@@ -1,0 +1,29 @@
+{
+  "source": "CONDOR paper Section 2.4 Data Generation",
+  "condor_raw_ranges": {
+    "Pbar_kW_per_server": [
+      0.2,
+      0.6
+    ],
+    "R_kW_per_server": [
+      0.0,
+      0.12
+    ]
+  },
+  "flexdc_values_used": {
+    "server_count": 1000,
+    "utilization": 0.7,
+    "idle_power_watts": 120.0,
+    "avg_max_job_power_watts": 356.625
+  },
+  "flexdc_denominators": {
+    "p_denominator_watts": 285637.5,
+    "r_denominator_watts": 118312.5
+  },
+  "converted_ratio_ranges": {
+    "Pbar_ratio_min": 0.700188175572185,
+    "Pbar_ratio_max": 2.100564526716555,
+    "R_ratio_min": 0.0,
+    "R_ratio_max": 1.0142630744849446
+  }
+}
