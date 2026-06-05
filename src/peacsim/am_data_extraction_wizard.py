@@ -528,10 +528,17 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
     r_actual = getattr(policy_config, "R", getattr(policy_config, "_R", None))
 
     init_output(output_dir, experiment_config, policy_config)
-    cost_power, simulator_tracking_error = simulator.run()
+
+    # simulator.run() returns power cost and simulator tracking cost.
+    # The 90th-percentile tracking error is stored separately on the simulator.
+    cost_power, simulator_tracking_cost = simulator.run()
+
+    tracking_error_90th = simulator.tracking_error_at_90
 
     # Raw tracking term for data generation.
-    raw_tracking_cost = simulator_tracking_error - 0.3
+    # This is the paper-style thresholded tracking-error term.
+    TRACKING_ERROR_THRESHOLD = 0.3
+    raw_tracking_cost = tracking_error_90th - TRACKING_ERROR_THRESHOLD
 
     # I kept the original old tracking penalty too for debugging/comparison.
     psi1, psi2 = cost_function_config.calculate_gradient_variables['psi1'], \
@@ -542,8 +549,11 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
     #)
     
     #Same math but this version prevents overflow
-    softplus_tracking_cost = psi1 * simulator_tracking_error * (
-    1 + np.logaddexp(0, psi2 * (simulator_tracking_error - 0.3))
+    softplus_tracking_cost = psi1 * tracking_error_90th * (
+        1 + np.logaddexp(
+            0,
+            psi2 * (tracking_error_90th - TRACKING_ERROR_THRESHOLD)
+        )
     )
 
     qos_constraints = list(simulator._job_config.all_job_qos_constraints.values())
@@ -588,6 +598,7 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         f"Raw Total Cost={raw_total_cost}, "
         f"Power Cost={cost_power}, "
         f"Raw Tracking Cost={raw_tracking_cost}, "
+        f"Simulator Tracking Cost={simulator_tracking_cost}, "
         f"Raw QoS Cost={raw_qos_cost}, "
         f"SoftPlus Total Cost={softplus_total_cost}"
     )
@@ -616,12 +627,12 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         cost_power,
         raw_tracking_cost,
         raw_qos_cost,
-        simulator_tracking_error,
+        simulator_tracking_cost,
         softplus_total_cost,
         softplus_tracking_cost,
         softplus_qos_cost,
         simulator.ratio_of_job_type_qos_violation,
-        simulator.tracking_error_at_90,
+        tracking_error_90th,
         json.dumps(delay_prob),
         json.dumps(raw_qos_terms),
     ]
@@ -694,18 +705,18 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             'workload_mix_size',
             'workload_mix',
             ] + [f'Weight_{i}' for i in range(job_config.job_type_count)] + [
-                'Raw_Total_Cost',
-                'Power_Cost',
-                'Raw_Tracking_Cost',
-                'Raw_QoS_Cost',
-                'Simulator_Tracking_Error',
-                'SoftPlus_Total_Cost',
-                'SoftPlus_Tracking_Cost',
-                'SoftPlus_QoS_Cost',
-                'QoS_Violation_Ratio',
-                'Tracking_Error_90th',
-                'Delay_Probabilities',
-                'Raw_QoS_Terms',
+            'Raw_Total_Cost',
+            'Power_Cost',
+            'Raw_Tracking_Cost',
+            'Raw_QoS_Cost',
+            'Simulator_Tracking_Cost',
+            'SoftPlus_Total_Cost',
+            'SoftPlus_Tracking_Cost',
+            'SoftPlus_QoS_Cost',
+            'QoS_Violation_Ratio',
+            'Tracking_Error_90th',
+            'Delay_Probabilities',
+            'Raw_QoS_Terms',
             ]
         writer.writerow(headers)
 

@@ -187,6 +187,8 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int]:
             "Power_Cost",
             "Raw_Tracking_Cost",
             "Raw_QoS_Cost",
+            "Simulator_Tracking_Cost",
+            "Tracking_Error_90th",
         ]
 
         missing_columns = [col for col in required_columns if col not in headers]
