@@ -2,12 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib
 
-# ============================================================
-# Optional backend setup
-# ============================================================
-# If figures do not pop up when running as a normal Python file,
-# uncomment ONE of these lines depending on your system:
-#
+# If figures do not pop up, uncomment ONE:
 # matplotlib.use("TkAgg")
 # matplotlib.use("QtAgg")
 
@@ -19,42 +14,36 @@ from pathlib import Path
 # CONFIG
 # ============================================================
 
-CSV_PATH = "flexdc_all_data.csv"
+CSV_PATH = "flexdc_all_data_fixed_with_softplus.csv"
 
-FIG_DIR = Path("figures")
+FIG_DIR = Path("figures_3d_raw_costs")
 FIG_DIR.mkdir(exist_ok=True)
+
+# Separate high-quality plots ONLY for all_workloads_combined
+HQ_TOTAL_DIR = FIG_DIR / "all_workloads_combined_high_quality_individual_components"
+HQ_TOTAL_DIR.mkdir(exist_ok=True)
 
 P_COL = "Pbar_ratio"
 R_COL = "R_ratio"
 WORKLOAD_COL = "workload_name"
 
-COST_COLUMNS = {
+PLOT_COLUMNS = {
     "Power_Cost": "Power Cost",
     "Raw_Tracking_Cost": "Raw Tracking Cost",
     "Raw_QoS_Cost": "Raw QoS Cost",
     "Raw_Total_Cost": "Raw Total Cost",
 }
 
-# Your older contour script used min.
-# mean = smoother
-# min = sharper / more cliff-like
-# max = worst-case / often jaggier
 AGGFUNC = "min"
 
 CMAP = "viridis"
-
 ELEV = 25
 AZIM = -135
 
 DPI = 250
+HIGH_QUALITY_DPI = 500
 
-# This controls whether figures pop up interactively.
-# Running as a normal .py file, plt.show() opens an interactive Matplotlib window.
 SHOW_FIGURES = True
-
-# If True, each individual cost surface also opens/saves.
-# If False, only the combined 2x2 figures are made.
-MAKE_INDIVIDUAL_PLOTS = False
 
 
 # ============================================================
@@ -63,11 +52,11 @@ MAKE_INDIVIDUAL_PLOTS = False
 
 df = pd.read_csv(CSV_PATH)
 
-required_cols = [P_COL, R_COL, WORKLOAD_COL] + list(COST_COLUMNS.keys())
-missing_cols = [col for col in required_cols if col not in df.columns]
+required_cols = [P_COL, R_COL, WORKLOAD_COL] + list(PLOT_COLUMNS.keys())
+missing = [col for col in required_cols if col not in df.columns]
 
-if missing_cols:
-    raise ValueError(f"Missing required columns: {missing_cols}")
+if missing:
+    raise ValueError(f"Missing required columns: {missing}")
 
 print("Loaded:", CSV_PATH)
 print("Rows:", len(df))
@@ -79,7 +68,7 @@ print("Aggregation:", AGGFUNC)
 
 
 # ============================================================
-# HELPER FUNCTIONS
+# HELPERS
 # ============================================================
 
 def safe_filename(text):
@@ -96,18 +85,6 @@ def safe_filename(text):
 
 
 def get_surface_data(data, value_col):
-    """
-    Build the P/R grid.
-
-    This follows the same idea as your original scripts:
-    - pivot table
-    - P values are columns
-    - R values are rows
-    - Z is the selected cost value
-
-    Since the full dataset has multiple rows per P/R pair,
-    AGGFUNC decides how to collapse them.
-    """
     pivot = data.pivot_table(
         index=R_COL,
         columns=P_COL,
@@ -123,7 +100,7 @@ def get_surface_data(data, value_col):
     X, Y = np.meshgrid(p_values, r_values)
     Z = pivot.to_numpy()
 
-    return X, Y, Z, pivot
+    return X, Y, Z
 
 
 def summarize_group(group_name, data):
@@ -138,7 +115,7 @@ def summarize_group(group_name, data):
 
 
 def plot_surface_on_axis(ax, data, value_col, title):
-    X, Y, Z, pivot = get_surface_data(data, value_col)
+    X, Y, Z = get_surface_data(data, value_col)
 
     zmin = np.nanmin(Z)
     zmax = np.nanmax(Z)
@@ -161,55 +138,27 @@ def plot_surface_on_axis(ax, data, value_col, title):
         offset=zmin,
         levels=15,
         cmap=CMAP,
-        alpha=0.8
+        alpha=0.85
     )
 
     ax.set_title(title)
     ax.set_xlabel("Pbar ratio")
     ax.set_ylabel("R ratio")
     ax.set_zlabel("Cost")
-
     ax.set_zlim(zmin, zmax)
     ax.view_init(elev=ELEV, azim=AZIM)
 
     return surface
 
 
-def plot_individual_surface(data, group_name, value_col, title):
-    fig = plt.figure(figsize=(9, 6))
-    ax = fig.add_subplot(111, projection="3d")
-
-    surface = plot_surface_on_axis(
-        ax=ax,
-        data=data,
-        value_col=value_col,
-        title=title
-    )
-
-    fig.colorbar(surface, ax=ax, shrink=0.6, label=value_col)
-
-    fig.suptitle(
-        f"{title} over P/R Grid\n{group_name} | aggfunc={AGGFUNC}",
-        fontsize=14
-    )
-
-    fig.tight_layout()
-
-    save_path = FIG_DIR / f"{safe_filename(group_name)}_{safe_filename(value_col)}_surface_{AGGFUNC}.png"
-    fig.savefig(save_path, dpi=DPI, bbox_inches="tight")
-
-    print("Saved:", save_path)
-
-    if SHOW_FIGURES:
-        plt.show()
-    else:
-        plt.close(fig)
-
-
 def plot_combined_surfaces(data, group_name):
+    """
+    Saves one combined 2x2 figure.
+    This is used for each workload and for all workloads combined.
+    """
     fig = plt.figure(figsize=(16, 10))
 
-    for i, (value_col, title) in enumerate(COST_COLUMNS.items(), start=1):
+    for i, (value_col, title) in enumerate(PLOT_COLUMNS.items(), start=1):
         ax = fig.add_subplot(2, 2, i, projection="3d")
 
         surface = plot_surface_on_axis(
@@ -219,19 +168,19 @@ def plot_combined_surfaces(data, group_name):
             title=title
         )
 
-        fig.colorbar(surface, ax=ax, shrink=0.5)
+        fig.colorbar(surface, ax=ax, shrink=0.5, label=value_col)
 
     fig.suptitle(
-        f"FlexDC Cost Surfaces over P/R Grid\n{group_name} | aggfunc={AGGFUNC}",
+        f"Raw Cost Surfaces over P/R Grid\n{group_name} | aggfunc={AGGFUNC}",
         fontsize=16
     )
 
     fig.tight_layout()
 
-    save_path = FIG_DIR / f"{safe_filename(group_name)}_combined_surfaces_{AGGFUNC}.png"
+    save_path = FIG_DIR / f"{safe_filename(group_name)}_raw_cost_surfaces_{AGGFUNC}.png"
     fig.savefig(save_path, dpi=DPI, bbox_inches="tight")
 
-    print("Saved:", save_path)
+    print("Saved combined:", save_path)
 
     if SHOW_FIGURES:
         plt.show()
@@ -239,8 +188,52 @@ def plot_combined_surfaces(data, group_name):
         plt.close(fig)
 
 
+def plot_all_workloads_individual_high_quality(data):
+    """
+    Saves four separate high-quality figures ONLY for all workloads combined:
+    - Power_Cost
+    - Raw_Tracking_Cost
+    - Raw_QoS_Cost
+    - Raw_Total_Cost
+    """
+    group_name = "all_workloads_combined"
+
+    for value_col, title in PLOT_COLUMNS.items():
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection="3d")
+
+        surface = plot_surface_on_axis(
+            ax=ax,
+            data=data,
+            value_col=value_col,
+            title=title
+        )
+
+        fig.colorbar(surface, ax=ax, shrink=0.65, label=value_col)
+
+        fig.suptitle(
+            f"{title} over P/R Grid\n{group_name} | aggfunc={AGGFUNC}",
+            fontsize=16
+        )
+
+        fig.tight_layout()
+
+        save_path = HQ_TOTAL_DIR / (
+            f"{safe_filename(group_name)}_{safe_filename(value_col)}_high_quality_{AGGFUNC}.png"
+        )
+
+        fig.savefig(save_path, dpi=HIGH_QUALITY_DPI, bbox_inches="tight")
+
+        print("Saved all-workloads high-quality individual figure:", save_path)
+
+        if SHOW_FIGURES:
+            plt.show()
+        else:
+            plt.close(fig)
+
+
 # ============================================================
-# PLOT EACH WORKLOAD
+# PLOT EACH WORKLOAD: COMBINED 4-PANEL ONLY
 # ============================================================
 
 workloads = sorted(df[WORKLOAD_COL].dropna().unique())
@@ -251,44 +244,26 @@ for workload in workloads:
 
     summarize_group(group_name, workload_df)
 
-    # Combined 2x2 figure like your original am_3d style
+    # Only combined 4-panel plot for each workload
     plot_combined_surfaces(workload_df, group_name)
-
-    # Optional individual figures
-    if MAKE_INDIVIDUAL_PLOTS:
-        for value_col, title in COST_COLUMNS.items():
-            plot_individual_surface(
-                data=workload_df,
-                group_name=group_name,
-                value_col=value_col,
-                title=title
-            )
 
 
 # ============================================================
-# PLOT ALL DATA COMBINED
+# PLOT ALL WORKLOADS COMBINED
 # ============================================================
 
 group_name = "all_workloads_combined"
 
 summarize_group(group_name, df)
 
+# Combined 4-panel all-workloads plot
 plot_combined_surfaces(df, group_name)
 
-if MAKE_INDIVIDUAL_PLOTS:
-    for value_col, title in COST_COLUMNS.items():
-        plot_individual_surface(
-            data=df,
-            group_name=group_name,
-            value_col=value_col,
-            title=title
-        )
+# Four separate high-quality plots ONLY for all workloads combined
+plot_all_workloads_individual_high_quality(df)
 
-
-# ============================================================
-# DONE
-# ============================================================
 
 print()
 print("Done.")
-print("Figures saved in:", FIG_DIR.resolve())
+print("Combined figures saved in:", FIG_DIR.resolve())
+print("All-workloads high-quality individual figures saved in:", HQ_TOTAL_DIR.resolve())

@@ -15,7 +15,6 @@ from peacsim.proportional_cap_policy import ProportionalCapPolicy
 from peacsim.priority_cap_policy import PriorityCapPolicy
 from peacsim.parsing import gradient_descent_reader as gradient_parser
 import datetime
-from denormalize_PR import denormalize_PR
 import os
 import itertools
 from calculate_qos_cost import calculate_qos_cost
@@ -24,9 +23,14 @@ from calculate_qos_cost import calculate_qos_cost
 #Here are my default sweep settings I added
 DEFAULT_UTILIZATION_VALUES = [0.5, 0.75, 0.8, 0.85, 0.9, 0.95]
 
+# Physical RSR bid sweep values. These are kW/server, not FlexDC normalized ratios.
 # Format: min, max, num_points
-DEFAULT_PBAR_RANGE = (0.7, 1.8, 10)
-DEFAULT_R_RANGE = (0.05, 1.0, 10)
+DEFAULT_PBAR_KW_PER_SERVER_RANGE = (0.2, 0.6, 10)
+DEFAULT_R_KW_PER_SERVER_RANGE = (0.0, 0.12, 10)
+
+# Paper tracking constraint gamma. This is only used for diagnostic residual columns,
+# not for the simulator-returned tracking cost.
+TRACKING_ERROR_CONSTRAINT = 0.3
 
 DEFAULT_NUM_WEIGHT_SAMPLES = 5
 DEFAULT_WEIGHT_SEED = 42
@@ -289,19 +293,33 @@ def build_sweep_values(args, job_type_count):
     if utilization_values is None:
         utilization_values = DEFAULT_UTILIZATION_VALUES
 
-    if args.pbar_values is not None and args.pbar_range is not None:
-        raise ValueError("Use either --pbar-values or --pbar-range, not both.")
+    if args.pbar_kw_per_server_values is not None and args.pbar_kw_per_server_range is not None:
+        raise ValueError("Use either --pbar-kw-per-server-values or --pbar-kw-per-server-range, not both.")
 
-    if args.r_values is not None and args.r_range is not None:
-        raise ValueError("Use either --r-values or --r-range, not both.")
+    if args.r_kw_per_server_values is not None and args.r_kw_per_server_range is not None:
+        raise ValueError("Use either --r-kw-per-server-values or --r-kw-per-server-range, not both.")
 
-    pbar_values = parse_float_list(args.pbar_values, "--pbar-values")
-    if pbar_values is None:
-        pbar_values = parse_range_spec(args.pbar_range, DEFAULT_PBAR_RANGE, "--pbar-range")
+    pbar_kw_per_server_values = parse_float_list(
+        args.pbar_kw_per_server_values,
+        "--pbar-kw-per-server-values"
+    )
+    if pbar_kw_per_server_values is None:
+        pbar_kw_per_server_values = parse_range_spec(
+            args.pbar_kw_per_server_range,
+            DEFAULT_PBAR_KW_PER_SERVER_RANGE,
+            "--pbar-kw-per-server-range"
+        )
 
-    r_values = parse_float_list(args.r_values, "--r-values")
-    if r_values is None:
-        r_values = parse_range_spec(args.r_range, DEFAULT_R_RANGE, "--r-range")
+    r_kw_per_server_values = parse_float_list(
+        args.r_kw_per_server_values,
+        "--r-kw-per-server-values"
+    )
+    if r_kw_per_server_values is None:
+        r_kw_per_server_values = parse_range_spec(
+            args.r_kw_per_server_range,
+            DEFAULT_R_KW_PER_SERVER_RANGE,
+            "--r-kw-per-server-range"
+        )
 
     inline_weight_vectors = parse_weight_vectors_from_string(args.weight_vectors)
     file_weight_vectors = load_weight_vectors_from_file(args.weight_file)
@@ -329,11 +347,11 @@ def build_sweep_values(args, job_type_count):
 
     weight_combinations = validate_weight_vectors(weight_combinations, job_type_count)
 
-    pbar_values = [float(x) for x in pbar_values]
-    r_values = [float(x) for x in r_values]
+    pbar_kw_per_server_values = [float(x) for x in pbar_kw_per_server_values]
+    r_kw_per_server_values = [float(x) for x in r_kw_per_server_values]
     utilization_values = [float(x) for x in utilization_values]
 
-    return utilization_values, pbar_values, r_values, weight_combinations
+    return utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations
 
 
 def build_policy_parameters(args, job_type_count):
@@ -399,12 +417,14 @@ def build_policy_parameters(args, job_type_count):
     return policy_parameters
 
 
-def count_valid_parameter_combinations(utilization_values, pbar_values, r_values, weight_combinations):
+def count_valid_parameter_combinations(utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations):
     total = 0
     for _ in utilization_values:
-        for Pbar in pbar_values:
-            for R in r_values:
-                if Pbar <= R:
+        for pbar_kw_per_server in pbar_kw_per_server_values:
+            for r_kw_per_server in r_kw_per_server_values:
+                # RSR bid sanity constraint in physical units.
+                # With the CONDOR-style defaults, Pbar is always greater than R.
+                if pbar_kw_per_server <= r_kw_per_server:
                     continue
                 total += len(weight_combinations)
     return total
@@ -415,21 +435,77 @@ def set_experiment_utilization(experiment_config, utilization):
     else:
         experiment_config.utilization = utilization
 
-def create_simulator_object(P_ratio, R_ratio, experiment_config, job_config, cluster_config, policy_config, output_dir):
-    job_table = init_job_table(experiment_config, job_config)
-    node_table = init_node_table(experiment_config)
-
+def calculate_flexdc_pr_denominators(experiment_config, job_config):
+    """
+    FlexDC's internal P_ratio and R_ratio denominators.
+    These are kept only so we can log the equivalent internal ratios.
+    The sweep itself should use Pbar_kw_per_server and R_kw_per_server.
+    """
     avg_max_job_power = sum(job_config.all_max_job_power.values()) / len(job_config.all_max_job_power)
     avg_num_servers = experiment_config.server_count * experiment_config.utilization
     avg_idle_servers = experiment_config.server_count - avg_num_servers
-    P_ratio = round(P_ratio, 6)
-    R_ratio = round(R_ratio, 6)
-    policy_config._P_ratio = P_ratio
-    policy_config._R_ratio = R_ratio
-    policy_config._P = int(P_ratio * (avg_max_job_power * avg_num_servers +
-                                      experiment_config.idle_power * avg_idle_servers))
-    policy_config._R = int(R_ratio * (avg_max_job_power * experiment_config.server_count -
-                                      (experiment_config.idle_power * experiment_config.server_count)) / 2)
+
+    pbar_denominator_watts = (
+        avg_max_job_power * avg_num_servers
+        + experiment_config.idle_power * avg_idle_servers
+    )
+
+    r_denominator_watts = (
+        avg_max_job_power * experiment_config.server_count
+        - experiment_config.idle_power * experiment_config.server_count
+    ) / 2
+
+    if pbar_denominator_watts <= 0:
+        raise ValueError(f"Invalid Pbar denominator: {pbar_denominator_watts}")
+
+    if r_denominator_watts <= 0:
+        raise ValueError(f"Invalid R denominator: {r_denominator_watts}")
+
+    return pbar_denominator_watts, r_denominator_watts
+
+def convert_kw_per_server_to_flexdc_pr(pbar_kw_per_server, r_kw_per_server, experiment_config, job_config):
+    """
+    Convert physical per-server bids into the actual watt bids used by the simulator,
+    plus the equivalent FlexDC internal ratios for logging/debugging.
+    """
+    p_actual_watts = int(round(float(pbar_kw_per_server) * 1000 * experiment_config.server_count))
+    r_actual_watts = int(round(float(r_kw_per_server) * 1000 * experiment_config.server_count))
+
+    pbar_denominator_watts, r_denominator_watts = calculate_flexdc_pr_denominators(
+        experiment_config,
+        job_config
+    )
+
+    pbar_ratio = p_actual_watts / pbar_denominator_watts
+    r_ratio = r_actual_watts / r_denominator_watts
+
+    return {
+        "Pbar_kw_per_server": float(pbar_kw_per_server),
+        "R_kw_per_server": float(r_kw_per_server),
+        "P_actual_watts": p_actual_watts,
+        "R_actual_watts": r_actual_watts,
+        "Pbar_ratio": round(float(pbar_ratio), 6),
+        "R_ratio": round(float(r_ratio), 6),
+        "Pbar_denominator_watts": float(pbar_denominator_watts),
+        "R_denominator_watts": float(r_denominator_watts),
+    }
+
+def create_simulator_object(pbar_kw_per_server, r_kw_per_server, experiment_config, job_config, cluster_config, policy_config, output_dir):
+    job_table = init_job_table(experiment_config, job_config)
+    node_table = init_node_table(experiment_config)
+
+    pr_values = convert_kw_per_server_to_flexdc_pr(
+        pbar_kw_per_server=pbar_kw_per_server,
+        r_kw_per_server=r_kw_per_server,
+        experiment_config=experiment_config,
+        job_config=job_config
+    )
+
+    # Set the simulator's actual bids in watts. Ratios are only logged for traceability.
+    policy_config._P = pr_values["P_actual_watts"]
+    policy_config._R = pr_values["R_actual_watts"]
+    policy_config._P_ratio = pr_values["Pbar_ratio"]
+    policy_config._R_ratio = pr_values["R_ratio"]
 
     policy_mapping = {
         "AQA": (
@@ -455,7 +531,7 @@ def create_simulator_object(P_ratio, R_ratio, experiment_config, job_config, clu
 
     simulator = Simulator(job_table, node_table, runtime_policy, experiment_config,
                           job_config, cluster_config, output_dir=output_dir)
-    return simulator
+    return simulator, pr_values
 
 def build_workload_mix_json(job_config, weights):
     """
@@ -483,7 +559,7 @@ def build_workload_mix_json(job_config, weights):
     return json.dumps(workload_mix)
 
 
-def calculate_raw_qos_cost(sim_hour, J, job_table, qos_constraints, min_execution_times, cost_function_config):
+def calculate_qos_raw_metrics(sim_hour, J, job_table, qos_constraints, min_execution_times, cost_function_config):
     from calculate_qos_cost import calculate_delay_prob
 
     delay_prob = calculate_delay_prob(
@@ -496,21 +572,30 @@ def calculate_raw_qos_cost(sim_hour, J, job_table, qos_constraints, min_executio
 
     delta = cost_function_config.calculate_gradient_variables['qos_threshold']
 
-    raw_qos_terms = [delay_prob[itype] - delta for itype in range(J)]
-    raw_qos_cost = sum(raw_qos_terms)
+    qos_delay_probabilities = [float(delay_prob[itype]) for itype in range(J)]
+    qos_delay_probability_sum = sum(qos_delay_probabilities)
 
-    return raw_qos_cost, raw_qos_terms, delay_prob
+    # Diagnostic only: this subtracts the QoS threshold, so it is a residual, not a raw cost.
+    qos_delay_probability_residuals = [delay_prob[itype] - delta for itype in range(J)]
+    qos_delay_probability_residual_sum = sum(qos_delay_probability_residuals)
 
+    return (
+        qos_delay_probability_sum,
+        qos_delay_probabilities,
+        qos_delay_probability_residual_sum,
+        qos_delay_probability_residuals,
+    )
 
 
 def objective_function(params, cost_function_config, policy_config, experiment_config, cluster_config, job_config,
                        output_dir, iteration_idx=None, total_iterations=None, weight_sample_id=None):
-    Pbar, R, *weights = params
+    pbar_kw_per_server, r_kw_per_server, *weights = params
     if iteration_idx is not None and total_iterations is not None:
         print(f"\n========== Iteration {iteration_idx}/{total_iterations} ==========")
         print(
             f"utilization={experiment_config.utilization}, "
-            f"Pbar={Pbar:.6f}, R={R:.6f}, weights={weights}"
+            f"Pbar_kw_per_server={pbar_kw_per_server:.6f}, "
+            f"R_kw_per_server={r_kw_per_server:.6f}, weights={weights}"
         )
 
     base_weights_path = os.path.join(output_dir, 'base_weights.csv')
@@ -520,47 +605,56 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
     }).to_csv(base_weights_path, index=False)
 
     policy_config.policy_parameters['weights_path'] = base_weights_path
-    simulator = create_simulator_object(Pbar, R, experiment_config, job_config, cluster_config,
-                                        policy_config, output_dir)
-
-    # Actual watt values after converting normalized Pbar/R ratios
-    p_actual = getattr(policy_config, "P", getattr(policy_config, "_P", None))
-    r_actual = getattr(policy_config, "R", getattr(policy_config, "_R", None))
+    simulator, pr_values = create_simulator_object(
+        pbar_kw_per_server,
+        r_kw_per_server,
+        experiment_config,
+        job_config,
+        cluster_config,
+        policy_config,
+        output_dir
+    )
 
     init_output(output_dir, experiment_config, policy_config)
 
-    # simulator.run() returns power cost and simulator tracking cost.
-    # The 90th-percentile tracking error is stored separately on the simulator.
-    cost_power, simulator_tracking_cost = simulator.run()
+    # simulator.run() returns the simulator's raw RSR monetary components.
+    # In simulator.final_output():
+    #   power cost    = (piP * P - piR * R) * hour
+    #   tracking cost = piE * R * mean(abs(normalized_tracking_error)) * hour
+    # The 90th-percentile normalized tracking error is stored separately as a diagnostic.
+    simulator_power_cost, simulator_tracking_cost = simulator.run()
+    simulator_rsr_total_cost = simulator_power_cost + simulator_tracking_cost
 
-    tracking_error_90th = simulator.tracking_error_at_90
-
-    # Raw tracking term for data generation.
-    # This is the paper-style thresholded tracking-error term.
-    TRACKING_ERROR_THRESHOLD = 0.3
-    raw_tracking_cost = tracking_error_90th - TRACKING_ERROR_THRESHOLD
-
-    # I kept the original old tracking penalty too for debugging/comparison.
-    psi1, psi2 = cost_function_config.calculate_gradient_variables['psi1'], \
-        cost_function_config.calculate_gradient_variables['psi2']
-
-    #softplus_tracking_cost = psi1 * simulator_tracking_error * (
-    #    1 + np.log(1 + np.exp(psi2 * (simulator_tracking_error - 0.3)))
-    #)
-    
-    #Same math but this version prevents overflow
-    softplus_tracking_cost = psi1 * tracking_error_90th * (
-        1 + np.logaddexp(
-            0,
-            psi2 * (tracking_error_90th - TRACKING_ERROR_THRESHOLD)
-        )
-    )
+    normalized_tracking_error_90th = simulator.tracking_error_at_90
+    normalized_tracking_error_90th_residual = normalized_tracking_error_90th - TRACKING_ERROR_CONSTRAINT
 
     qos_constraints = list(simulator._job_config.all_job_qos_constraints.values())
     min_execution_times = list(simulator._job_config.all_min_execution_time.values())
 
-    # Existing FlexDC/old objective QoS cost, kept for comparison.
-    softplus_qos_cost = calculate_qos_cost(
+    (
+        qos_delay_probability_sum,
+        qos_delay_probabilities,
+        qos_delay_probability_residual_sum,
+        qos_delay_probability_residuals,
+    ) = calculate_qos_raw_metrics(
+        sim_hour=1,
+        J=simulator._job_type_count,
+        job_table=simulator._job_table,
+        qos_constraints=qos_constraints,
+        min_execution_times=min_execution_times,
+        cost_function_config=cost_function_config
+    )
+
+    # Diagnostics only. These are intentionally not written into the raw results CSV.
+    psi1, psi2 = cost_function_config.calculate_gradient_variables['psi1'], \
+        cost_function_config.calculate_gradient_variables['psi2']
+
+    diagnostic_paper_like_softplus_tracking_cost = psi1 * np.logaddexp(
+        0,
+        psi2 * normalized_tracking_error_90th_residual
+    )
+
+    diagnostic_flexdc_softplus_qos_cost = calculate_qos_cost(
         experiment_config=experiment_config,
         job_config=job_config,
         policy_config=policy_config,
@@ -576,72 +670,86 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         cost_function_config=cost_function_config
     )
 
-    # Raw QoS term for data generation.
-    raw_qos_cost, raw_qos_terms, delay_prob = calculate_raw_qos_cost(
-        sim_hour=1,
-        J=simulator._job_type_count,
-        job_table=simulator._job_table,
-        qos_constraints=qos_constraints,
-        min_execution_times=min_execution_times,
-        cost_function_config=cost_function_config
+    diagnostic_paper_like_total_cost = (
+        simulator_power_cost
+        + diagnostic_paper_like_softplus_tracking_cost
+        + diagnostic_flexdc_softplus_qos_cost
     )
 
-    # Raw objective for data generation.
-    raw_total_cost = cost_power + raw_tracking_cost + raw_qos_cost
-
-    # Existing old objective, useful for comparison/debugging.
-    softplus_total_cost = cost_power + softplus_tracking_cost + softplus_qos_cost
-
-    
     print(
-        f"Iteration Variables: Pbar={Pbar}, R={R}, Weights={weights}, "
-        f"Raw Total Cost={raw_total_cost}, "
-        f"Power Cost={cost_power}, "
-        f"Raw Tracking Cost={raw_tracking_cost}, "
+        f"Iteration Variables: Pbar_kw_per_server={pbar_kw_per_server}, "
+        f"R_kw_per_server={r_kw_per_server}, "
+        f"Pbar_ratio={pr_values['Pbar_ratio']}, R_ratio={pr_values['R_ratio']}, "
+        f"Weights={weights}, "
+        f"Simulator RSR Total Cost={simulator_rsr_total_cost}, "
+        f"Simulator Power Cost={simulator_power_cost}, "
         f"Simulator Tracking Cost={simulator_tracking_cost}, "
-        f"Raw QoS Cost={raw_qos_cost}, "
-        f"SoftPlus Total Cost={softplus_total_cost}"
+        f"Normalized Tracking Error 90th={normalized_tracking_error_90th}, "
+        f"QoS Delay Probability Sum={qos_delay_probability_sum}, "
+        f"Diagnostic Paper-Like Total Cost={diagnostic_paper_like_total_cost}"
     )
-
-    results_file = os.path.join(output_dir, 'grid_search_results.csv')
 
     workload_mix_json = build_workload_mix_json(job_config, weights)
 
-    results = [
+    raw_results_file = os.path.join(output_dir, 'grid_search_results.csv')
+    raw_results = [
         iteration_idx,
         weight_sample_id,
         policy_config.runtime_policy_name,
         policy_config.policy_parameters.get("node_count_control"),
         policy_config.policy_parameters.get("power_cap_percentage", ""),
         json.dumps(policy_config.policy_parameters.get("probabilities", "")),
-        Pbar,                  # normalized Pbar ratio
-        R,                     # normalized R ratio
-        p_actual,                     # actual P in watts
-        r_actual,                     # actual R in watts
+        pr_values["Pbar_kw_per_server"],
+        pr_values["R_kw_per_server"],
+        pr_values["P_actual_watts"],
+        pr_values["R_actual_watts"],
+        pr_values["Pbar_ratio"],
+        pr_values["R_ratio"],
+        pr_values["Pbar_denominator_watts"],
+        pr_values["R_denominator_watts"],
         experiment_config.server_count,
         experiment_config.utilization,
         job_config.job_type_count,
         workload_mix_json,
     ] + list(weights) + [
-        raw_total_cost,
-        cost_power,
-        raw_tracking_cost,
-        raw_qos_cost,
+        simulator_rsr_total_cost,
+        simulator_power_cost,
         simulator_tracking_cost,
-        softplus_total_cost,
-        softplus_tracking_cost,
-        softplus_qos_cost,
+        qos_delay_probability_sum,
         simulator.ratio_of_job_type_qos_violation,
-        tracking_error_90th,
-        json.dumps(delay_prob),
-        json.dumps(raw_qos_terms),
+        json.dumps(qos_delay_probabilities),
     ]
 
-    with open(results_file, 'a', newline='') as f:
+    with open(raw_results_file, 'a', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(results)
+        writer.writerow(raw_results)
 
-    return raw_total_cost
+    diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
+    diagnostic_results = [
+        iteration_idx,
+        weight_sample_id,
+        pr_values["Pbar_kw_per_server"],
+        pr_values["R_kw_per_server"],
+        pr_values["P_actual_watts"],
+        pr_values["R_actual_watts"],
+        pr_values["Pbar_ratio"],
+        pr_values["R_ratio"],
+        experiment_config.server_count,
+        experiment_config.utilization,
+        normalized_tracking_error_90th,
+        normalized_tracking_error_90th_residual,
+        qos_delay_probability_residual_sum,
+        json.dumps(qos_delay_probability_residuals),
+        diagnostic_paper_like_softplus_tracking_cost,
+        diagnostic_flexdc_softplus_qos_cost,
+        diagnostic_paper_like_total_cost,
+    ]
+
+    with open(diagnostics_file, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(diagnostic_results)
+
+    return simulator_rsr_total_cost
 
 
 def generate_weight_grid(lower, upper, step, count):
@@ -666,11 +774,11 @@ def generate_random_softmax_weights(job_type_count, num_weight_samples, seed=42,
     return weight_combinations
 
 def grid_search_parameters(cost_function_config, policy_config, experiment_config, cluster_config, job_config, output_dir,
-                           utilization_values, pbar_values, r_values, weight_combinations):
+                           utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations):
     """
     Performs a sweep over:
     - utilization values
-    - Pbar/R bid ratios
+    - physical Pbar/R bids in kW/server
     - randomly sampled workload weight vectors
     """
     best_cost = float('inf')
@@ -678,14 +786,14 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
 
     print("\nSweep configuration:")
     print(f"  utilization_values = {utilization_values}")
-    print(f"  pbar_values = {pbar_values}")
-    print(f"  r_values = {r_values}")
+    print(f"  pbar_kw_per_server_values = {pbar_kw_per_server_values}")
+    print(f"  r_kw_per_server_values = {r_kw_per_server_values}")
     print(f"  number of weight vectors = {len(weight_combinations)}")
     print(f"  job_type_count = {job_config.job_type_count}")
     print(f"  policy_name = {policy_config.runtime_policy_name}")
     print(f"  policy_parameters = {policy_config.policy_parameters}")
 
-    # CSV file for logging iterations
+    # CSV file for raw simulator outputs only.
     results_file = os.path.join(output_dir, 'grid_search_results.csv')
     with open(results_file, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -696,36 +804,58 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             'Node_Count_Control',
             'Power_Cap_Percentage',
             'Flex_Resource_Probabilities',
-            'Pbar_ratio',
-            'R_ratio',
+            'Pbar_kw_per_server',
+            'R_kw_per_server',
             'P_actual_watts',
             'R_actual_watts',
+            'Pbar_ratio',
+            'R_ratio',
+            'Pbar_denominator_watts',
+            'R_denominator_watts',
             'server_count',
             'utilization',
             'workload_mix_size',
             'workload_mix',
             ] + [f'Weight_{i}' for i in range(job_config.job_type_count)] + [
-            'Raw_Total_Cost',
-            'Power_Cost',
-            'Raw_Tracking_Cost',
-            'Raw_QoS_Cost',
+            'Simulator_RSR_Total_Cost',
+            'Simulator_Power_Cost',
             'Simulator_Tracking_Cost',
-            'SoftPlus_Total_Cost',
-            'SoftPlus_Tracking_Cost',
-            'SoftPlus_QoS_Cost',
+            'QoS_Delay_Probability_Sum',
             'QoS_Violation_Ratio',
-            'Tracking_Error_90th',
-            'Delay_Probabilities',
-            'Raw_QoS_Terms',
+            'QoS_Delay_Probabilities',
             ]
         writer.writerow(headers)
 
+    # Separate diagnostics file for residuals, percentiles, and activation-function terms.
+    diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
+    with open(diagnostics_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        diagnostic_headers = [
+            'Iteration',
+            'Weight_Sample_ID',
+            'Pbar_kw_per_server',
+            'R_kw_per_server',
+            'P_actual_watts',
+            'R_actual_watts',
+            'Pbar_ratio',
+            'R_ratio',
+            'server_count',
+            'utilization',
+            'Normalized_Tracking_Error_90th',
+            'Normalized_Tracking_Error_90th_Residual',
+            'QoS_Delay_Probability_Residual_Sum',
+            'QoS_Delay_Probability_Residuals',
+            'Diagnostic_PaperLike_SoftPlus_Tracking_Cost',
+            'Diagnostic_FlexDC_SoftPlus_QoS_Cost',
+            'Diagnostic_PaperLike_Total_Cost',
+            ]
+        writer.writerow(diagnostic_headers)
 
 
     total_iterations = count_valid_parameter_combinations(
         utilization_values,
-        pbar_values,
-        r_values,
+        pbar_kw_per_server_values,
+        r_kw_per_server_values,
         weight_combinations
     )
 
@@ -737,16 +867,16 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
         set_experiment_utilization(experiment_config, utilization)
         print(f"\n===== Starting utilization = {utilization} =====")
 
-        for Pbar in pbar_values:
-            for R in r_values:
-                # Enforce constraint: Pbar must be greater than R.
-                if Pbar <= R:
+        for pbar_kw_per_server in pbar_kw_per_server_values:
+            for r_kw_per_server in r_kw_per_server_values:
+                # Enforce RSR bid sanity constraint in physical units.
+                if pbar_kw_per_server <= r_kw_per_server:
                     continue
 
                 # Loop over all valid weight combinations
                 for weight_sample_id, weights in enumerate(weight_combinations):
                     iteration_idx += 1
-                    params = [Pbar, R] + list(weights)
+                    params = [pbar_kw_per_server, r_kw_per_server] + list(weights)
 
                     cost = objective_function(
                         params,
@@ -796,21 +926,21 @@ if __name__ == "__main__":
                         help="Optional comma-separated utilization values, e.g. '0.5,0.75,0.9'. "
                              "Default: 0.5,0.75,0.8,0.85,0.9,0.95")
 
-    parser.add_argument('--pbar-range', type=str, default=None,
-                        help="Optional compact Pbar linspace range as 'min,max,num_points', e.g. '0.7,1.8,10'. "
-                             "Default: '0.7,1.8,10'")
+    parser.add_argument('--pbar-kw-per-server-range', type=str, default=None,
+                        help="Optional compact physical Pbar linspace range in kW/server as 'min,max,num_points', "
+                             "e.g. '0.2,0.6,10'. Default: '0.2,0.6,10'")
 
-    parser.add_argument('--r-range', type=str, default=None,
-                        help="Optional compact R linspace range as 'min,max,num_points', e.g. '0.05,1.0,10'. "
-                             "Default: '0.05,1.0,10'")
+    parser.add_argument('--r-kw-per-server-range', type=str, default=None,
+                        help="Optional compact physical R linspace range in kW/server as 'min,max,num_points', "
+                             "e.g. '0.0,0.12,10'. Default: '0.0,0.12,10'")
 
-    parser.add_argument('--pbar-values', type=str, default=None,
-                        help="Optional exact comma-separated Pbar ratio values, e.g. '0.7,1.0,1.3'. "
-                             "Overrides --pbar-range if used alone.")
+    parser.add_argument('--pbar-kw-per-server-values', type=str, default=None,
+                        help="Optional exact comma-separated physical Pbar values in kW/server, e.g. '0.2,0.4,0.6'. "
+                             "Overrides --pbar-kw-per-server-range if used alone.")
 
-    parser.add_argument('--r-values', type=str, default=None,
-                        help="Optional exact comma-separated R ratio values, e.g. '0.05,0.2,0.5'. "
-                             "Overrides --r-range if used alone.")
+    parser.add_argument('--r-kw-per-server-values', type=str, default=None,
+                        help="Optional exact comma-separated physical R values in kW/server, e.g. '0.0,0.06,0.12'. "
+                             "Overrides --r-kw-per-server-range if used alone.")
 
     parser.add_argument('--weight-vectors', type=str, default=None,
                         help="Optional custom weight vectors. Format: "
@@ -863,7 +993,7 @@ if __name__ == "__main__":
         policy_parameters=policy_parameters
     )
 
-    utilization_values, pbar_values, r_values, weight_combinations = build_sweep_values(
+    utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations = build_sweep_values(
         args=args,
         job_type_count=job_config.job_type_count
     )
@@ -880,8 +1010,8 @@ if __name__ == "__main__":
         job_config=job_config,
         output_dir=output_dir,
         utilization_values=utilization_values,
-        pbar_values=pbar_values,
-        r_values=r_values,
+        pbar_kw_per_server_values=pbar_kw_per_server_values,
+        r_kw_per_server_values=r_kw_per_server_values,
         weight_combinations=weight_combinations
     )
-    print("Best Parameters Under Raw Total Cost:", optimal_params)
+    print("Best Parameters Under Simulator RSR Total Cost Only:", optimal_params)
