@@ -26,20 +26,19 @@ SUPPORTED_RUNTIME_POLICIES = [
     "proportional-cap",
 ]
 
+# Tomorrow's range-finding subset: 2 CPU/SCC-style workloads and 2 GPU/AI workloads.
+# These remain fully overrideable with --workload-configs.
 DEFAULT_WORKLOAD_CONFIGS = [
-    "../../configs/workload/W8.ini",
     "../../configs/workload/W9.ini",
     "../../configs/workload/W10.ini",
-    "../../configs/workload/W11.ini",
-    "../../configs/workload/W12.ini",
-    "../../configs/workload/W13.ini",
+    "../../configs/workload/W-train-2app.ini",
+    "../../configs/workload/W-inference-2app.ini",
 ]
 
+# Tomorrow's range-finding subset is 64 servers only.
+# This remains fully overrideable with --experiment-configs.
 DEFAULT_EXPERIMENT_CONFIGS = [
     "../../configs/experiment/generated_server_counts/exp_servers_64.ini",
-    "../../configs/experiment/generated_server_counts/exp_servers_100.ini",
-    "../../configs/experiment/generated_server_counts/exp_servers_500.ini",
-    "../../configs/experiment/generated_server_counts/exp_servers_1000.ini",
 ]
 
 
@@ -74,14 +73,18 @@ def validate_existing_file(path_str: str, base_dir: Path, label: str) -> None:
 
 
 def build_optional_generator_args(args) -> list[str]:
+    """
+    Pass optional modular arguments through to am_data_extraction_wizard.py.
+    Important: these are physical kW/server P/R flags, not old FlexDC ratio flags.
+    """
     optional_args = []
 
     passthrough_pairs = [
         ("--node-count-control", args.node_count_control),
-        ("--pbar-range", args.pbar_range),
-        ("--r-range", args.r_range),
-        ("--pbar-values", args.pbar_values),
-        ("--r-values", args.r_values),
+        ("--pbar-kw-per-server-range", args.pbar_kw_per_server_range),
+        ("--r-kw-per-server-range", args.r_kw_per_server_range),
+        ("--pbar-kw-per-server-values", args.pbar_kw_per_server_values),
+        ("--r-kw-per-server-values", args.r_kw_per_server_values),
         ("--utilization-values", args.utilization_values),
         ("--weight-vectors", args.weight_vectors),
         ("--weight-file", args.weight_file),
@@ -124,17 +127,22 @@ def preflight_validate(args, workload_configs: list[str], experiment_configs: li
         if normalized not in ["true", "false", "t", "f", "1", "0", "yes", "no", "y", "n"]:
             raise ValueError("--node-count-control must be true or false.")
 
-    if args.pbar_range is not None and args.pbar_values is not None:
-        raise ValueError("Use either --pbar-range or --pbar-values, not both.")
+    if args.pbar_kw_per_server_range is not None and args.pbar_kw_per_server_values is not None:
+        raise ValueError("Use either --pbar-kw-per-server-range or --pbar-kw-per-server-values, not both.")
 
-    if args.r_range is not None and args.r_values is not None:
-        raise ValueError("Use either --r-range or --r-values, not both.")
+    if args.r_kw_per_server_range is not None and args.r_kw_per_server_values is not None:
+        raise ValueError("Use either --r-kw-per-server-range or --r-kw-per-server-values, not both.")
 
     if args.weight_vectors is not None and args.weight_file is not None:
         raise ValueError("Use either --weight-vectors or --weight-file, not both.")
 
 
-def validate_grid_search_output(output_dir_label: str) -> tuple[str, int]:
+def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, int]:
+    """
+    Validate that the new audited generator produced both:
+    - grid_search_results.csv: raw simulator/data collection outputs only
+    - grid_search_diagnostics.csv: residuals, percentiles, and diagnostic activation terms
+    """
     optimization_dir = PEACSIM_DIR / "output" / "optimization"
     matches = sorted(
         optimization_dir.glob(f"{output_dir_label}_*/grid_search_results.csv"),
@@ -147,43 +155,77 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int]:
             f"under {optimization_dir}"
         )
 
-    csv_path = matches[-1]
+    results_csv_path = matches[-1]
+    diagnostics_csv_path = results_csv_path.parent / "grid_search_diagnostics.csv"
 
-    with csv_path.open("r", newline="") as f:
+    required_results_columns = [
+        "Iteration",
+        "Weight_Sample_ID",
+        "Policy_Name",
+        "Node_Count_Control",
+        "Pbar_kw_per_server",
+        "R_kw_per_server",
+        "P_actual_watts",
+        "R_actual_watts",
+        "Pbar_ratio",
+        "R_ratio",
+        "Pbar_denominator_watts",
+        "R_denominator_watts",
+        "server_count",
+        "utilization",
+        "workload_mix_size",
+        "workload_mix",
+        "Simulator_RSR_Total_Cost",
+        "Simulator_Power_Cost",
+        "Simulator_Tracking_Cost",
+        "QoS_Delay_Probability_Sum",
+        "QoS_Violation_Ratio",
+        "QoS_Delay_Probabilities",
+    ]
+
+    with results_csv_path.open("r", newline="") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames or []
-
-        required_columns = [
-            "Iteration",
-            "Weight_Sample_ID",
-            "Policy_Name",
-            "Node_Count_Control",
-            "Pbar_ratio",
-            "R_ratio",
-            "P_actual_watts",
-            "R_actual_watts",
-            "server_count",
-            "utilization",
-            "workload_mix_size",
-            "workload_mix",
-            "Raw_Total_Cost",
-            "Power_Cost",
-            "Raw_Tracking_Cost",
-            "Raw_QoS_Cost",
-            "Simulator_Tracking_Cost",
-            "Tracking_Error_90th",
-        ]
-
-        missing_columns = [col for col in required_columns if col not in headers]
+        missing_columns = [col for col in required_results_columns if col not in headers]
         if missing_columns:
-            raise ValueError(f"{csv_path} is missing required columns: {missing_columns}")
+            raise ValueError(f"{results_csv_path} is missing required columns: {missing_columns}")
+        results_row_count = sum(1 for _ in reader)
 
-        row_count = sum(1 for _ in reader)
+    if results_row_count <= 0:
+        raise ValueError(f"{results_csv_path} has no data rows.")
 
-    if row_count <= 0:
-        raise ValueError(f"{csv_path} has no data rows.")
+    if not diagnostics_csv_path.exists():
+        raise FileNotFoundError(f"Expected diagnostics CSV not found: {diagnostics_csv_path}")
 
-    return str(csv_path), row_count
+    required_diagnostic_columns = [
+        "Iteration",
+        "Weight_Sample_ID",
+        "Pbar_kw_per_server",
+        "R_kw_per_server",
+        "Normalized_Tracking_Error_90th",
+        "Normalized_Tracking_Error_90th_Residual",
+        "QoS_Delay_Probability_Residual_Sum",
+        "QoS_Delay_Probability_Residuals",
+        "Diagnostic_PaperLike_SoftPlus_Tracking_Cost",
+        "Diagnostic_FlexDC_SoftPlus_QoS_Cost",
+        "Diagnostic_PaperLike_Total_Cost",
+    ]
+
+    with diagnostics_csv_path.open("r", newline="") as f:
+        reader = csv.DictReader(f)
+        headers = reader.fieldnames or []
+        missing_columns = [col for col in required_diagnostic_columns if col not in headers]
+        if missing_columns:
+            raise ValueError(f"{diagnostics_csv_path} is missing required columns: {missing_columns}")
+        diagnostics_row_count = sum(1 for _ in reader)
+
+    if diagnostics_row_count != results_row_count:
+        raise ValueError(
+            f"Row count mismatch: {results_csv_path} has {results_row_count} rows, "
+            f"but {diagnostics_csv_path} has {diagnostics_row_count} rows."
+        )
+
+    return str(results_csv_path), results_row_count, str(diagnostics_csv_path), diagnostics_row_count
 
 
 def build_env() -> dict:
@@ -199,16 +241,7 @@ def build_env() -> dict:
     return env
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Launch or run parallel FlexDC dataset workers.")
-
-    parser.add_argument(
-        "--worker-experiment",
-        type=str,
-        default=None,
-        help="Internal worker mode: run all workloads for one experiment config."
-    )
-
+def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--gradient-config", type=str, default=DEFAULT_GRADIENT_CONFIG,
                         help=f"Gradient config path. Default: {DEFAULT_GRADIENT_CONFIG}")
 
@@ -220,31 +253,32 @@ def build_parser() -> argparse.ArgumentParser:
                         help=f"Runtime policy. Default: {DEFAULT_POLICY_NAME}")
 
     parser.add_argument("--workload-configs", type=str, default=None,
-                        help="Comma-separated workload config paths. Default: W8-W13.")
+                        help="Comma-separated workload config paths. Default: W9, W10, W-train-2app, W-inference-2app.")
 
     parser.add_argument("--experiment-configs", type=str, default=None,
-                        help="Comma-separated experiment config paths. Default: 64, 100, 500, 1000 server configs.")
+                        help="Comma-separated experiment config paths. Default: exp_servers_64 only.")
 
-    parser.add_argument("--output-prefix", type=str, default="dataset",
-                        help="Prefix for output folder labels. Default: dataset")
+    parser.add_argument("--output-prefix", type=str, default="rangefind64",
+                        help="Prefix for output folder labels. Default: rangefind64")
 
+    # Optional generator arguments. P/R are physical kW/server values.
     parser.add_argument("--node-count-control", type=str, default=None,
                         help="Optional override: true or false.")
 
-    parser.add_argument("--pbar-range", type=str, default=None,
-                        help="Optional compact Pbar range: 'min,max,num_points'.")
+    parser.add_argument("--pbar-kw-per-server-range", type=str, default=None,
+                        help="Optional physical Pbar range in kW/server: 'min,max,num_points'.")
 
-    parser.add_argument("--r-range", type=str, default=None,
-                        help="Optional compact R range: 'min,max,num_points'.")
+    parser.add_argument("--r-kw-per-server-range", type=str, default=None,
+                        help="Optional physical R range in kW/server: 'min,max,num_points'.")
 
-    parser.add_argument("--pbar-values", type=str, default=None,
-                        help="Optional exact comma-separated Pbar values.")
+    parser.add_argument("--pbar-kw-per-server-values", type=str, default=None,
+                        help="Optional exact comma-separated physical Pbar values in kW/server.")
 
-    parser.add_argument("--r-values", type=str, default=None,
-                        help="Optional exact comma-separated R values.")
+    parser.add_argument("--r-kw-per-server-values", type=str, default=None,
+                        help="Optional exact comma-separated physical R values in kW/server.")
 
     parser.add_argument("--utilization-values", type=str, default=None,
-                        help="Optional comma-separated utilization values.")
+                        help="Optional comma-separated utilization values. Omit for generator default full set.")
 
     parser.add_argument("--weight-vectors", type=str, default=None,
                         help="Optional inline custom workload weight vectors.")
@@ -258,13 +292,34 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--probabilities", type=str, default=None,
                         help="FlexResource probabilities, one value per job type.")
 
+
+def build_generator_command(args, experiment_config: str, workload_config: str, output_dir: str) -> list[str]:
+    return [
+        sys.executable,
+        "-u",
+        DATA_GENERATOR,
+        "--gradient-config", args.gradient_config,
+        "--experiment-config", experiment_config,
+        "--cluster-config", args.cluster_config,
+        "--policy-name", args.policy_name,
+        "--job-config", workload_config,
+        "--output-dir", output_dir,
+    ] + build_optional_generator_args(args)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Launch or run parallel FlexDC dataset workers by experiment/server config.")
+    parser.add_argument(
+        "--worker-experiment",
+        type=str,
+        default=None,
+        help="Internal worker mode: run all workloads for one experiment config."
+    )
+    add_common_arguments(parser)
     return parser
 
 
 def get_common_launch_args(args) -> list[str]:
-    """
-    Args that should be forwarded from launcher mode into each worker process.
-    """
     common_args = [
         "--gradient-config", args.gradient_config,
         "--cluster-config", args.cluster_config,
@@ -275,19 +330,11 @@ def get_common_launch_args(args) -> list[str]:
     if args.workload_configs is not None:
         common_args.extend(["--workload-configs", args.workload_configs])
 
-    # Do NOT forward --experiment-configs into each worker.
-    # Each worker receives exactly one --worker-experiment instead.
-
     common_args.extend(build_optional_generator_args(args))
-
     return common_args
 
 
 def run_worker(args) -> int:
-    """
-    Run all workload configs sequentially for one experiment/server-count config.
-    Each visible worker terminal calls this with --worker-experiment.
-    """
     workload_configs = parse_csv_list(args.workload_configs, DEFAULT_WORKLOAD_CONFIGS)
     experiment_config = args.worker_experiment
     optional_generator_args = build_optional_generator_args(args)
@@ -302,19 +349,7 @@ def run_worker(args) -> int:
     for workload_config in workload_configs:
         workload_name = safe_name(workload_config)
         output_dir = f"{args.output_prefix}_{args.policy_name}_{workload_name}_{exp_name}"
-
-        cmd = [
-            sys.executable,
-            "-u",
-            DATA_GENERATOR,
-            "--gradient-config", args.gradient_config,
-            "--experiment-config", experiment_config,
-            "--cluster-config", args.cluster_config,
-            "--policy-name", args.policy_name,
-            "--job-config", workload_config,
-            "--output-dir", output_dir,
-        ] + optional_generator_args
-
+        cmd = build_generator_command(args, experiment_config, workload_config, output_dir)
         runs.append({
             "experiment_config": experiment_config,
             "workload_config": workload_config,
@@ -350,6 +385,8 @@ def run_worker(args) -> int:
                 "output_dir",
                 "grid_search_results",
                 "grid_search_rows",
+                "grid_search_diagnostics",
+                "grid_search_diagnostic_rows",
                 "status",
                 "elapsed_minutes",
                 "command",
@@ -369,6 +406,8 @@ def run_worker(args) -> int:
             status = "running"
             grid_search_results_path = ""
             grid_search_rows = ""
+            diagnostics_path = ""
+            diagnostics_rows = ""
             run_start = time.time()
 
             try:
@@ -379,15 +418,17 @@ def run_worker(args) -> int:
                     env=env,
                 )
 
-                grid_search_results_path, grid_search_rows = validate_grid_search_output(
+                grid_search_results_path, grid_search_rows, diagnostics_path, diagnostics_rows = validate_grid_search_output(
                     run["output_dir"]
                 )
 
                 status = "completed"
                 completed_runs += 1
 
-                print(f"Validated output CSV: {grid_search_results_path}")
-                print(f"Validated output rows: {grid_search_rows}")
+                print(f"Validated raw output CSV: {grid_search_results_path}")
+                print(f"Validated raw output rows: {grid_search_rows}")
+                print(f"Validated diagnostics CSV: {diagnostics_path}")
+                print(f"Validated diagnostics rows: {diagnostics_rows}")
 
             except subprocess.CalledProcessError as e:
                 status = f"failed_returncode_{e.returncode}"
@@ -422,6 +463,8 @@ def run_worker(args) -> int:
                     "output_dir": run["output_dir"],
                     "grid_search_results": grid_search_results_path,
                     "grid_search_rows": grid_search_rows,
+                    "grid_search_diagnostics": diagnostics_path,
+                    "grid_search_diagnostic_rows": diagnostics_rows,
                     "status": status,
                     "elapsed_minutes": f"{elapsed / 60:.2f}",
                     "command": " ".join(run["command"]),
@@ -505,8 +548,8 @@ def launch_workers(args) -> None:
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     launch_manifest_path = REPO_ROOT / f"dataset_parallel_launch_manifest_{args.policy_name}_{timestamp}.csv"
 
-    print(f"Launching {len(experiment_configs)} visible Command Prompt worker windows...")
-    print("Each worker will run all workload configs sequentially for one experiment/server-count config.")
+    print(f"Launching {len(experiment_configs)} visible Command Prompt worker window(s)...")
+    print("Each worker runs all workload configs sequentially for one experiment/server-count config.")
     print()
     print(f"Policy: {args.policy_name}")
     print(f"Workload configs: {workload_configs}")
@@ -515,12 +558,6 @@ def launch_workers(args) -> None:
     print(f"Working directory for workers: {PEACSIM_DIR}")
     print(f"PYTHONPATH includes: {SRC_DIR}")
     print(f"Launch manifest: {launch_manifest_path}")
-    print()
-    print("Data quality note:")
-    print("- This does not change simulator inputs or labels.")
-    print("- It only runs independent experiment-config batches at the same time.")
-    print("- Each worker writes separate timestamped output folders and its own worker manifest.")
-    print("- Each worker validates grid_search_results.csv after each workload run.")
     print()
 
     if os.name != "nt":
