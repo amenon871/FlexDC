@@ -1,0 +1,53 @@
+TRACKING / R EFFECT VALIDATION REPORT
+====================================
+
+Rows: 4176
+Workloads: ['W10', 'W9', 'W_inference_2app', 'W_train_2app']
+Pbar values: [0.2, 0.3066666666666666, 0.4133333333333333, 0.52, 0.6266666666666666, 0.7333333333333332, 0.84]
+R values: [0.01, 0.1483333333333333, 0.2866666666666667, 0.425, 0.5633333333333334, 0.7016666666666667]
+
+Correlation matrix:
+                                Pbar_kw_per_server  R_kw_per_server  Simulator_Tracking_Cost  QoS_Delay_Probability_Sum  QoS_Violation_Ratio  Normalized_Tracking_Error_90th
+Pbar_kw_per_server                        1.000000         0.436760                 0.710611                  -0.704537            -0.652126                        0.236779
+R_kw_per_server                           0.436760         1.000000                 0.343583                  -0.212817            -0.155650                       -0.398711
+Simulator_Tracking_Cost                   0.710611         0.343583                 1.000000                  -0.499410            -0.640151                        0.331299
+QoS_Delay_Probability_Sum                -0.704537        -0.212817                -0.499410                   1.000000             0.693967                       -0.234085
+QoS_Violation_Ratio                      -0.652126        -0.155650                -0.640151                   0.693967             1.000000                       -0.297932
+Normalized_Tracking_Error_90th            0.236779        -0.398711                 0.331299                  -0.234085            -0.297932                        1.000000
+
+Important interpretation:
+- Do not validate the R effect using an all-Pbar aggregate heatmap alone; Pbar dominates the tracking-cost scale.
+- Use controlled plots: fixed workload, fixed Pbar, x-axis=R.
+- Simulator_Tracking_Cost is the simulator monetary tracking term, approximately proportional to mean absolute power tracking error.
+- Normalized_Tracking_Error_90th is divided by R and can decrease as R increases; it is a constraint diagnostic, not the same as monetary tracking cost.
+
+Tracking-cost sensitivity over R by workload/Pbar:
+Source_Workload_Name  Pbar_kw_per_server  tracking_min_over_R  tracking_max_over_R  tracking_range_over_R  tracking_first_R  tracking_last_R
+                 W10            0.200000             0.022062             0.052413               0.030352          0.022062         0.052413
+                 W10            0.306667             0.028051             0.243456               0.215406          0.028051         0.243456
+                 W10            0.413333             0.537173             0.593657               0.056484          0.537173         0.593657
+                 W10            0.520000             1.218325             1.284799               0.066474          1.218325         1.230684
+                 W10            0.626667             1.912032             1.952549               0.040518          1.923185         1.952549
+                 W10            0.733333             2.590198             2.635448               0.045250          2.608331         2.635448
+                 W10            0.840000             3.253232             3.319275               0.066043          3.276022         3.303628
+                  W9            0.200000             0.013718             0.060422               0.046704          0.013718         0.060422
+                  W9            0.306667             0.010074             0.187365               0.177292          0.010074         0.187365
+                  W9            0.413333             0.359674             0.465042               0.105367          0.359674         0.465042
+                  W9            0.520000             1.060883             1.124494               0.063611          1.060883         1.124494
+                  W9            0.626667             1.738417             1.800492               0.062074          1.748996         1.775991
+                  W9            0.733333             2.434767             2.476274               0.041507          2.447515         2.476274
+                  W9            0.840000             3.097730             3.132049               0.034319          3.115595         3.132049
+    W_inference_2app            0.200000             0.002081             0.034136               0.032056          0.002081         0.034136
+    W_inference_2app            0.306667             0.001947             0.049552               0.047605          0.001947         0.049552
+    W_inference_2app            0.413333             0.002332             0.031626               0.029294          0.002332         0.031626
+    W_inference_2app            0.520000             0.002501             0.106959               0.104459          0.002501         0.106959
+    W_inference_2app            0.626667             0.057634             0.431319               0.373686          0.057634         0.431319
+    W_inference_2app            0.733333             0.583167             0.928083               0.344916          0.583167         0.928083
+    W_inference_2app            0.840000             1.268311             1.365085               0.096774          1.270550         1.365085
+        W_train_2app            0.200000             0.001216             0.034224               0.033008          0.001216         0.034224
+        W_train_2app            0.306667             0.001165             0.051563               0.050398          0.001165         0.051563
+        W_train_2app            0.413333             0.001302             0.029292               0.027989          0.001302         0.029292
+        W_train_2app            0.520000             0.003547             0.083695               0.080148          0.003547         0.083695
+        W_train_2app            0.626667             0.010868             0.360355               0.349486          0.010868         0.360355
+        W_train_2app            0.733333             0.520674             0.824070               0.303396          0.520674         0.824070
+        W_train_2app            0.840000             1.191757             1.290358               0.098601          1.191757         1.290358
