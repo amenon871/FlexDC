@@ -28,6 +28,17 @@ DEFAULT_UTILIZATION_VALUES = [0.5, 0.75, 0.8, 0.85, 0.9, 0.95]
 DEFAULT_PBAR_KW_PER_SERVER_RANGE = (0.2, 0.6, 10)
 DEFAULT_R_KW_PER_SERVER_RANGE = (0.0, 0.12, 10)
 
+# Workload-specific targeted P/R sweep defaults.
+# In auto mode, Pbar is derived from workload Pmin/Pmax and each Pbar gets its own R linspace.
+DEFAULT_AUTO_WORKLOAD_PR_SWEEP = True
+DEFAULT_PBAR_LOWER_FACTOR = 0.9
+DEFAULT_PBAR_UPPER_FACTOR = 1.1
+DEFAULT_PR_UPPER_FACTOR = 1.3
+DEFAULT_PBAR_POINTS = 10
+DEFAULT_R_POINTS_PER_PBAR = 10
+DEFAULT_R_LOWER_KW_PER_SERVER = 0.01
+PR_SWEEP_EPS = 1e-9
+
 # Paper tracking constraint gamma. This is only used for diagnostic residual columns,
 # not for the simulator-returned tracking cost.
 TRACKING_ERROR_CONSTRAINT = 0.3
@@ -288,38 +299,266 @@ def validate_weight_vectors(weight_combinations, job_type_count, tolerance=1e-6)
     return validated
 
 
-def build_sweep_values(args, job_type_count):
+def to_float(value, argument_name):
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{argument_name} must be a float. Got: {value}") from exc
+
+
+def to_positive_int(value, argument_name):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{argument_name} must be an integer. Got: {value}") from exc
+
+    if parsed <= 0:
+        raise ValueError(f"{argument_name} must be positive. Got: {parsed}")
+
+    return parsed
+
+
+def round_or_blank(value, digits=6):
+    if value is None or value == "":
+        return ""
+    return round(float(value), digits)
+
+
+def calculate_workload_pr_bounds(job_config, pbar_lower_factor, pbar_upper_factor, pr_upper_factor):
+    """
+    Calculate workload-specific physical kW/server P/R bounds from the loaded workload config.
+
+    Pmin and Pmax come from the current workload's per-job-type power fields.
+    This means each workload config automatically gets its own Pbar range and R envelope.
+    """
+    min_job_powers = [float(x) for x in job_config.all_min_job_power.values()]
+    max_job_powers = [float(x) for x in job_config.all_max_job_power.values()]
+
+    if not min_job_powers:
+        raise ValueError("job_config.all_min_job_power is empty; cannot derive Pmin.")
+
+    if not max_job_powers:
+        raise ValueError("job_config.all_max_job_power is empty; cannot derive Pmax.")
+
+    pmin_kw_per_server = min(min_job_powers) / 1000.0
+    pmax_kw_per_server = max(max_job_powers) / 1000.0
+
+    pbar_lower_bound = pbar_lower_factor * pmin_kw_per_server
+    pbar_upper_bound = pbar_upper_factor * pmax_kw_per_server
+    pr_upper_bound = pr_upper_factor * pmax_kw_per_server
+
+    if pbar_lower_bound <= 0:
+        raise ValueError(f"Invalid Pbar lower bound: {pbar_lower_bound}")
+
+    if pbar_upper_bound < pbar_lower_bound:
+        raise ValueError(
+            f"Invalid Pbar range: lower={pbar_lower_bound}, upper={pbar_upper_bound}"
+        )
+
+    if pr_upper_bound <= 0:
+        raise ValueError(f"Invalid Pbar+R upper bound: {pr_upper_bound}")
+
+    return {
+        "Pmin_kw_per_server": float(pmin_kw_per_server),
+        "Pmax_kw_per_server": float(pmax_kw_per_server),
+        "Pbar_lower_bound_kw_per_server": float(pbar_lower_bound),
+        "Pbar_upper_bound_kw_per_server": float(pbar_upper_bound),
+        "PR_upper_bound_kw_per_server": float(pr_upper_bound),
+        "Pbar_lower_factor": float(pbar_lower_factor),
+        "Pbar_upper_factor": float(pbar_upper_factor),
+        "PR_upper_factor": float(pr_upper_factor),
+    }
+
+
+def build_auto_workload_pr_pairs(job_config, pbar_points, r_points_per_pbar, r_lower_kw_per_server,
+                                 pbar_lower_factor, pbar_upper_factor, pr_upper_factor):
+    """
+    Build targeted physical P/R pairs using the same logic as the spreadsheet helper script:
+
+        Pbar values = linspace(0.9 * Pmin, 1.1 * Pmax, pbar_points)
+        R max for each Pbar = min(Pbar, 1.3 * Pmax - Pbar)
+        R values for each Pbar = linspace(R_lower, R max for this Pbar, r_points_per_pbar)
+
+    The output is a flat list of valid (Pbar_kw_per_server, R_kw_per_server) pairs.
+    """
+    bounds = calculate_workload_pr_bounds(
+        job_config=job_config,
+        pbar_lower_factor=pbar_lower_factor,
+        pbar_upper_factor=pbar_upper_factor,
+        pr_upper_factor=pr_upper_factor,
+    )
+
+    pbar_values = np.linspace(
+        bounds["Pbar_lower_bound_kw_per_server"],
+        bounds["Pbar_upper_bound_kw_per_server"],
+        pbar_points,
+    )
+
+    pr_pairs = []
+    allowed_values = {}
+    r_max_by_pbar = {}
+
+    for pbar in pbar_values:
+        pbar = float(pbar)
+        max_allowed_r = min(
+            pbar,
+            bounds["PR_upper_bound_kw_per_server"] - pbar,
+        )
+
+        pbar_key = round(float(pbar), 4)
+        r_max_by_pbar[pbar_key] = round(float(max_allowed_r), 6)
+
+        if max_allowed_r < r_lower_kw_per_server - PR_SWEEP_EPS:
+            allowed_values[pbar_key] = []
+            continue
+
+        r_values_for_pbar = np.linspace(
+            r_lower_kw_per_server,
+            max_allowed_r,
+            r_points_per_pbar,
+        )
+
+        allowed_values[pbar_key] = [round(float(r), 4) for r in r_values_for_pbar]
+
+        for r in r_values_for_pbar:
+            r = float(r)
+
+            # Defensive guard against numerical drift.
+            if r > pbar + PR_SWEEP_EPS:
+                raise ValueError(f"Generated invalid R>Pbar pair: Pbar={pbar}, R={r}")
+
+            if pbar + r > bounds["PR_upper_bound_kw_per_server"] + PR_SWEEP_EPS:
+                raise ValueError(
+                    f"Generated invalid Pbar+R pair: Pbar={pbar}, R={r}, "
+                    f"PR upper={bounds['PR_upper_bound_kw_per_server']}"
+                )
+
+            pr_pairs.append((pbar, r))
+
+    metadata = {
+        "PR_Sweep_Mode": "auto_workload_pr",
+        **bounds,
+        "R_lower_bound_kw_per_server": float(r_lower_kw_per_server),
+        "Pbar_points": int(pbar_points),
+        "R_points_per_Pbar": int(r_points_per_pbar),
+        "Pbar_values": [float(x) for x in pbar_values],
+        "Allowed_R_values_by_Pbar": allowed_values,
+        "R_max_by_Pbar": r_max_by_pbar,
+    }
+
+    return pr_pairs, metadata
+
+
+def build_manual_pr_pairs(pbar_kw_per_server_values, r_kw_per_server_values, job_config,
+                          pbar_lower_factor, pbar_upper_factor, pr_upper_factor):
+    """
+    Preserve the old manual/global P x R behavior when auto-workload sweep is disabled.
+    Manual mode still records workload-specific bounds in diagnostics for traceability.
+    """
+    bounds = calculate_workload_pr_bounds(
+        job_config=job_config,
+        pbar_lower_factor=pbar_lower_factor,
+        pbar_upper_factor=pbar_upper_factor,
+        pr_upper_factor=pr_upper_factor,
+    )
+
+    pr_pairs = []
+    for pbar_kw_per_server in pbar_kw_per_server_values:
+        for r_kw_per_server in r_kw_per_server_values:
+            if pbar_kw_per_server <= r_kw_per_server:
+                continue
+            pr_pairs.append((float(pbar_kw_per_server), float(r_kw_per_server)))
+
+    metadata = {
+        "PR_Sweep_Mode": "manual_global_pr",
+        **bounds,
+        "R_lower_bound_kw_per_server": min(r_kw_per_server_values) if r_kw_per_server_values else "",
+        "Pbar_points": len(pbar_kw_per_server_values),
+        "R_points_per_Pbar": "manual_global_r_values",
+        "Pbar_values": [float(x) for x in pbar_kw_per_server_values],
+        "Allowed_R_values_by_Pbar": {
+            round(float(p), 4): [round(float(r), 4) for r in r_kw_per_server_values if float(p) > float(r)]
+            for p in pbar_kw_per_server_values
+        },
+        "R_max_by_Pbar": {},
+    }
+
+    return pr_pairs, metadata
+
+
+def print_pr_sweep_summary(pr_sweep_metadata, utilization_values, weight_combinations):
+    """
+    Print a human-checkable P/R table before simulator runs start.
+    This mirrors the standalone helper script used to fill the spreadsheet.
+    """
+    print("\nWorkload-specific P/R sweep summary:")
+    print(f"  mode = {pr_sweep_metadata.get('PR_Sweep_Mode')}")
+    print(f"  Pmin_kw_per_server = {pr_sweep_metadata.get('Pmin_kw_per_server'):.6f}")
+    print(f"  Pmax_kw_per_server = {pr_sweep_metadata.get('Pmax_kw_per_server'):.6f}")
+    print(
+        f"  Pbar range = "
+        f"[{pr_sweep_metadata.get('Pbar_lower_bound_kw_per_server'):.6f}, "
+        f"{pr_sweep_metadata.get('Pbar_upper_bound_kw_per_server'):.6f}] kW/server"
+    )
+    print(f"  Pbar + R upper bound = {pr_sweep_metadata.get('PR_upper_bound_kw_per_server'):.6f} kW/server")
+    print(f"  R lower bound = {pr_sweep_metadata.get('R_lower_bound_kw_per_server')}")
+    print(f"  Pbar points = {pr_sweep_metadata.get('Pbar_points')}")
+    print(f"  R points per Pbar = {pr_sweep_metadata.get('R_points_per_Pbar')}")
+
+    pbar_values = pr_sweep_metadata.get("Pbar_values", [])
+    print(f"\nPbar values generated from workload bounds:\n{np.array(pbar_values)}\n")
+
+    print("Allowed values of Pbar and R:")
+    allowed_values = pr_sweep_metadata.get("Allowed_R_values_by_Pbar", {})
+    for pbar, r_list in allowed_values.items():
+        print(f"Pbar = {pbar}: R = {r_list}")
+
+    print("\nAllowed values with Pbar+R and Pbar-R:")
+    for pbar, r_list in allowed_values.items():
+        p_plus_r_list = [round(float(pbar + r), 4) for r in r_list]
+        p_minus_r_list = [round(float(pbar - r), 4) for r in r_list]
+        print(
+            f"Pbar = {pbar}: "
+            f"R = {r_list}, "
+            f"Pbar+R = {p_plus_r_list}, "
+            f"Pbar-R = {p_minus_r_list}"
+        )
+
+    valid_pair_count = sum(len(r_list) for r_list in allowed_values.values())
+    data_rows_per_workload = valid_pair_count * len(utilization_values) * len(weight_combinations)
+    print(
+        f"\nData rows for this workload = {valid_pair_count} valid P/R pairs "
+        f"* {len(utilization_values)} utilization values "
+        f"* {len(weight_combinations)} weight combinations = {data_rows_per_workload} rows"
+    )
+
+def build_sweep_values(args, job_config):
     utilization_values = parse_float_list(args.utilization_values, "--utilization-values")
     if utilization_values is None:
         utilization_values = DEFAULT_UTILIZATION_VALUES
+
+    auto_workload_pr_sweep = parse_bool_or_none(
+        args.auto_workload_pr_sweep,
+        "--auto-workload-pr-sweep"
+    )
+    if auto_workload_pr_sweep is None:
+        auto_workload_pr_sweep = DEFAULT_AUTO_WORKLOAD_PR_SWEEP
+
+    pbar_lower_factor = to_float(args.pbar_lower_factor, "--pbar-lower-factor")
+    pbar_upper_factor = to_float(args.pbar_upper_factor, "--pbar-upper-factor")
+    pr_upper_factor = to_float(args.pr_upper_factor, "--pr-upper-factor")
+    pbar_points = to_positive_int(args.pbar_points, "--pbar-points")
+    r_points_per_pbar = to_positive_int(args.r_points_per_pbar, "--r-points-per-pbar")
+    r_lower_kw_per_server = to_float(args.r_lower_kw_per_server, "--r-lower-kw-per-server")
+
+    if r_lower_kw_per_server < 0:
+        raise ValueError(f"--r-lower-kw-per-server must be non-negative. Got: {r_lower_kw_per_server}")
 
     if args.pbar_kw_per_server_values is not None and args.pbar_kw_per_server_range is not None:
         raise ValueError("Use either --pbar-kw-per-server-values or --pbar-kw-per-server-range, not both.")
 
     if args.r_kw_per_server_values is not None and args.r_kw_per_server_range is not None:
         raise ValueError("Use either --r-kw-per-server-values or --r-kw-per-server-range, not both.")
-
-    pbar_kw_per_server_values = parse_float_list(
-        args.pbar_kw_per_server_values,
-        "--pbar-kw-per-server-values"
-    )
-    if pbar_kw_per_server_values is None:
-        pbar_kw_per_server_values = parse_range_spec(
-            args.pbar_kw_per_server_range,
-            DEFAULT_PBAR_KW_PER_SERVER_RANGE,
-            "--pbar-kw-per-server-range"
-        )
-
-    r_kw_per_server_values = parse_float_list(
-        args.r_kw_per_server_values,
-        "--r-kw-per-server-values"
-    )
-    if r_kw_per_server_values is None:
-        r_kw_per_server_values = parse_range_spec(
-            args.r_kw_per_server_range,
-            DEFAULT_R_KW_PER_SERVER_RANGE,
-            "--r-kw-per-server-range"
-        )
 
     inline_weight_vectors = parse_weight_vectors_from_string(args.weight_vectors)
     file_weight_vectors = load_weight_vectors_from_file(args.weight_file)
@@ -335,23 +574,82 @@ def build_sweep_values(args, job_type_count):
 
     else:
         weight_combinations = generate_random_softmax_weights(
-            job_type_count=job_type_count,
+            job_type_count=job_config.job_type_count,
             num_weight_samples=DEFAULT_NUM_WEIGHT_SAMPLES,
             seed=DEFAULT_WEIGHT_SEED,
             temperature=DEFAULT_WEIGHT_TEMPERATURE
         )
 
         if DEFAULT_INCLUDE_EQUAL_WEIGHTS:
-            equal_weights = [1 / job_type_count] * job_type_count
+            equal_weights = [1 / job_config.job_type_count] * job_config.job_type_count
             weight_combinations.append(equal_weights)
 
-    weight_combinations = validate_weight_vectors(weight_combinations, job_type_count)
+    weight_combinations = validate_weight_vectors(weight_combinations, job_config.job_type_count)
 
-    pbar_kw_per_server_values = [float(x) for x in pbar_kw_per_server_values]
-    r_kw_per_server_values = [float(x) for x in r_kw_per_server_values]
+    if auto_workload_pr_sweep:
+        manual_pr_args = [
+            args.pbar_kw_per_server_values,
+            args.pbar_kw_per_server_range,
+            args.r_kw_per_server_values,
+            args.r_kw_per_server_range,
+        ]
+        if any(value is not None for value in manual_pr_args):
+            raise ValueError(
+                "Auto workload P/R sweep is enabled, so do not pass manual --pbar-* or --r-* sweep flags. "
+                "Use --auto-workload-pr-sweep false if you intentionally want the old manual/global P x R behavior."
+            )
+
+        pr_pairs, pr_sweep_metadata = build_auto_workload_pr_pairs(
+            job_config=job_config,
+            pbar_points=pbar_points,
+            r_points_per_pbar=r_points_per_pbar,
+            r_lower_kw_per_server=r_lower_kw_per_server,
+            pbar_lower_factor=pbar_lower_factor,
+            pbar_upper_factor=pbar_upper_factor,
+            pr_upper_factor=pr_upper_factor,
+        )
+
+    else:
+        pbar_kw_per_server_values = parse_float_list(
+            args.pbar_kw_per_server_values,
+            "--pbar-kw-per-server-values"
+        )
+        if pbar_kw_per_server_values is None:
+            pbar_kw_per_server_values = parse_range_spec(
+                args.pbar_kw_per_server_range,
+                DEFAULT_PBAR_KW_PER_SERVER_RANGE,
+                "--pbar-kw-per-server-range"
+            )
+
+        r_kw_per_server_values = parse_float_list(
+            args.r_kw_per_server_values,
+            "--r-kw-per-server-values"
+        )
+        if r_kw_per_server_values is None:
+            r_kw_per_server_values = parse_range_spec(
+                args.r_kw_per_server_range,
+                DEFAULT_R_KW_PER_SERVER_RANGE,
+                "--r-kw-per-server-range"
+            )
+
+        pbar_kw_per_server_values = [float(x) for x in pbar_kw_per_server_values]
+        r_kw_per_server_values = [float(x) for x in r_kw_per_server_values]
+
+        pr_pairs, pr_sweep_metadata = build_manual_pr_pairs(
+            pbar_kw_per_server_values=pbar_kw_per_server_values,
+            r_kw_per_server_values=r_kw_per_server_values,
+            job_config=job_config,
+            pbar_lower_factor=pbar_lower_factor,
+            pbar_upper_factor=pbar_upper_factor,
+            pr_upper_factor=pr_upper_factor,
+        )
+
     utilization_values = [float(x) for x in utilization_values]
 
-    return utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations
+    if not pr_pairs:
+        raise ValueError("No valid P/R pairs were generated. Check workload Pmin/Pmax and R lower bound.")
+
+    return utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata
 
 
 def build_policy_parameters(args, job_type_count):
@@ -417,17 +715,9 @@ def build_policy_parameters(args, job_type_count):
     return policy_parameters
 
 
-def count_valid_parameter_combinations(utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations):
-    total = 0
-    for _ in utilization_values:
-        for pbar_kw_per_server in pbar_kw_per_server_values:
-            for r_kw_per_server in r_kw_per_server_values:
-                # RSR bid sanity constraint in physical units.
-                # With the CONDOR-style defaults, Pbar is always greater than R.
-                if pbar_kw_per_server <= r_kw_per_server:
-                    continue
-                total += len(weight_combinations)
-    return total
+def count_valid_parameter_combinations(utilization_values, pr_pairs, weight_combinations):
+    return len(utilization_values) * len(pr_pairs) * len(weight_combinations)
+
 
 def set_experiment_utilization(experiment_config, utilization):
     if hasattr(experiment_config, "_utilization"):
@@ -588,7 +878,8 @@ def calculate_qos_raw_metrics(sim_hour, J, job_table, qos_constraints, min_execu
 
 
 def objective_function(params, cost_function_config, policy_config, experiment_config, cluster_config, job_config,
-                       output_dir, iteration_idx=None, total_iterations=None, weight_sample_id=None):
+                       output_dir, iteration_idx=None, total_iterations=None, weight_sample_id=None,
+                       pr_sweep_metadata=None):
     pbar_kw_per_server, r_kw_per_server, *weights = params
     if iteration_idx is not None and total_iterations is not None:
         print(f"\n========== Iteration {iteration_idx}/{total_iterations} ==========")
@@ -691,11 +982,17 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
 
     workload_mix_json = build_workload_mix_json(job_config, weights)
 
+    pr_sweep_metadata = pr_sweep_metadata or {}
+    workload_name = pr_sweep_metadata.get("Workload_Name", "")
+    workload_config = pr_sweep_metadata.get("Workload_Config", "")
+
     raw_results_file = os.path.join(output_dir, 'grid_search_results.csv')
     raw_results = [
         iteration_idx,
         weight_sample_id,
         policy_config.runtime_policy_name,
+        workload_name,
+        workload_config,
         policy_config.policy_parameters.get("node_count_control"),
         policy_config.policy_parameters.get("power_cap_percentage", ""),
         json.dumps(policy_config.policy_parameters.get("probabilities", "")),
@@ -725,9 +1022,24 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         writer.writerow(raw_results)
 
     diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
+
+    pr_upper_bound_kw = pr_sweep_metadata.get("PR_upper_bound_kw_per_server")
+    if pr_upper_bound_kw in (None, ""):
+        r_max_for_this_pbar_kw = ""
+    else:
+        r_max_for_this_pbar_kw = min(
+            float(pbar_kw_per_server),
+            float(pr_upper_bound_kw) - float(pbar_kw_per_server)
+        )
+
+    p_plus_r_kw = float(pbar_kw_per_server) + float(r_kw_per_server)
+    p_minus_r_kw = float(pbar_kw_per_server) - float(r_kw_per_server)
+
     diagnostic_results = [
         iteration_idx,
         weight_sample_id,
+        workload_name,
+        workload_config,
         pr_values["Pbar_kw_per_server"],
         pr_values["R_kw_per_server"],
         pr_values["P_actual_watts"],
@@ -736,6 +1048,18 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         pr_values["R_ratio"],
         experiment_config.server_count,
         experiment_config.utilization,
+        pr_sweep_metadata.get("PR_Sweep_Mode", ""),
+        round_or_blank(pr_sweep_metadata.get("Pmin_kw_per_server")),
+        round_or_blank(pr_sweep_metadata.get("Pmax_kw_per_server")),
+        round_or_blank(pr_sweep_metadata.get("Pbar_lower_bound_kw_per_server")),
+        round_or_blank(pr_sweep_metadata.get("Pbar_upper_bound_kw_per_server")),
+        round_or_blank(pr_sweep_metadata.get("PR_upper_bound_kw_per_server")),
+        round_or_blank(pr_sweep_metadata.get("R_lower_bound_kw_per_server")),
+        round_or_blank(r_max_for_this_pbar_kw),
+        round_or_blank(p_plus_r_kw),
+        round_or_blank(p_minus_r_kw),
+        pr_sweep_metadata.get("Pbar_points", ""),
+        pr_sweep_metadata.get("R_points_per_Pbar", ""),
         normalized_tracking_error_90th,
         normalized_tracking_error_90th_residual,
         qos_delay_probability_residual_sum,
@@ -774,24 +1098,29 @@ def generate_random_softmax_weights(job_type_count, num_weight_samples, seed=42,
     return weight_combinations
 
 def grid_search_parameters(cost_function_config, policy_config, experiment_config, cluster_config, job_config, output_dir,
-                           utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations):
+                           utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata):
     """
     Performs a sweep over:
     - utilization values
-    - physical Pbar/R bids in kW/server
-    - randomly sampled workload weight vectors
+    - targeted physical (Pbar_kw_per_server, R_kw_per_server) pairs
+    - workload weight vectors
     """
     best_cost = float('inf')
     best_params = None
 
     print("\nSweep configuration:")
     print(f"  utilization_values = {utilization_values}")
-    print(f"  pbar_kw_per_server_values = {pbar_kw_per_server_values}")
-    print(f"  r_kw_per_server_values = {r_kw_per_server_values}")
+    print(f"  number of P/R pairs = {len(pr_pairs)}")
     print(f"  number of weight vectors = {len(weight_combinations)}")
     print(f"  job_type_count = {job_config.job_type_count}")
     print(f"  policy_name = {policy_config.runtime_policy_name}")
     print(f"  policy_parameters = {policy_config.policy_parameters}")
+
+    print_pr_sweep_summary(
+        pr_sweep_metadata=pr_sweep_metadata,
+        utilization_values=utilization_values,
+        weight_combinations=weight_combinations,
+    )
 
     # CSV file for raw simulator outputs only.
     results_file = os.path.join(output_dir, 'grid_search_results.csv')
@@ -801,6 +1130,8 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             'Iteration',
             'Weight_Sample_ID',
             'Policy_Name',
+            'Workload_Name',
+            'Workload_Config',
             'Node_Count_Control',
             'Power_Cap_Percentage',
             'Flex_Resource_Probabilities',
@@ -826,13 +1157,16 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             ]
         writer.writerow(headers)
 
-    # Separate diagnostics file for residuals, percentiles, and activation-function terms.
+    # Separate diagnostics file for residuals, percentiles, activation-function terms,
+    # and P/R sweep audit metadata. These extra P/R metadata columns are diagnostic only.
     diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
     with open(diagnostics_file, 'w', newline='') as f:
         writer = csv.writer(f)
         diagnostic_headers = [
             'Iteration',
             'Weight_Sample_ID',
+            'Workload_Name',
+            'Workload_Config',
             'Pbar_kw_per_server',
             'R_kw_per_server',
             'P_actual_watts',
@@ -841,6 +1175,18 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             'R_ratio',
             'server_count',
             'utilization',
+            'PR_Sweep_Mode',
+            'Pmin_kw_per_server',
+            'Pmax_kw_per_server',
+            'Pbar_lower_bound_kw_per_server',
+            'Pbar_upper_bound_kw_per_server',
+            'PR_upper_bound_kw_per_server',
+            'R_lower_bound_kw_per_server',
+            'R_max_for_this_Pbar_kw_per_server',
+            'P_plus_R_kw_per_server',
+            'P_minus_R_kw_per_server',
+            'Pbar_points',
+            'R_points_per_Pbar',
             'Normalized_Tracking_Error_90th',
             'Normalized_Tracking_Error_90th_Residual',
             'QoS_Delay_Probability_Residual_Sum',
@@ -851,11 +1197,9 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             ]
         writer.writerow(diagnostic_headers)
 
-
     total_iterations = count_valid_parameter_combinations(
         utilization_values,
-        pbar_kw_per_server_values,
-        r_kw_per_server_values,
+        pr_pairs,
         weight_combinations
     )
 
@@ -867,33 +1211,41 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
         set_experiment_utilization(experiment_config, utilization)
         print(f"\n===== Starting utilization = {utilization} =====")
 
-        for pbar_kw_per_server in pbar_kw_per_server_values:
-            for r_kw_per_server in r_kw_per_server_values:
-                # Enforce RSR bid sanity constraint in physical units.
-                if pbar_kw_per_server <= r_kw_per_server:
-                    continue
+        for pbar_kw_per_server, r_kw_per_server in pr_pairs:
+            # Defensive constraints. Auto mode should already generate only valid pairs.
+            if pbar_kw_per_server + PR_SWEEP_EPS < r_kw_per_server:
+                raise ValueError(f"Invalid P/R pair: Pbar={pbar_kw_per_server}, R={r_kw_per_server}")
 
-                # Loop over all valid weight combinations
-                for weight_sample_id, weights in enumerate(weight_combinations):
-                    iteration_idx += 1
-                    params = [pbar_kw_per_server, r_kw_per_server] + list(weights)
-
-                    cost = objective_function(
-                        params,
-                        cost_function_config,
-                        policy_config,
-                        experiment_config,
-                        cluster_config,
-                        job_config,
-                        output_dir,
-                        iteration_idx=iteration_idx,
-                        total_iterations=total_iterations,
-                        weight_sample_id=weight_sample_id
+            pr_upper_bound = pr_sweep_metadata.get("PR_upper_bound_kw_per_server")
+            if pr_sweep_metadata.get("PR_Sweep_Mode") == "auto_workload_pr":
+                if pbar_kw_per_server + r_kw_per_server > float(pr_upper_bound) + PR_SWEEP_EPS:
+                    raise ValueError(
+                        f"Invalid Pbar+R pair: Pbar={pbar_kw_per_server}, R={r_kw_per_server}, "
+                        f"PR upper={pr_upper_bound}"
                     )
 
-                    if cost < best_cost:
-                        best_cost = cost
-                        best_params = [utilization] + params
+            # Loop over all valid weight combinations.
+            for weight_sample_id, weights in enumerate(weight_combinations):
+                iteration_idx += 1
+                params = [pbar_kw_per_server, r_kw_per_server] + list(weights)
+
+                cost = objective_function(
+                    params,
+                    cost_function_config,
+                    policy_config,
+                    experiment_config,
+                    cluster_config,
+                    job_config,
+                    output_dir,
+                    iteration_idx=iteration_idx,
+                    total_iterations=total_iterations,
+                    weight_sample_id=weight_sample_id,
+                    pr_sweep_metadata=pr_sweep_metadata,
+                )
+
+                if cost < best_cost:
+                    best_cost = cost
+                    best_params = [utilization] + params
 
     return best_params
 
@@ -925,6 +1277,27 @@ if __name__ == "__main__":
     parser.add_argument('--utilization-values', type=str, default=None,
                         help="Optional comma-separated utilization values, e.g. '0.5,0.75,0.9'. "
                              "Default: 0.5,0.75,0.8,0.85,0.9,0.95")
+
+    parser.add_argument('--auto-workload-pr-sweep', type=str, default='true',
+                        help="If true, derive Pbar/R sweep from the current workload config's Pmin/Pmax. Default: true.")
+
+    parser.add_argument('--pbar-points', type=int, default=DEFAULT_PBAR_POINTS,
+                        help="Number of Pbar points for auto workload P/R sweep. Default: 10.")
+
+    parser.add_argument('--r-points-per-pbar', type=int, default=DEFAULT_R_POINTS_PER_PBAR,
+                        help="Number of R points generated inside each Pbar's valid interval. Default: 10.")
+
+    parser.add_argument('--r-lower-kw-per-server', type=float, default=DEFAULT_R_LOWER_KW_PER_SERVER,
+                        help="Lower R value for auto workload P/R sweep in kW/server. Default: 0.01.")
+
+    parser.add_argument('--pbar-lower-factor', type=float, default=DEFAULT_PBAR_LOWER_FACTOR,
+                        help="Lower Pbar factor applied to workload Pmin. Default: 0.9.")
+
+    parser.add_argument('--pbar-upper-factor', type=float, default=DEFAULT_PBAR_UPPER_FACTOR,
+                        help="Upper Pbar factor applied to workload Pmax. Default: 1.1.")
+
+    parser.add_argument('--pr-upper-factor', type=float, default=DEFAULT_PR_UPPER_FACTOR,
+                        help="Upper Pbar+R factor applied to workload Pmax. Default: 1.3.")
 
     parser.add_argument('--pbar-kw-per-server-range', type=str, default=None,
                         help="Optional compact physical Pbar linspace range in kW/server as 'min,max,num_points', "
@@ -993,10 +1366,12 @@ if __name__ == "__main__":
         policy_parameters=policy_parameters
     )
 
-    utilization_values, pbar_kw_per_server_values, r_kw_per_server_values, weight_combinations = build_sweep_values(
+    utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata = build_sweep_values(
         args=args,
-        job_type_count=job_config.job_type_count
+        job_config=job_config
     )
+    pr_sweep_metadata["Workload_Name"] = os.path.splitext(os.path.basename(args.job_config))[0]
+    pr_sweep_metadata["Workload_Config"] = args.job_config
 
     output_dir = 'output/optimization/' + args.output_dir + '_' + start_time.strftime("%Y%m%d%H%M%S") + '/'
     os.makedirs(output_dir, exist_ok=True)
@@ -1010,8 +1385,8 @@ if __name__ == "__main__":
         job_config=job_config,
         output_dir=output_dir,
         utilization_values=utilization_values,
-        pbar_kw_per_server_values=pbar_kw_per_server_values,
-        r_kw_per_server_values=r_kw_per_server_values,
-        weight_combinations=weight_combinations
+        pr_pairs=pr_pairs,
+        weight_combinations=weight_combinations,
+        pr_sweep_metadata=pr_sweep_metadata
     )
     print("Best Parameters Under Simulator RSR Total Cost Only:", optimal_params)

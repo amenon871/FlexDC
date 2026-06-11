@@ -86,6 +86,13 @@ def build_optional_generator_args(args) -> list[str]:
         ("--pbar-kw-per-server-values", args.pbar_kw_per_server_values),
         ("--r-kw-per-server-values", args.r_kw_per_server_values),
         ("--utilization-values", args.utilization_values),
+        ("--auto-workload-pr-sweep", args.auto_workload_pr_sweep),
+        ("--pbar-points", args.pbar_points),
+        ("--r-points-per-pbar", args.r_points_per_pbar),
+        ("--r-lower-kw-per-server", args.r_lower_kw_per_server),
+        ("--pbar-lower-factor", args.pbar_lower_factor),
+        ("--pbar-upper-factor", args.pbar_upper_factor),
+        ("--pr-upper-factor", args.pr_upper_factor),
         ("--weight-vectors", args.weight_vectors),
         ("--weight-file", args.weight_file),
         ("--power-cap-percentage", args.power_cap_percentage),
@@ -127,6 +134,11 @@ def preflight_validate(args, workload_configs: list[str], experiment_configs: li
         if normalized not in ["true", "false", "t", "f", "1", "0", "yes", "no", "y", "n"]:
             raise ValueError("--node-count-control must be true or false.")
 
+    if args.auto_workload_pr_sweep is not None:
+        normalized = str(args.auto_workload_pr_sweep).strip().lower()
+        if normalized not in ["true", "false", "t", "f", "1", "0", "yes", "no", "y", "n"]:
+            raise ValueError("--auto-workload-pr-sweep must be true or false.")
+
     if args.pbar_kw_per_server_range is not None and args.pbar_kw_per_server_values is not None:
         raise ValueError("Use either --pbar-kw-per-server-range or --pbar-kw-per-server-values, not both.")
 
@@ -162,6 +174,8 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, i
         "Iteration",
         "Weight_Sample_ID",
         "Policy_Name",
+        "Workload_Name",
+        "Workload_Config",
         "Node_Count_Control",
         "Pbar_kw_per_server",
         "R_kw_per_server",
@@ -200,8 +214,22 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, i
     required_diagnostic_columns = [
         "Iteration",
         "Weight_Sample_ID",
+        "Workload_Name",
+        "Workload_Config",
         "Pbar_kw_per_server",
         "R_kw_per_server",
+        "PR_Sweep_Mode",
+        "Pmin_kw_per_server",
+        "Pmax_kw_per_server",
+        "Pbar_lower_bound_kw_per_server",
+        "Pbar_upper_bound_kw_per_server",
+        "PR_upper_bound_kw_per_server",
+        "R_lower_bound_kw_per_server",
+        "R_max_for_this_Pbar_kw_per_server",
+        "P_plus_R_kw_per_server",
+        "P_minus_R_kw_per_server",
+        "Pbar_points",
+        "R_points_per_Pbar",
         "Normalized_Tracking_Error_90th",
         "Normalized_Tracking_Error_90th_Residual",
         "QoS_Delay_Probability_Residual_Sum",
@@ -279,6 +307,27 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> None:
 
     parser.add_argument("--utilization-values", type=str, default=None,
                         help="Optional comma-separated utilization values. Omit for generator default full set.")
+
+    parser.add_argument("--auto-workload-pr-sweep", type=str, default=None,
+                        help="If true, generator derives Pbar/R sweep from each workload config's Pmin/Pmax.")
+
+    parser.add_argument("--pbar-points", type=int, default=None,
+                        help="Number of Pbar points for auto workload P/R sweep.")
+
+    parser.add_argument("--r-points-per-pbar", type=int, default=None,
+                        help="Number of R points generated inside each Pbar's valid interval.")
+
+    parser.add_argument("--r-lower-kw-per-server", type=float, default=None,
+                        help="Lower R value for auto workload P/R sweep in kW/server.")
+
+    parser.add_argument("--pbar-lower-factor", type=float, default=None,
+                        help="Lower Pbar factor applied to workload Pmin.")
+
+    parser.add_argument("--pbar-upper-factor", type=float, default=None,
+                        help="Upper Pbar factor applied to workload Pmax.")
+
+    parser.add_argument("--pr-upper-factor", type=float, default=None,
+                        help="Upper Pbar+R factor applied to workload Pmax.")
 
     parser.add_argument("--weight-vectors", type=str, default=None,
                         help="Optional inline custom workload weight vectors.")
