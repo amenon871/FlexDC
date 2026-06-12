@@ -39,9 +39,13 @@ DEFAULT_R_POINTS_PER_PBAR = 10
 DEFAULT_R_LOWER_KW_PER_SERVER = 0.01
 PR_SWEEP_EPS = 1e-9
 
-# Paper tracking constraint gamma. This is only used for diagnostic residual columns,
-# not for the simulator-returned tracking cost.
+# Paper tracking constraint gamma for Ctrack residual columns.
 TRACKING_ERROR_CONSTRAINT = 0.3
+
+# Constants used by simulator.py::final_output() for the simulator monetary tracking term.
+# Keep these explicit so Mtrack_Cost lineage is audit-friendly.
+MTRACK_HOUR_SECONDS = 3600
+MTRACK_PRICE_COEFFICIENT_PIE = 0.1 / (MTRACK_HOUR_SECONDS * 1000)
 
 DEFAULT_NUM_WEIGHT_SAMPLES = 5
 DEFAULT_WEIGHT_SEED = 42
@@ -877,6 +881,57 @@ def calculate_qos_raw_metrics(sim_hour, J, job_table, qos_constraints, min_execu
     )
 
 
+
+def calculate_mtrack_raw_metrics(output_dir, r_actual_watts, simulation_duration_seconds):
+    """
+    Extract raw simulator monetary tracking-cost lineage from power_trace.csv.
+
+    This deliberately mirrors simulator.py::final_output() for the one-hour experiments
+    used in the dataset workflow:
+
+        tracking_cost += piE * R * mean(abs(trackingError_phase)) * hour
+
+    The simulator itself still returns Mtrack_Cost through simulator.run(); this helper
+    only logs the underlying components with clear names.
+    """
+    if int(simulation_duration_seconds) != MTRACK_HOUR_SECONDS:
+        raise ValueError(
+            "Mtrack component labels currently assume a one-hour simulation_duration=3600. "
+            f"Got simulation_duration={simulation_duration_seconds}. For multi-hour runs, add explicit "
+            "per-phase or phase-sum component columns before collecting data."
+        )
+
+    power_trace_path = os.path.join(output_dir, 'power_trace.csv')
+    if not os.path.exists(power_trace_path):
+        raise FileNotFoundError(f"power_trace.csv not found for Mtrack extraction: {power_trace_path}")
+
+    trace_df = pd.read_csv(power_trace_path, usecols=['time', 'trackingError'])
+    if trace_df.empty:
+        raise ValueError(f"power_trace.csv has no rows: {power_trace_path}")
+
+    trace_df['time'] = pd.to_numeric(trace_df['time'], errors='coerce')
+    trace_df['trackingError'] = pd.to_numeric(trace_df['trackingError'], errors='coerce')
+    phase_error = trace_df[
+        (trace_df['time'] >= 0) &
+        (trace_df['time'] <= MTRACK_HOUR_SECONDS)
+    ]['trackingError'].dropna()
+
+    # Match simulator.py::final_output(): ['trackingError'][1:] drops the first sample.
+    phase_error = phase_error.iloc[1:]
+    if phase_error.empty:
+        raise ValueError(f"No usable trackingError samples for Mtrack extraction: {power_trace_path}")
+
+    mean_abs_normalized = float(np.mean(np.abs(phase_error.to_numpy(dtype=float))))
+    mean_abs_watts = float(r_actual_watts) * mean_abs_normalized
+
+    return {
+        'Mtrack_Error_MeanAbs_Normalized': mean_abs_normalized,
+        'Mtrack_Error_MeanAbs_Watts': mean_abs_watts,
+        'Mtrack_Price_Coefficient_piE': float(MTRACK_PRICE_COEFFICIENT_PIE),
+        'Mtrack_Hour_Seconds': float(MTRACK_HOUR_SECONDS),
+    }
+
+
 def objective_function(params, cost_function_config, policy_config, experiment_config, cluster_config, job_config,
                        output_dir, iteration_idx=None, total_iterations=None, weight_sample_id=None,
                        pr_sweep_metadata=None):
@@ -908,16 +963,36 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
 
     init_output(output_dir, experiment_config, policy_config)
 
-    # simulator.run() returns the simulator's raw RSR monetary components.
+    # simulator.run() returns the simulator's RSR monetary components.
     # In simulator.final_output():
-    #   power cost    = (piP * P - piR * R) * hour
-    #   tracking cost = piE * R * mean(abs(normalized_tracking_error)) * hour
-    # The 90th-percentile normalized tracking error is stored separately as a diagnostic.
-    simulator_power_cost, simulator_tracking_cost = simulator.run()
-    simulator_rsr_total_cost = simulator_power_cost + simulator_tracking_cost
+    #   power cost = (piP * P - piR * R) * hour
+    #   Mtrack    = piE * R * mean(abs(normalized_tracking_error)) * hour
+    # We no longer write a column named Simulator_Tracking_Cost because that name is ambiguous.
+    simulator_power_cost, simulator_mtrack_cost = simulator.run()
 
-    normalized_tracking_error_90th = simulator.tracking_error_at_90
-    normalized_tracking_error_90th_residual = normalized_tracking_error_90th - TRACKING_ERROR_CONSTRAINT
+    mtrack_metrics = calculate_mtrack_raw_metrics(
+        output_dir=output_dir,
+        r_actual_watts=pr_values["R_actual_watts"],
+        simulation_duration_seconds=experiment_config.simulation_duration,
+    )
+    mtrack_cost = float(simulator_mtrack_cost)
+    reconstructed_mtrack_cost = (
+        mtrack_metrics['Mtrack_Price_Coefficient_piE']
+        * mtrack_metrics['Mtrack_Error_MeanAbs_Watts']
+        * mtrack_metrics['Mtrack_Hour_Seconds']
+    )
+    if not np.isclose(reconstructed_mtrack_cost, mtrack_cost, rtol=1e-6, atol=1e-8):
+        raise ValueError(
+            "Mtrack component reconstruction mismatch: "
+            f"simulator_mtrack_cost={mtrack_cost}, "
+            f"reconstructed_mtrack_cost={reconstructed_mtrack_cost}"
+        )
+
+    simulator_rsr_total_cost = simulator_power_cost + mtrack_cost
+
+    ctrack_epsilon_90th = float(simulator.tracking_error_at_90)
+    ctrack_gamma = float(TRACKING_ERROR_CONSTRAINT)
+    ctrack_residual = ctrack_epsilon_90th - ctrack_gamma
 
     qos_constraints = list(simulator._job_config.all_job_qos_constraints.values())
     min_execution_times = list(simulator._job_config.all_min_execution_time.values())
@@ -936,14 +1011,12 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         cost_function_config=cost_function_config
     )
 
-    # Diagnostics only. These are intentionally not written into the raw results CSV.
-    psi1, psi2 = cost_function_config.calculate_gradient_variables['psi1'], \
-        cost_function_config.calculate_gradient_variables['psi2']
-
-    diagnostic_paper_like_softplus_tracking_cost = psi1 * np.logaddexp(
-        0,
-        psi2 * normalized_tracking_error_90th_residual
-    )
+    # Ctrack diagnostics only. These are intentionally not written as raw labels.
+    ctrack_psi = float(cost_function_config.calculate_gradient_variables['psi1'])
+    ctrack_mu = float(cost_function_config.calculate_gradient_variables['psi2'])
+    ctrack_mu_scaled_residual = ctrack_mu * ctrack_residual
+    ctrack_softplus_value = float(np.logaddexp(0, ctrack_mu_scaled_residual))
+    ctrack_weighted_cost = ctrack_psi * ctrack_softplus_value
 
     diagnostic_flexdc_softplus_qos_cost = calculate_qos_cost(
         experiment_config=experiment_config,
@@ -961,9 +1034,9 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         cost_function_config=cost_function_config
     )
 
-    diagnostic_paper_like_total_cost = (
-        simulator_power_cost
-        + diagnostic_paper_like_softplus_tracking_cost
+    diagnostic_full_paper_objective_cost = (
+        simulator_rsr_total_cost
+        + ctrack_weighted_cost
         + diagnostic_flexdc_softplus_qos_cost
     )
 
@@ -974,10 +1047,12 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         f"Weights={weights}, "
         f"Simulator RSR Total Cost={simulator_rsr_total_cost}, "
         f"Simulator Power Cost={simulator_power_cost}, "
-        f"Simulator Tracking Cost={simulator_tracking_cost}, "
-        f"Normalized Tracking Error 90th={normalized_tracking_error_90th}, "
+        f"Mtrack Cost={mtrack_cost}, "
+        f"Mtrack MeanAbs Normalized={mtrack_metrics['Mtrack_Error_MeanAbs_Normalized']}, "
+        f"Ctrack Epsilon 90th={ctrack_epsilon_90th}, "
+        f"Ctrack Weighted Cost={ctrack_weighted_cost}, "
         f"QoS Delay Probability Sum={qos_delay_probability_sum}, "
-        f"Diagnostic Paper-Like Total Cost={diagnostic_paper_like_total_cost}"
+        f"Diagnostic Full Paper Objective Cost={diagnostic_full_paper_objective_cost}"
     )
 
     workload_mix_json = build_workload_mix_json(job_config, weights)
@@ -1011,7 +1086,11 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
     ] + list(weights) + [
         simulator_rsr_total_cost,
         simulator_power_cost,
-        simulator_tracking_cost,
+        mtrack_metrics['Mtrack_Error_MeanAbs_Normalized'],
+        mtrack_metrics['Mtrack_Error_MeanAbs_Watts'],
+        mtrack_metrics['Mtrack_Price_Coefficient_piE'],
+        mtrack_metrics['Mtrack_Hour_Seconds'],
+        mtrack_cost,
         qos_delay_probability_sum,
         simulator.ratio_of_job_type_qos_violation,
         json.dumps(qos_delay_probabilities),
@@ -1060,13 +1139,18 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         round_or_blank(p_minus_r_kw),
         pr_sweep_metadata.get("Pbar_points", ""),
         pr_sweep_metadata.get("R_points_per_Pbar", ""),
-        normalized_tracking_error_90th,
-        normalized_tracking_error_90th_residual,
+        ctrack_epsilon_90th,
+        ctrack_gamma,
+        ctrack_residual,
+        ctrack_mu,
+        ctrack_mu_scaled_residual,
+        ctrack_softplus_value,
+        ctrack_psi,
+        ctrack_weighted_cost,
         qos_delay_probability_residual_sum,
         json.dumps(qos_delay_probability_residuals),
-        diagnostic_paper_like_softplus_tracking_cost,
         diagnostic_flexdc_softplus_qos_cost,
-        diagnostic_paper_like_total_cost,
+        diagnostic_full_paper_objective_cost,
     ]
 
     with open(diagnostics_file, 'a', newline='') as f:
@@ -1150,7 +1234,11 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             ] + [f'Weight_{i}' for i in range(job_config.job_type_count)] + [
             'Simulator_RSR_Total_Cost',
             'Simulator_Power_Cost',
-            'Simulator_Tracking_Cost',
+            'Mtrack_Error_MeanAbs_Normalized',
+            'Mtrack_Error_MeanAbs_Watts',
+            'Mtrack_Price_Coefficient_piE',
+            'Mtrack_Hour_Seconds',
+            'Mtrack_Cost',
             'QoS_Delay_Probability_Sum',
             'QoS_Violation_Ratio',
             'QoS_Delay_Probabilities',
@@ -1187,13 +1275,18 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
             'P_minus_R_kw_per_server',
             'Pbar_points',
             'R_points_per_Pbar',
-            'Normalized_Tracking_Error_90th',
-            'Normalized_Tracking_Error_90th_Residual',
+            'Ctrack_Epsilon_90th',
+            'Ctrack_Gamma',
+            'Ctrack_Residual',
+            'Ctrack_Mu',
+            'Ctrack_MuScaled_Residual',
+            'Ctrack_SoftPlus_Value',
+            'Ctrack_Psi',
+            'Ctrack_Weighted_Cost',
             'QoS_Delay_Probability_Residual_Sum',
             'QoS_Delay_Probability_Residuals',
-            'Diagnostic_PaperLike_SoftPlus_Tracking_Cost',
             'Diagnostic_FlexDC_SoftPlus_QoS_Cost',
-            'Diagnostic_PaperLike_Total_Cost',
+            'Diagnostic_FullPaperObjective_Cost',
             ]
         writer.writerow(diagnostic_headers)
 

@@ -151,7 +151,7 @@ def preflight_validate(args, workload_configs: list[str], experiment_configs: li
 
 def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, int]:
     """
-    Validate that the new audited generator produced both:
+    Validate that the generator produced both:
     - grid_search_results.csv: raw simulator/data collection outputs only
     - grid_search_diagnostics.csv: residuals, percentiles, and diagnostic activation terms
     """
@@ -191,7 +191,11 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, i
         "workload_mix",
         "Simulator_RSR_Total_Cost",
         "Simulator_Power_Cost",
-        "Simulator_Tracking_Cost",
+        "Mtrack_Error_MeanAbs_Normalized",
+        "Mtrack_Error_MeanAbs_Watts",
+        "Mtrack_Price_Coefficient_piE",
+        "Mtrack_Hour_Seconds",
+        "Mtrack_Cost",
         "QoS_Delay_Probability_Sum",
         "QoS_Violation_Ratio",
         "QoS_Delay_Probabilities",
@@ -230,13 +234,18 @@ def validate_grid_search_output(output_dir_label: str) -> tuple[str, int, str, i
         "P_minus_R_kw_per_server",
         "Pbar_points",
         "R_points_per_Pbar",
-        "Normalized_Tracking_Error_90th",
-        "Normalized_Tracking_Error_90th_Residual",
+        "Ctrack_Epsilon_90th",
+        "Ctrack_Gamma",
+        "Ctrack_Residual",
+        "Ctrack_Mu",
+        "Ctrack_MuScaled_Residual",
+        "Ctrack_SoftPlus_Value",
+        "Ctrack_Psi",
+        "Ctrack_Weighted_Cost",
         "QoS_Delay_Probability_Residual_Sum",
         "QoS_Delay_Probability_Residuals",
-        "Diagnostic_PaperLike_SoftPlus_Tracking_Cost",
         "Diagnostic_FlexDC_SoftPlus_QoS_Cost",
-        "Diagnostic_PaperLike_Total_Cost",
+        "Diagnostic_FullPaperObjective_Cost",
     ]
 
     with diagnostics_csv_path.open("r", newline="") as f:
