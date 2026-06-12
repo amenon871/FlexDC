@@ -10,15 +10,15 @@ import pandas as pd
 # DEFAULT TARGET RUN
 # ============================================================
 
-DEFAULT_OUTPUT_PREFIX = "rangefind64_p020_084_rtargeted"
+DEFAULT_OUTPUT_PREFIX = "targeted_pr_test"
 DEFAULT_POLICY_NAME = "AQA"
 DEFAULT_EXPERIMENT_NAME = "exp_servers_64"
 
 EXPECTED_WORKLOAD_NAMES = [
     "W9",
-    "W10",
-    "W_train_2app",
-    "W_inference_2app",
+    "W2-short-qos2-2.5-2.5-3",
+    #"W_train_2app",
+    #"W_inference_2app",
 ]
 
 DEFAULT_OPTIMIZATION_DIR = Path("src") / "peacsim" / "output" / "optimization"

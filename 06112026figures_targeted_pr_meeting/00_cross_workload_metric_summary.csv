@@ -1,0 +1,3 @@
+Workload_Name,Simulator_Power_Cost,Simulator_Tracking_Cost,QoS_Delay_Probability_Sum,QoS_Violation_Ratio,Diagnostic_FlexDC_SoftPlus_QoS_Cost,Implied_Mean_Absolute_Tracking_Error_Watts
+W2-short-qos2-2.5-2.5-3,1.7619500000000001,0.04252514377777805,3.059083850309353,1.0,3.192598794778525,425.2514377777805
+W9,1.439,0.0352240078333338,3.070711034353349,0.5,4.325487293029658,352.24007833333803

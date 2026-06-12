@@ -1,0 +1,25 @@
+TARGETED P/R COST-COMPONENT MEETING REPORT
+===========================================
+
+Rows: 1200
+Aggregation: median
+Workloads: ['W2-short-qos2-2.5-2.5-3', 'W9']
+
+What to show first:
+1. 01_pr_grid_constraints.png for each workload: proves the targeted sweep is correct.
+2. 03_3d_Presentation_Total_Cost.png for each workload: total cost = power + tracking + QoS cost.
+3. 03_3d_Simulator_Power_Cost.png, 03_3d_Simulator_Tracking_Cost.png, 03_3d_QoS_Cost.png: separate cost components.
+4. 04_lines_vs_r_Simulator_Tracking_Cost.png: controlled R effect at fixed Pbar.
+5. 04_lines_vs_r_QoS_Cost.png and 04_lines_vs_r_QoS_Violation_Ratio.png: QoS effect of P/R choices.
+6. 06_total_cost_vs_qos_tradeoff_colored_by_r.png: shows cost/QoS tradeoff.
+
+Column interpretation:
+- Simulator_RSR_Total_Cost is NOT full total cost. It is only power + tracking.
+- Presentation_Total_Cost is created by this script as power + tracking + Diagnostic_FlexDC_SoftPlus_QoS_Cost.
+- QoS_Cost is Diagnostic_FlexDC_SoftPlus_QoS_Cost when available. It is a SoftPlus diagnostic cost, not a raw probability.
+- QoS_Delay_Probability_Sum and QoS_Violation_Ratio are raw QoS/feasibility metrics.
+- Normalized_Tracking_Error_90th is a constraint diagnostic, not the same as tracking cost.
+
+Why plots are workload-separated:
+- P/R ranges are derived from each workload's own Pmin/Pmax, so cross-workload P/R surfaces would mix different feasible domains.
+- Use cross-workload summaries only for high-level comparisons.

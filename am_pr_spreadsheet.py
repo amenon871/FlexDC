@@ -1,14 +1,14 @@
 import numpy as np
 
 # For workload
-PMAX = 402 / 1000
-PMIN = 237 / 1000
+PMAX = 732 / 1000
+PMIN = 198 / 1000
 
-ALPHA = 1.3
+ALPHA = 1.2
 EPS = 1e-9
 
 P_LOWER = 0.9 * PMIN
-P_UPPER = 1.1 * PMAX
+P_UPPER = 1.0 * PMAX
 PR_UPPER = ALPHA * PMAX
 
 p_values = np.linspace(P_LOWER, P_UPPER, 10)
