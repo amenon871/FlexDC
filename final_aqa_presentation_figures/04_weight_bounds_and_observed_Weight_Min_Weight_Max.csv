@@ -1,9 +1,0 @@
-Workload_Name,server_count,Weight_Equal_Value,Weight_Relative_Lower_Bound,Weight_Relative_Upper_Bound,Weight_Server_Lower_Bound,Weight_Upper_From_Lower_Bound,Weight_Final_Lower_Bound,Weight_Final_Upper_Bound,Weight_Min,Weight_Max,group
-W1-train,250,0.25,0.025,1.0,0.004,0.925,0.025,0.925,0.0637813389986127,0.6240535094463464,"W1-train
-S=250"
-W1-train,1000,0.25,0.025,1.0,0.001,0.925,0.025,0.925,0.0637813389986127,0.6240535094463464,"W1-train
-S=1000"
-W2-short-qos2-2.5-2.5-3,250,0.25,0.025,1.0,0.004,0.925,0.025,0.925,0.0637813389986127,0.6240535094463464,"W2-short-qos2-2.5-2.5-3
-S=250"
-W2-short-qos2-2.5-2.5-3,1000,0.25,0.025,1.0,0.001,0.925,0.025,0.925,0.0637813389986127,0.6240535094463464,"W2-short-qos2-2.5-2.5-3
-S=1000"

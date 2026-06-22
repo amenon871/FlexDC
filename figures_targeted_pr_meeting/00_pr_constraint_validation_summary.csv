@@ -1,3 +1,0 @@
-Workload,Rows,Unique_Pbar,Unique_PR_pairs,Pmin_kw_per_server,Pmax_kw_per_server,PR_upper_bound_kw_per_server,Min_P_minus_R,Max_P_plus_R,Invalid_P_minus_R_count,Invalid_P_plus_R_count
-W2-short-qos2-2.5-2.5-3,600,10,100,0.198,0.732,0.9516,0.0,0.9516,0,0
-W9,600,10,100,0.237,0.402,0.5226,0.0,0.5226,0,0

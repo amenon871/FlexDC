@@ -1,3 +1,0 @@
-Workload_Name,Simulator_RSR_Total_Cost,Simulator_Tracking_Cost,QoS_Delay_Probability_Sum,QoS_Violation_Ratio,Normalized_Tracking_Error_90th,Implied_Mean_Absolute_Tracking_Error_Watts
-W2-short-qos2-2.5-2.5-3,1.9454620305833328,0.05264992747222255,2.7155038030574827,0.75,0.142,526.4992747222254
-W9,1.559814773930555,0.06711629209722281,2.4558470158607957,0.5,0.2505,671.162920972228
