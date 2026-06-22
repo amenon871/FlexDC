@@ -29,7 +29,6 @@ SUPPORTED_RUNTIME_POLICIES = [
     "proportional-cap",
 ]
 
-# Tomorrow's range-finding subset: 2 CPU/SCC-style workloads and 2 GPU/AI workloads.
 # These remain fully overrideable with --workload-configs.
 DEFAULT_WORKLOAD_CONFIGS = [
     "../../configs/workload/W9.ini",
@@ -38,7 +37,6 @@ DEFAULT_WORKLOAD_CONFIGS = [
     "../../configs/workload/W-inference-2app.ini",
 ]
 
-# Tomorrow's range-finding subset is 64 servers only.
 # This remains fully overrideable with --experiment-configs.
 DEFAULT_EXPERIMENT_CONFIGS = [
     "../../configs/experiment/generated_server_counts/exp_servers_64.ini",
