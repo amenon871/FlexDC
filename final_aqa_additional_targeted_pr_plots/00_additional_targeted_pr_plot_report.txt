@@ -1,0 +1,22 @@
+ADDITIONAL TARGETED P/R PLOT REPORT
+===================================
+
+Rows: 80800
+Aggregation: median
+Workloads: ['W1-train', 'W2-short-qos2-2.5-2.5-3']
+Server counts: [np.int64(250), np.int64(1000)]
+Utilizations: [np.float64(0.6), np.float64(0.8)]
+
+Plot organization:
+- 01_PR_grid_and_constraints: one per workload/server
+- 02_scatter_PR_* and 03_3D_PR_*: one per workload/server/utilization
+- 04_lines_vs_R_by_Pbar_*: controlled R-sensitivity plots
+- 05_cost_components_vs_Pbar: raw and diagnostic cost components
+- 06_tracking_vs_QoS_colored_by_R: tradeoff scatter
+
+Column mapping used:
+- Raw tracking monetary term: Mtrack_Cost
+- Mean tracking miss in watts: Mtrack_Error_MeanAbs_Watts
+- Paper tracking constraint metric: Ctrack_Epsilon_90th
+- Weighted tracking SoftPlus penalty: Ctrack_Weighted_Cost
+- Full diagnostic paper objective: Diagnostic_FullPaperObjective_Cost

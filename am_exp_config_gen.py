@@ -3,7 +3,7 @@ from pathlib import Path
 BASE_EXPERIMENT_CONFIG = Path("configs/experiment/exp.ini")
 OUTPUT_DIR = Path("configs/experiment/generated_server_counts")
 
-SERVER_COUNTS = [64, 100, 500, 1000]
+SERVER_COUNTS = [250]
 
 #THIS FILE IS USED TO GENERATE .ini files with different server counts
 

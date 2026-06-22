@@ -1,0 +1,17 @@
+check,value
+rows,80800
+workloads,"['W1-train', 'W2-short-qos2-2.5-2.5-3']"
+server_counts,"[250, 1000]"
+utilizations,"[0.6, 0.8]"
+p_actual_watts_mismatches,0
+r_actual_watts_mismatches,0
+max_rsr_total_error,2.842170943040401e-14
+max_weight_sum_error,3.3306690738754696e-16
+max_weight_min_metadata_error,0.0
+max_weight_max_metadata_error,0.0
+weight_lower_bound_violations,0
+weight_upper_bound_violations,0
+pr_pairs_per_workload_server,"{('W1-train', 250): 100, ('W1-train', 1000): 100, ('W2-short-qos2-2.5-2.5-3', 250): 100, ('W2-short-qos2-2.5-2.5-3', 1000): 100}"
+chunks_per_workload_server,"{('W1-train', 250): 10, ('W1-train', 1000): 10, ('W2-short-qos2-2.5-2.5-3', 250): 10, ('W2-short-qos2-2.5-2.5-3', 1000): 10}"
+weight_samples_per_setting_min,101
+weight_samples_per_setting_max,101
