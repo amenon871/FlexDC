@@ -1,4 +1,5 @@
 import argparse
+import random
 import numpy as np
 import pandas as pd
 import json
@@ -952,6 +953,11 @@ def convert_kw_per_server_to_flexdc_pr(pbar_kw_per_server, r_kw_per_server, expe
     }
 
 def create_simulator_object(pbar_kw_per_server, r_kw_per_server, experiment_config, job_config, cluster_config, policy_config, output_dir):
+    # Match the released run_simulator.py ordering so the stochastic job table
+    # is identical across validation runs that use the same experiment random_seed.
+    np.random.seed(experiment_config.random_seed)
+    random.seed(experiment_config.random_seed)
+
     job_table = init_job_table(experiment_config, job_config)
     node_table = init_node_table(experiment_config)
 
