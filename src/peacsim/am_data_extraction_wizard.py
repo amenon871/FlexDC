@@ -1,5 +1,4 @@
 import argparse
-import random
 import numpy as np
 import pandas as pd
 import json
@@ -18,6 +17,8 @@ from peacsim.parsing import gradient_descent_reader as gradient_parser
 import datetime
 import os
 import itertools
+import random
+from pathlib import Path
 from calculate_qos_cost import calculate_qos_cost
 
 
@@ -274,6 +275,216 @@ def load_weight_vectors_from_file(path):
         raise ValueError(f"No valid weight vectors found in file: {path}")
 
     return vectors
+
+
+
+PLAN_PROVENANCE_COLUMNS = [
+    'Plan_Row_ID',
+    'Base_Plan_Row_ID',
+    'Design_Version',
+    'Context_ID',
+    'PR_Stratum',
+    'PR_Stratum_Detail',
+    'Weight_Stratum',
+    'Dirichlet_Alpha',
+    'Anchor_Type',
+    'Simulation_Seed',
+    'Is_Replicate',
+    'Plan_Source_File',
+]
+
+
+def parse_json_or_python_list(value, argument_name):
+    """Parse a JSON/Python-style list used by plan CSV cells."""
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return [float(x) for x in value]
+    text = str(value).strip()
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        import ast
+        parsed = ast.literal_eval(text)
+    if not isinstance(parsed, (list, tuple)):
+        raise ValueError(f"{argument_name} must contain a list. Got: {value}")
+    return [float(x) for x in parsed]
+
+
+def normalize_plan_bool(value):
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {'true', '1', 'yes', 'y', 't'}
+
+
+def same_config_reference(plan_value, cli_value):
+    """Compare path references by resolved path when possible, otherwise by filename stem."""
+    if plan_value is None or str(plan_value).strip() == '':
+        return True
+    plan_path = Path(str(plan_value))
+    cli_path = Path(str(cli_value))
+    try:
+        if plan_path.resolve() == cli_path.resolve():
+            return True
+    except Exception:
+        pass
+    return plan_path.stem == cli_path.stem
+
+
+def plan_provenance_values(plan_row_metadata):
+    row = plan_row_metadata or {}
+    return [
+        row.get('plan_row_id', ''),
+        row.get('base_plan_row_id', ''),
+        row.get('design_version', ''),
+        row.get('context_id', ''),
+        row.get('pr_stratum', ''),
+        row.get('pr_stratum_detail', ''),
+        row.get('weight_stratum', ''),
+        row.get('dirichlet_alpha', ''),
+        row.get('anchor_type', ''),
+        row.get('simulation_seed', ''),
+        row.get('is_replicate', ''),
+        row.get('plan_source_file', ''),
+    ]
+
+
+def load_sweep_plan_rows(path, args, job_config, experiment_config):
+    """Load, validate, filter, and deterministically chunk an exact sweep plan.
+
+    Plan mode executes one exact (utilization, Pbar, R, weight, seed) row at a time.
+    It does not form a Cartesian product.
+    """
+    plan_path = Path(path).expanduser().resolve()
+    if not plan_path.exists():
+        raise FileNotFoundError(f"Sweep plan file does not exist: {plan_path}")
+
+    if plan_path.suffix.lower() == '.json':
+        data = json.loads(plan_path.read_text())
+        if isinstance(data, dict):
+            data = data.get('rows', data.get('plan', data))
+        plan_df = pd.DataFrame(data)
+    else:
+        plan_df = pd.read_csv(plan_path)
+
+    required = [
+        'plan_row_id', 'utilization', 'Pbar_kw_per_server',
+        'R_kw_per_server', 'weights', 'simulation_seed'
+    ]
+    missing = [c for c in required if c not in plan_df.columns]
+    if missing:
+        raise ValueError(f"Sweep plan is missing required columns: {missing}")
+    if plan_df['plan_row_id'].astype(str).duplicated().any():
+        dupes = plan_df.loc[plan_df['plan_row_id'].astype(str).duplicated(), 'plan_row_id'].head(10).tolist()
+        raise ValueError(f"Sweep plan contains duplicate plan_row_id values, examples: {dupes}")
+
+    # A plan chunk passed by the runner should contain one workload/config context.
+    if 'workload_config' in plan_df.columns:
+        bad = ~plan_df['workload_config'].map(lambda x: same_config_reference(x, args.job_config))
+        if bad.any():
+            examples = plan_df.loc[bad, 'workload_config'].astype(str).unique()[:5].tolist()
+            raise ValueError(
+                f"Sweep plan rows do not match --job-config {args.job_config}. Examples: {examples}"
+            )
+    if 'experiment_config' in plan_df.columns:
+        bad = ~plan_df['experiment_config'].map(lambda x: same_config_reference(x, args.experiment_config))
+        if bad.any():
+            examples = plan_df.loc[bad, 'experiment_config'].astype(str).unique()[:5].tolist()
+            raise ValueError(
+                f"Sweep plan rows do not match --experiment-config {args.experiment_config}. Examples: {examples}"
+            )
+    if 'server_count' in plan_df.columns:
+        bad = plan_df['server_count'].astype(int) != int(experiment_config.server_count)
+        if bad.any():
+            raise ValueError(
+                f"Sweep plan server_count does not match experiment config server_count={experiment_config.server_count}."
+            )
+    if 'job_type_count' in plan_df.columns:
+        bad = plan_df['job_type_count'].astype(int) != int(job_config.job_type_count)
+        if bad.any():
+            raise ValueError(
+                f"Sweep plan job_type_count does not match workload J={job_config.job_type_count}."
+            )
+
+    bounds = calculate_workload_pr_bounds(
+        job_config=job_config,
+        pbar_lower_factor=args.pbar_lower_factor,
+        pbar_upper_factor=args.pbar_upper_factor,
+        pr_upper_factor=args.pr_upper_factor,
+    )
+    weight_bounds = calculate_weight_bounds(job_config.job_type_count, experiment_config.server_count)
+
+    validated = []
+    for row_index, row in plan_df.reset_index(drop=True).iterrows():
+        pbar = float(row['Pbar_kw_per_server'])
+        reserve = float(row['R_kw_per_server'])
+        utilization = float(row['utilization'])
+        seed = int(row['simulation_seed'])
+        weights = parse_json_or_python_list(row['weights'], f"plan row {row_index} weights")
+        validate_weight_vectors(
+            [weights],
+            job_type_count=job_config.job_type_count,
+            server_count=experiment_config.server_count,
+            enforce_weight_bounds=True,
+        )
+
+        if pbar < bounds['Pbar_lower_bound_kw_per_server'] - PR_SWEEP_EPS:
+            raise ValueError(f"Plan row {row['plan_row_id']} has Pbar below workload bound: {pbar}")
+        if pbar > bounds['Pbar_upper_bound_kw_per_server'] + PR_SWEEP_EPS:
+            raise ValueError(f"Plan row {row['plan_row_id']} has Pbar above workload bound: {pbar}")
+        if reserve < args.r_lower_kw_per_server - PR_SWEEP_EPS:
+            raise ValueError(f"Plan row {row['plan_row_id']} has R below lower bound: {reserve}")
+        if reserve > pbar + PR_SWEEP_EPS:
+            raise ValueError(f"Plan row {row['plan_row_id']} has R>Pbar: Pbar={pbar}, R={reserve}")
+        if pbar + reserve > bounds['PR_upper_bound_kw_per_server'] + PR_SWEEP_EPS:
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} violates Pbar+R bound: "
+                f"{pbar + reserve}>{bounds['PR_upper_bound_kw_per_server']}"
+            )
+        if utilization <= 0 or utilization > 1:
+            raise ValueError(f"Plan row {row['plan_row_id']} has invalid utilization={utilization}")
+        if seed < 0:
+            raise ValueError(f"Plan row {row['plan_row_id']} has negative simulation_seed={seed}")
+
+        metadata = row.to_dict()
+        metadata['weights'] = weights
+        metadata['Pbar_kw_per_server'] = pbar
+        metadata['R_kw_per_server'] = reserve
+        metadata['utilization'] = utilization
+        metadata['simulation_seed'] = seed
+        metadata['is_replicate'] = normalize_plan_bool(metadata.get('is_replicate', False))
+        metadata['plan_source_file'] = str(plan_path)
+        validated.append(metadata)
+
+    if args.plan_num_chunks <= 0:
+        raise ValueError(f"--plan-num-chunks must be positive, got {args.plan_num_chunks}")
+    if args.plan_chunk_index < 0 or args.plan_chunk_index >= args.plan_num_chunks:
+        raise ValueError(
+            f"--plan-chunk-index must be in [0,{args.plan_num_chunks - 1}], got {args.plan_chunk_index}"
+        )
+
+    chunks = np.array_split(np.arange(len(validated)), args.plan_num_chunks)
+    selected_indices = chunks[args.plan_chunk_index].tolist()
+    selected = [validated[int(i)] for i in selected_indices]
+    if not selected:
+        raise ValueError(
+            f"Plan chunk {args.plan_chunk_index + 1}/{args.plan_num_chunks} is empty. "
+            f"Plan rows={len(validated)}"
+        )
+
+    metadata = {
+        'PR_Sweep_Mode': 'exact_sweep_plan',
+        **bounds,
+        'R_lower_bound_kw_per_server': float(args.r_lower_kw_per_server),
+        'Pbar_points': '',
+        'R_points_per_Pbar': '',
+        'PR_Total_Pairs_Before_Chunk': int(len(validated)),
+        'PR_Chunk_Index': int(args.plan_chunk_index),
+        'PR_Num_Chunks': int(args.plan_num_chunks),
+        'PR_Chunk_Start_Index': int(selected_indices[0]),
+        'PR_Chunk_End_Index_Exclusive': int(selected_indices[-1] + 1),
+        'PR_Pairs_In_Chunk': int(len(selected)),
+        'Plan_Source_File': str(plan_path),
+    }
+    return selected, metadata
 
 
 def calculate_weight_bounds(job_type_count, server_count):
@@ -953,10 +1164,14 @@ def convert_kw_per_server_to_flexdc_pr(pbar_kw_per_server, r_kw_per_server, expe
     }
 
 def create_simulator_object(pbar_kw_per_server, r_kw_per_server, experiment_config, job_config, cluster_config, policy_config, output_dir):
-    # Match the released run_simulator.py ordering so the stochastic job table
-    # is identical across validation runs that use the same experiment random_seed.
-    np.random.seed(experiment_config.random_seed)
-    random.seed(experiment_config.random_seed)
+    # Re-seed BEFORE job-table construction. Job arrivals/prefill are generated in
+    # init_job_table() using Python's random module. Simulator.run() also seeds,
+    # but that happens after the job table already exists. Without this reset, a
+    # row's workload trace depends on process startup and on every row simulated
+    # before it, so the same P/R/weights/config cannot be reproduced standalone.
+    effective_seed = int(experiment_config.random_seed)
+    np.random.seed(effective_seed)
+    random.seed(effective_seed)
 
     job_table = init_job_table(experiment_config, job_config)
     node_table = init_node_table(experiment_config)
@@ -1108,7 +1323,7 @@ def calculate_mtrack_raw_metrics(output_dir, r_actual_watts, simulation_duration
 
 def objective_function(params, cost_function_config, policy_config, experiment_config, cluster_config, job_config,
                        output_dir, iteration_idx=None, total_iterations=None, weight_sample_id=None,
-                       pr_sweep_metadata=None):
+                       pr_sweep_metadata=None, plan_row_metadata=None):
     pbar_kw_per_server, r_kw_per_server, *weights = params
     if iteration_idx is not None and total_iterations is not None:
         print(f"\n========== Iteration {iteration_idx}/{total_iterations} ==========")
@@ -1242,6 +1457,7 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         policy_config.runtime_policy_name,
         workload_name,
         workload_config,
+    ] + plan_provenance_values(plan_row_metadata) + [
         policy_config.policy_parameters.get("node_count_control"),
         policy_config.policy_parameters.get("power_cap_percentage", ""),
         json.dumps(policy_config.policy_parameters.get("probabilities", "")),
@@ -1297,6 +1513,7 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         weight_sample_id,
         workload_name,
         workload_config,
+    ] + plan_provenance_values(plan_row_metadata) + [
         pr_values["Pbar_kw_per_server"],
         pr_values["R_kw_per_server"],
         pr_values["P_actual_watts"],
@@ -1391,6 +1608,164 @@ def generate_random_softmax_weights(job_type_count, server_count, num_weight_sam
 
     return weight_combinations
 
+
+def grid_search_plan_rows(cost_function_config, policy_config, experiment_config, cluster_config, job_config,
+                          output_dir, plan_rows, pr_sweep_metadata):
+    """Execute exact plan rows without a P/R x weight Cartesian product."""
+    best_cost = float('inf')
+    best_params = None
+    initialize_grid_search_output_files(output_dir, job_config.job_type_count)
+    total_iterations = len(plan_rows)
+    print("\nExact sweep-plan configuration:")
+    print(f"  plan rows in this worker = {total_iterations}")
+    print(f"  job_type_count = {job_config.job_type_count}")
+    print(f"  policy_name = {policy_config.runtime_policy_name}")
+    print(f"  plan source = {pr_sweep_metadata.get('Plan_Source_File', '')}")
+
+    for iteration_idx, plan_row in enumerate(plan_rows, start=1):
+        utilization = float(plan_row['utilization'])
+        pbar = float(plan_row['Pbar_kw_per_server'])
+        reserve = float(plan_row['R_kw_per_server'])
+        weights = [float(x) for x in plan_row['weights']]
+        simulation_seed = int(plan_row['simulation_seed'])
+
+        set_experiment_utilization(experiment_config, utilization)
+        # ExperimentConfigReader exposes random_seed read-only, but Simulator reads the
+        # internal value when it is constructed. This exact per-row override is recorded
+        # in both CSVs through plan provenance.
+        experiment_config._random_seed = simulation_seed
+
+        row_metadata = dict(plan_row)
+        row_pr_metadata = dict(pr_sweep_metadata)
+        row_pr_metadata.update({
+            'Workload_Name': os.path.splitext(os.path.basename(row_metadata.get('workload_config', '')))[0]
+                or pr_sweep_metadata.get('Workload_Name', ''),
+            'Workload_Config': row_metadata.get('workload_config', pr_sweep_metadata.get('Workload_Config', '')),
+        })
+
+        params = [pbar, reserve] + weights
+        cost = objective_function(
+            params,
+            cost_function_config,
+            policy_config,
+            experiment_config,
+            cluster_config,
+            job_config,
+            output_dir,
+            iteration_idx=iteration_idx,
+            total_iterations=total_iterations,
+            weight_sample_id=int(plan_row.get('weight_index_within_pr', iteration_idx - 1)),
+            pr_sweep_metadata=row_pr_metadata,
+            plan_row_metadata=row_metadata,
+        )
+        if cost < best_cost:
+            best_cost = cost
+            best_params = [utilization] + params
+    return best_params
+
+
+def initialize_grid_search_output_files(output_dir, job_type_count):
+        # CSV file for raw simulator outputs only.
+        results_file = os.path.join(output_dir, 'grid_search_results.csv')
+        with open(results_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            headers = [
+                'Iteration',
+                'Weight_Sample_ID',
+                'Policy_Name',
+                'Workload_Name',
+                'Workload_Config',
+                ] + PLAN_PROVENANCE_COLUMNS + [
+                'Node_Count_Control',
+                'Power_Cap_Percentage',
+                'Flex_Resource_Probabilities',
+                'Pbar_kw_per_server',
+                'R_kw_per_server',
+                'P_actual_watts',
+                'R_actual_watts',
+                'Pbar_ratio',
+                'R_ratio',
+                'Pbar_denominator_watts',
+                'R_denominator_watts',
+                'server_count',
+                'utilization',
+                'workload_mix_size',
+                'workload_mix',
+                ] + [f'Weight_{i}' for i in range(job_type_count)] + [
+                'Simulator_RSR_Total_Cost',
+                'Simulator_Power_Cost',
+                'Mtrack_Error_MeanAbs_Normalized',
+                'Mtrack_Error_MeanAbs_Watts',
+                'Mtrack_Price_Coefficient_piE',
+                'Mtrack_Hour_Seconds',
+                'Mtrack_Cost',
+                'QoS_Delay_Probability_Sum',
+                'QoS_Violation_Ratio',
+                'QoS_Delay_Probabilities',
+                ]
+            writer.writerow(headers)
+
+        # Separate diagnostics file for residuals, percentiles, activation-function terms,
+        # and P/R sweep audit metadata. These extra P/R metadata columns are diagnostic only.
+        diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
+        with open(diagnostics_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            diagnostic_headers = [
+                'Iteration',
+                'Weight_Sample_ID',
+                'Workload_Name',
+                'Workload_Config',
+                ] + PLAN_PROVENANCE_COLUMNS + [
+                'Pbar_kw_per_server',
+                'R_kw_per_server',
+                'P_actual_watts',
+                'R_actual_watts',
+                'Pbar_ratio',
+                'R_ratio',
+                'server_count',
+                'utilization',
+                'PR_Sweep_Mode',
+                'Pmin_kw_per_server',
+                'Pmax_kw_per_server',
+                'Pbar_lower_bound_kw_per_server',
+                'Pbar_upper_bound_kw_per_server',
+                'PR_upper_bound_kw_per_server',
+                'R_lower_bound_kw_per_server',
+                'R_max_for_this_Pbar_kw_per_server',
+                'P_plus_R_kw_per_server',
+                'P_minus_R_kw_per_server',
+                'Pbar_points',
+                'R_points_per_Pbar',
+                'PR_Total_Pairs_Before_Chunk',
+                'PR_Chunk_Index',
+                'PR_Num_Chunks',
+                'PR_Chunk_Start_Index',
+                'PR_Chunk_End_Index_Exclusive',
+                'PR_Pairs_In_Chunk',
+                'Weight_Equal_Value',
+                'Weight_Relative_Lower_Bound',
+                'Weight_Relative_Upper_Bound',
+                'Weight_Server_Lower_Bound',
+                'Weight_Upper_From_Lower_Bound',
+                'Weight_Final_Lower_Bound',
+                'Weight_Final_Upper_Bound',
+                'Weight_Min',
+                'Weight_Max',
+                'Ctrack_Epsilon_90th',
+                'Ctrack_Gamma',
+                'Ctrack_Residual',
+                'Ctrack_Mu',
+                'Ctrack_MuScaled_Residual',
+                'Ctrack_SoftPlus_Value',
+                'Ctrack_Psi',
+                'Ctrack_Weighted_Cost',
+                'QoS_Delay_Probability_Residual_Sum',
+                'QoS_Delay_Probability_Residuals',
+                'Diagnostic_FlexDC_SoftPlus_QoS_Cost',
+                'Diagnostic_FullPaperObjective_Cost',
+                ]
+            writer.writerow(diagnostic_headers)
+
 def grid_search_parameters(cost_function_config, policy_config, experiment_config, cluster_config, job_config, output_dir,
                            utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata):
     """
@@ -1416,104 +1791,8 @@ def grid_search_parameters(cost_function_config, policy_config, experiment_confi
         weight_combinations=weight_combinations,
     )
 
-    # CSV file for raw simulator outputs only.
-    results_file = os.path.join(output_dir, 'grid_search_results.csv')
-    with open(results_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        headers = [
-            'Iteration',
-            'Weight_Sample_ID',
-            'Policy_Name',
-            'Workload_Name',
-            'Workload_Config',
-            'Node_Count_Control',
-            'Power_Cap_Percentage',
-            'Flex_Resource_Probabilities',
-            'Pbar_kw_per_server',
-            'R_kw_per_server',
-            'P_actual_watts',
-            'R_actual_watts',
-            'Pbar_ratio',
-            'R_ratio',
-            'Pbar_denominator_watts',
-            'R_denominator_watts',
-            'server_count',
-            'utilization',
-            'workload_mix_size',
-            'workload_mix',
-            ] + [f'Weight_{i}' for i in range(job_config.job_type_count)] + [
-            'Simulator_RSR_Total_Cost',
-            'Simulator_Power_Cost',
-            'Mtrack_Error_MeanAbs_Normalized',
-            'Mtrack_Error_MeanAbs_Watts',
-            'Mtrack_Price_Coefficient_piE',
-            'Mtrack_Hour_Seconds',
-            'Mtrack_Cost',
-            'QoS_Delay_Probability_Sum',
-            'QoS_Violation_Ratio',
-            'QoS_Delay_Probabilities',
-            ]
-        writer.writerow(headers)
+    initialize_grid_search_output_files(output_dir, job_config.job_type_count)
 
-    # Separate diagnostics file for residuals, percentiles, activation-function terms,
-    # and P/R sweep audit metadata. These extra P/R metadata columns are diagnostic only.
-    diagnostics_file = os.path.join(output_dir, 'grid_search_diagnostics.csv')
-    with open(diagnostics_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        diagnostic_headers = [
-            'Iteration',
-            'Weight_Sample_ID',
-            'Workload_Name',
-            'Workload_Config',
-            'Pbar_kw_per_server',
-            'R_kw_per_server',
-            'P_actual_watts',
-            'R_actual_watts',
-            'Pbar_ratio',
-            'R_ratio',
-            'server_count',
-            'utilization',
-            'PR_Sweep_Mode',
-            'Pmin_kw_per_server',
-            'Pmax_kw_per_server',
-            'Pbar_lower_bound_kw_per_server',
-            'Pbar_upper_bound_kw_per_server',
-            'PR_upper_bound_kw_per_server',
-            'R_lower_bound_kw_per_server',
-            'R_max_for_this_Pbar_kw_per_server',
-            'P_plus_R_kw_per_server',
-            'P_minus_R_kw_per_server',
-            'Pbar_points',
-            'R_points_per_Pbar',
-            'PR_Total_Pairs_Before_Chunk',
-            'PR_Chunk_Index',
-            'PR_Num_Chunks',
-            'PR_Chunk_Start_Index',
-            'PR_Chunk_End_Index_Exclusive',
-            'PR_Pairs_In_Chunk',
-            'Weight_Equal_Value',
-            'Weight_Relative_Lower_Bound',
-            'Weight_Relative_Upper_Bound',
-            'Weight_Server_Lower_Bound',
-            'Weight_Upper_From_Lower_Bound',
-            'Weight_Final_Lower_Bound',
-            'Weight_Final_Upper_Bound',
-            'Weight_Min',
-            'Weight_Max',
-            'Ctrack_Epsilon_90th',
-            'Ctrack_Gamma',
-            'Ctrack_Residual',
-            'Ctrack_Mu',
-            'Ctrack_MuScaled_Residual',
-            'Ctrack_SoftPlus_Value',
-            'Ctrack_Psi',
-            'Ctrack_Weighted_Cost',
-            'QoS_Delay_Probability_Residual_Sum',
-            'QoS_Delay_Probability_Residuals',
-            'Diagnostic_FlexDC_SoftPlus_QoS_Cost',
-            'Diagnostic_FullPaperObjective_Cost',
-            ]
-        writer.writerow(diagnostic_headers)
 
     total_iterations = count_valid_parameter_combinations(
         utilization_values,
@@ -1647,7 +1926,17 @@ if __name__ == "__main__":
     parser.add_argument('--weight-file', type=str, default=None,
                         help="Optional CSV or JSON file containing custom weight vectors. "
                              "CSV rows should be one vector per row. "
-                             "JSON can be a list of vectors or {'weights': [...]}.")
+                             "JSON can be a list of vectors or {'weights': [...] }.")
+
+    parser.add_argument('--sweep-plan-file', type=str, default=None,
+                        help="Optional exact CSV/JSON plan. Each row specifies utilization, Pbar, R, weights, "
+                             "and simulation_seed. Plan mode bypasses the legacy Cartesian sweep.")
+    parser.add_argument('--plan-chunk-index', type=int, default=0,
+                        help="Zero-based exact-plan row chunk index. Default: 0.")
+    parser.add_argument('--plan-num-chunks', type=int, default=1,
+                        help="Number of deterministic exact-plan row chunks. Default: 1.")
+    parser.add_argument('--validate-sweep-plan-only', action='store_true',
+                        help="Validate and summarize the selected plan chunk, then exit without simulation.")
 
     # Below is for runtime policies
     # I added node count control per Kerim's request
@@ -1690,28 +1979,54 @@ if __name__ == "__main__":
         policy_parameters=policy_parameters
     )
 
-    utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata = build_sweep_values(
-        args=args,
-        job_config=job_config,
-        experiment_config=experiment_config
-    )
-    pr_sweep_metadata["Workload_Name"] = os.path.splitext(os.path.basename(args.job_config))[0]
-    pr_sweep_metadata["Workload_Config"] = args.job_config
+    if args.sweep_plan_file:
+        plan_rows, pr_sweep_metadata = load_sweep_plan_rows(
+            path=args.sweep_plan_file,
+            args=args,
+            job_config=job_config,
+            experiment_config=experiment_config,
+        )
+        pr_sweep_metadata["Workload_Name"] = os.path.splitext(os.path.basename(args.job_config))[0]
+        pr_sweep_metadata["Workload_Config"] = args.job_config
+        print(f"Validated exact sweep plan rows in selected chunk: {len(plan_rows)}")
+        if args.validate_sweep_plan_only:
+            print("Plan validation completed successfully; simulation was not run.")
+            raise SystemExit(0)
+    else:
+        utilization_values, pr_pairs, weight_combinations, pr_sweep_metadata = build_sweep_values(
+            args=args,
+            job_config=job_config,
+            experiment_config=experiment_config
+        )
+        pr_sweep_metadata["Workload_Name"] = os.path.splitext(os.path.basename(args.job_config))[0]
+        pr_sweep_metadata["Workload_Config"] = args.job_config
 
     output_dir = 'output/optimization/' + args.output_dir + '_' + start_time.strftime("%Y%m%d%H%M%S") + '/'
     os.makedirs(output_dir, exist_ok=True)
     print("saving results in", output_dir)
 
-    optimal_params = grid_search_parameters(
-        cost_function_config=cost_function_config,
-        policy_config=policy_config,
-        experiment_config=experiment_config,
-        cluster_config=cluster_config,
-        job_config=job_config,
-        output_dir=output_dir,
-        utilization_values=utilization_values,
-        pr_pairs=pr_pairs,
-        weight_combinations=weight_combinations,
-        pr_sweep_metadata=pr_sweep_metadata
-    )
+    if args.sweep_plan_file:
+        optimal_params = grid_search_plan_rows(
+            cost_function_config=cost_function_config,
+            policy_config=policy_config,
+            experiment_config=experiment_config,
+            cluster_config=cluster_config,
+            job_config=job_config,
+            output_dir=output_dir,
+            plan_rows=plan_rows,
+            pr_sweep_metadata=pr_sweep_metadata,
+        )
+    else:
+        optimal_params = grid_search_parameters(
+            cost_function_config=cost_function_config,
+            policy_config=policy_config,
+            experiment_config=experiment_config,
+            cluster_config=cluster_config,
+            job_config=job_config,
+            output_dir=output_dir,
+            utilization_values=utilization_values,
+            pr_pairs=pr_pairs,
+            weight_combinations=weight_combinations,
+            pr_sweep_metadata=pr_sweep_metadata
+        )
     print("Best Parameters Under Simulator RSR Total Cost Only:", optimal_params)

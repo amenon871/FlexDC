@@ -145,3 +145,11 @@ tests/simulator-functions/output/*
 src/peacsim/wandb/*
 wandb/*
 .vscode/launch.json
+
+# large result folders
+traditional_is016_results/
+traditionaliso_newqos_pilot/
+traditionaliso_newqos_pilot_flexdc_configured_objective/
+traditionaliso_newqos_pilot_plus_w2_dense_v1_flexdc_configured_objective/
+traditionaliso_newqos_pilot_plus_w2_dense_v1_raw/
+traditionaliso_newqos_pilot_w2_dense_v1_local_only/
