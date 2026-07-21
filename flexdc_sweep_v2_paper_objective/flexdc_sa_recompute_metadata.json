@@ -1,0 +1,36 @@
+{
+  "results_csv": "flexdc_sweep_v2_vetted\\flexdc_sweep_combined_grid_search_results.csv",
+  "diagnostics_csv": "flexdc_sweep_v2_vetted\\flexdc_sweep_combined_grid_search_diagnostics.csv",
+  "rows": 19008,
+  "merge_keys": [
+    "Source_Output_Dir",
+    "Iteration"
+  ],
+  "mode": "replace_original_columns_with_sa_recomputed_values",
+  "sa_constants": {
+    "psi1": 1.0,
+    "psi2": 10.0,
+    "tracking_error_constraint": 0.3,
+    "beta": 20.0,
+    "rho": 2.0,
+    "qos_constraint": 0.1
+  },
+  "formula": {
+    "Ctrack_Weighted_Cost": "psi1 * softplus(psi2 * (Ctrack_Epsilon_90th - tracking_error_constraint))",
+    "Diagnostic_FlexDC_SoftPlus_QoS_Cost": "beta * sum_j softplus(rho * (QoS_Delay_Probability_j - qos_constraint))",
+    "Diagnostic_FullPaperObjective_Cost": "Simulator_RSR_Total_Cost + Ctrack_Weighted_Cost + Diagnostic_FlexDC_SoftPlus_QoS_Cost"
+  },
+  "validation": {
+    "input_current_ctrack_max_abs_diff": 5.684341886080802e-14,
+    "input_current_qos_max_abs_diff": 1.7763568394002505e-15,
+    "input_current_full_max_abs_diff": 8.526512829121202e-14,
+    "output_full_reconstruction_max_abs_diff": 0.0,
+    "qos_probability_sum_max_abs_diff": 1.3322676295501878e-15
+  },
+  "outputs": {
+    "results_csv": "flexdc_sweep_v2_paper_objective\\flexdc_sweep_combined_grid_search_results.csv",
+    "diagnostics_csv": "flexdc_sweep_v2_paper_objective\\flexdc_sweep_combined_grid_search_diagnostics.csv",
+    "summary": "flexdc_sweep_v2_paper_objective\\flexdc_sa_recompute_summary.csv",
+    "metadata": "flexdc_sweep_v2_paper_objective\\flexdc_sa_recompute_metadata.json"
+  }
+}
