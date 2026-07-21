@@ -1232,9 +1232,9 @@ def run_exact_plan(args) -> None:
             rows.append(record)
             write_manifest()
             print(f"Finished {completed}/{len(pending)} {item['output_label']} status={record['status']}")
-            while next_index < len(pending) and len(still_running) < max_workers:
-                start_one(pending[next_index]); next_index += 1
         running = still_running
+        while next_index < len(pending) and len(running) < max_workers:
+            start_one(pending[next_index]); next_index += 1
 
     write_manifest()
     print(f"Plan launch manifest: {manifest_path}")
