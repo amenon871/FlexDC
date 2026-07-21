@@ -283,13 +283,23 @@ PLAN_PROVENANCE_COLUMNS = [
     'Base_Plan_Row_ID',
     'Design_Version',
     'Context_ID',
+    'PR_ID',
     'PR_Stratum',
     'PR_Stratum_Detail',
+    'Weight_ID',
     'Weight_Stratum',
+    'Weight_Family',
+    'Weight_Detail',
     'Dirichlet_Alpha',
     'Anchor_Type',
+    'Data_Split',
+    'R_Over_P',
+    'Configured_R_Over_P_Max',
+    'Configured_Weight_Lower',
+    'Configured_Weight_Upper',
     'Simulation_Seed',
     'Is_Replicate',
+    'Replicate_Of_Plan_Row_ID',
     'Plan_Source_File',
 ]
 
@@ -315,6 +325,19 @@ def normalize_plan_bool(value):
     return str(value).strip().lower() in {'true', '1', 'yes', 'y', 't'}
 
 
+def optional_plan_float(value):
+    """Return None for blank/NaN plan cells, otherwise a finite float."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if text == '' or text.lower() in {'nan', 'none'}:
+        return None
+    parsed = float(value)
+    if not np.isfinite(parsed):
+        return None
+    return parsed
+
+
 def same_config_reference(plan_value, cli_value):
     """Compare path references by resolved path when possible, otherwise by filename stem."""
     if plan_value is None or str(plan_value).strip() == '':
@@ -336,13 +359,23 @@ def plan_provenance_values(plan_row_metadata):
         row.get('base_plan_row_id', ''),
         row.get('design_version', ''),
         row.get('context_id', ''),
+        row.get('pr_id', ''),
         row.get('pr_stratum', ''),
         row.get('pr_stratum_detail', ''),
+        row.get('weight_id', ''),
         row.get('weight_stratum', ''),
+        row.get('weight_family', ''),
+        row.get('weight_detail', ''),
         row.get('dirichlet_alpha', ''),
         row.get('anchor_type', ''),
+        row.get('data_split', ''),
+        row.get('R_over_P', row.get('r_over_p', '')),
+        row.get('configured_r_over_p_max', ''),
+        row.get('configured_weight_lower', ''),
+        row.get('configured_weight_upper', ''),
         row.get('simulation_seed', ''),
         row.get('is_replicate', ''),
+        row.get('replicate_of_plan_row_id', ''),
         row.get('plan_source_file', ''),
     ]
 
@@ -410,7 +443,10 @@ def load_sweep_plan_rows(path, args, job_config, experiment_config):
         pbar_upper_factor=args.pbar_upper_factor,
         pr_upper_factor=args.pr_upper_factor,
     )
-    weight_bounds = calculate_weight_bounds(job_config.job_type_count, experiment_config.server_count)
+    legacy_weight_bounds = calculate_weight_bounds(
+        job_config.job_type_count,
+        experiment_config.server_count,
+    )
 
     validated = []
     for row_index, row in plan_df.reset_index(drop=True).iterrows():
@@ -426,6 +462,80 @@ def load_sweep_plan_rows(path, args, job_config, experiment_config):
             enforce_weight_bounds=True,
         )
 
+        plan_r_over_p_max = optional_plan_float(row.get('configured_r_over_p_max'))
+        cli_r_over_p_max = optional_plan_float(args.r_over_p_max)
+        if (
+            plan_r_over_p_max is not None
+            and cli_r_over_p_max is not None
+            and not np.isclose(plan_r_over_p_max, cli_r_over_p_max, atol=1e-9)
+        ):
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} configured_r_over_p_max="
+                f"{plan_r_over_p_max} does not match CLI --r-over-p-max="
+                f"{cli_r_over_p_max}."
+            )
+        effective_r_over_p_max = (
+            cli_r_over_p_max if cli_r_over_p_max is not None else plan_r_over_p_max
+        )
+
+        plan_weight_lower = optional_plan_float(row.get('configured_weight_lower'))
+        plan_weight_upper = optional_plan_float(row.get('configured_weight_upper'))
+        cli_weight_lower = optional_plan_float(args.configured_weight_lower)
+        cli_weight_upper = optional_plan_float(args.configured_weight_upper)
+        if (
+            plan_weight_lower is not None
+            and cli_weight_lower is not None
+            and not np.isclose(plan_weight_lower, cli_weight_lower, atol=1e-9)
+        ):
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} configured_weight_lower="
+                f"{plan_weight_lower} does not match CLI --configured-weight-lower="
+                f"{cli_weight_lower}."
+            )
+        if (
+            plan_weight_upper is not None
+            and cli_weight_upper is not None
+            and not np.isclose(plan_weight_upper, cli_weight_upper, atol=1e-9)
+        ):
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} configured_weight_upper="
+                f"{plan_weight_upper} does not match CLI --configured-weight-upper="
+                f"{cli_weight_upper}."
+            )
+        configured_weight_lower = (
+            cli_weight_lower if cli_weight_lower is not None else plan_weight_lower
+        )
+        configured_weight_upper = (
+            cli_weight_upper if cli_weight_upper is not None else plan_weight_upper
+        )
+        effective_weight_lower = max(
+            legacy_weight_bounds['Weight_Final_Lower_Bound'],
+            configured_weight_lower
+            if configured_weight_lower is not None
+            else legacy_weight_bounds['Weight_Final_Lower_Bound'],
+        )
+        effective_weight_upper = min(
+            legacy_weight_bounds['Weight_Final_Upper_Bound'],
+            configured_weight_upper
+            if configured_weight_upper is not None
+            else legacy_weight_bounds['Weight_Final_Upper_Bound'],
+        )
+        if effective_weight_upper < effective_weight_lower - 1e-9:
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} has infeasible effective weight bounds "
+                f"[{effective_weight_lower}, {effective_weight_upper}]."
+            )
+        if min(weights) < effective_weight_lower - 1e-6:
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} has weight below effective lower bound: "
+                f"min={min(weights)}, lower={effective_weight_lower}."
+            )
+        if max(weights) > effective_weight_upper + 1e-6:
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} has weight above effective upper bound: "
+                f"max={max(weights)}, upper={effective_weight_upper}."
+            )
+
         if pbar < bounds['Pbar_lower_bound_kw_per_server'] - PR_SWEEP_EPS:
             raise ValueError(f"Plan row {row['plan_row_id']} has Pbar below workload bound: {pbar}")
         if pbar > bounds['Pbar_upper_bound_kw_per_server'] + PR_SWEEP_EPS:
@@ -434,6 +544,15 @@ def load_sweep_plan_rows(path, args, job_config, experiment_config):
             raise ValueError(f"Plan row {row['plan_row_id']} has R below lower bound: {reserve}")
         if reserve > pbar + PR_SWEEP_EPS:
             raise ValueError(f"Plan row {row['plan_row_id']} has R>Pbar: Pbar={pbar}, R={reserve}")
+        if (
+            effective_r_over_p_max is not None
+            and reserve > effective_r_over_p_max * pbar + PR_SWEEP_EPS
+        ):
+            raise ValueError(
+                f"Plan row {row['plan_row_id']} violates R/P cap: "
+                f"R={reserve}, Pbar={pbar}, R/P={reserve / pbar}, "
+                f"limit={effective_r_over_p_max}."
+            )
         if pbar + reserve > bounds['PR_upper_bound_kw_per_server'] + PR_SWEEP_EPS:
             raise ValueError(
                 f"Plan row {row['plan_row_id']} violates Pbar+R bound: "
@@ -451,6 +570,18 @@ def load_sweep_plan_rows(path, args, job_config, experiment_config):
         metadata['utilization'] = utilization
         metadata['simulation_seed'] = seed
         metadata['is_replicate'] = normalize_plan_bool(metadata.get('is_replicate', False))
+        metadata['R_over_P'] = float(reserve / pbar)
+        metadata['configured_r_over_p_max'] = (
+            '' if effective_r_over_p_max is None else float(effective_r_over_p_max)
+        )
+        metadata['configured_weight_lower'] = (
+            '' if configured_weight_lower is None else float(configured_weight_lower)
+        )
+        metadata['configured_weight_upper'] = (
+            '' if configured_weight_upper is None else float(configured_weight_upper)
+        )
+        metadata['effective_weight_lower'] = float(effective_weight_lower)
+        metadata['effective_weight_upper'] = float(effective_weight_upper)
         metadata['plan_source_file'] = str(plan_path)
         validated.append(metadata)
 
@@ -1496,15 +1627,37 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
     if pr_upper_bound_kw in (None, ""):
         r_max_for_this_pbar_kw = ""
     else:
-        r_max_for_this_pbar_kw = min(
+        r_max_candidates = [
             float(pbar_kw_per_server),
-            float(pr_upper_bound_kw) - float(pbar_kw_per_server)
+            float(pr_upper_bound_kw) - float(pbar_kw_per_server),
+        ]
+        plan_r_over_p_max = optional_plan_float(
+            (plan_row_metadata or {}).get('configured_r_over_p_max')
         )
+        if plan_r_over_p_max is not None:
+            r_max_candidates.append(plan_r_over_p_max * float(pbar_kw_per_server))
+        r_max_for_this_pbar_kw = min(r_max_candidates)
 
     p_plus_r_kw = float(pbar_kw_per_server) + float(r_kw_per_server)
     p_minus_r_kw = float(pbar_kw_per_server) - float(r_kw_per_server)
 
     weight_bounds = calculate_weight_bounds(job_config.job_type_count, experiment_config.server_count)
+    configured_weight_lower = optional_plan_float(
+        (plan_row_metadata or {}).get('configured_weight_lower')
+    )
+    configured_weight_upper = optional_plan_float(
+        (plan_row_metadata or {}).get('configured_weight_upper')
+    )
+    if configured_weight_lower is not None:
+        weight_bounds['Weight_Final_Lower_Bound'] = max(
+            weight_bounds['Weight_Final_Lower_Bound'],
+            configured_weight_lower,
+        )
+    if configured_weight_upper is not None:
+        weight_bounds['Weight_Final_Upper_Bound'] = min(
+            weight_bounds['Weight_Final_Upper_Bound'],
+            configured_weight_upper,
+        )
     weight_min = float(np.min(weights))
     weight_max = float(np.max(weights))
 
@@ -1901,6 +2054,18 @@ if __name__ == "__main__":
 
     parser.add_argument('--pr-upper-factor', type=float, default=DEFAULT_PR_UPPER_FACTOR,
                         help="Upper Pbar+R factor applied to workload Pmax. Default: 1.3.")
+
+    parser.add_argument('--r-over-p-max', type=float, default=None,
+                        help="Optional additional reserve cap R <= value * Pbar. "
+                             "Exact-plan rows may also carry configured_r_over_p_max.")
+
+    parser.add_argument('--configured-weight-lower', type=float, default=None,
+                        help="Optional additional lower bound for every scheduling weight. "
+                             "Intersected with existing server/job-count feasibility bounds.")
+
+    parser.add_argument('--configured-weight-upper', type=float, default=None,
+                        help="Optional additional upper bound for every scheduling weight. "
+                             "Intersected with existing server/job-count feasibility bounds.")
 
     parser.add_argument('--pbar-kw-per-server-range', type=str, default=None,
                         help="Optional compact physical Pbar linspace range in kW/server as 'min,max,num_points', "
