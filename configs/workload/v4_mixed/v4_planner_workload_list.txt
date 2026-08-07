@@ -1,0 +1,1 @@
+configs/workload/v4_mixed/V4-H4-RG.ini,configs/workload/v4_mixed/V4-H4-GL.ini,configs/workload/v4_mixed/V4-H4-LB.ini,configs/workload/v4_mixed/V4-H4-BR.ini,configs/workload/v4_mixed/V4-J5-GPT2.ini,configs/workload/v4_mixed/V4-J5-Bloom.ini,configs/workload/v4_mixed/V4-J6-RGL.ini,configs/workload/v4_mixed/V4-J8-ALL.ini

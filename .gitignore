@@ -153,3 +153,58 @@ traditionaliso_newqos_pilot_flexdc_configured_objective/
 traditionaliso_newqos_pilot_plus_w2_dense_v1_flexdc_configured_objective/
 traditionaliso_newqos_pilot_plus_w2_dense_v1_raw/
 traditionaliso_newqos_pilot_w2_dense_v1_local_only/
+
+/local_archive/
+
+# ------------------------------------------------------------
+# Python / local environments
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# ------------------------------------------------------------
+# FlexDC parallel-run scratch files
+# ------------------------------------------------------------
+.flexdc_plan_chunks/
+.flexdc_worker_bats/
+.flexdc_worker_logs/
+
+# ------------------------------------------------------------
+# Simulator/generated outputs
+# ------------------------------------------------------------
+output/
+src/peacsim/output/
+
+# ------------------------------------------------------------
+# Generated datasets
+# ------------------------------------------------------------
+flexdc_*_training_dataset/
+flexdc_sweep_*_plan_artifacts/
+flexdc_sweep_*_vetted/
+flexdc_sweep_*_colab_*/
+traditionaliso_*/
+
+# ------------------------------------------------------------
+# Temporary Colab/staging bundles
+# ------------------------------------------------------------
+*_colab_stage/
+*_colab_configs.zip
+
+# ------------------------------------------------------------
+# Generated sweep plans / manifests
+# ------------------------------------------------------------
+dataset_plan_launch_manifest_*.csv
+flexdc_sweep_plan_*.csv
+flexdc_sweep_plan_*_audit.json
+flexdc_sweep_plan_*_context_summary.csv
+
+# ------------------------------------------------------------
+# Generated figures/results/logs
+# ------------------------------------------------------------
+alpha_plots/
+alpha_results/
+alpha_plots.zip
+alpha_results.zip
+*.log

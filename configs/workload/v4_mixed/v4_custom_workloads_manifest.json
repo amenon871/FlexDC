@@ -1,0 +1,271 @@
+{
+  "design_version": "flexdc_sweep_v4_mixed",
+  "train_source": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\W1-train-qos4444.ini",
+  "infer_source": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\W2-short-qos5555.ini",
+  "workloads": [
+    {
+      "workload_id": "V4-H4-RG",
+      "job_count": 4,
+      "description": "Four-job hybrid: inference ResNet/GPT2 with training Llama/Bloom.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-H4-RG.ini",
+      "jobs": [
+        {
+          "role": "infer",
+          "application": "resnet",
+          "qos_constraint": 3.0
+        },
+        {
+          "role": "infer",
+          "application": "gpt2",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "train",
+          "application": "bloom",
+          "qos_constraint": 5.0
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-H4-GL",
+      "job_count": 4,
+      "description": "Four-job hybrid: training ResNet/Bloom with inference GPT2/Llama.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-H4-GL.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "infer",
+          "application": "gpt2",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "infer",
+          "application": "llama",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "bloom",
+          "qos_constraint": 4.5
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-H4-LB",
+      "job_count": 4,
+      "description": "Four-job hybrid: training ResNet/GPT2 with inference Llama/Bloom.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-H4-LB.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "llama",
+          "qos_constraint": 3.0
+        },
+        {
+          "role": "infer",
+          "application": "bloom",
+          "qos_constraint": 4.0
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-H4-BR",
+      "job_count": 4,
+      "description": "Four-job hybrid: inference ResNet/Bloom with training GPT2/Llama.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-H4-BR.ini",
+      "jobs": [
+        {
+          "role": "infer",
+          "application": "resnet",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "bloom",
+          "qos_constraint": 3.0
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-J5-GPT2",
+      "job_count": 5,
+      "description": "Five-job mix: all training profiles plus inference GPT2.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-J5-GPT2.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "train",
+          "application": "bloom",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "infer",
+          "application": "gpt2",
+          "qos_constraint": 3.5
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-J5-Bloom",
+      "job_count": 5,
+      "description": "Five-job mix: all training profiles plus inference Bloom.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-J5-Bloom.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "train",
+          "application": "bloom",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "bloom",
+          "qos_constraint": 3.5
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-J6-RGL",
+      "job_count": 6,
+      "description": "Six-job paired mix: training/inference ResNet, GPT2, and Llama.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-J6-RGL.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "infer",
+          "application": "resnet",
+          "qos_constraint": 3.0
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "gpt2",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "infer",
+          "application": "llama",
+          "qos_constraint": 3.0
+        }
+      ]
+    },
+    {
+      "workload_id": "V4-J8-ALL",
+      "job_count": 8,
+      "description": "Eight-job complete mix: training and inference versions of all four applications.",
+      "output_file": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\configs\\workload\\v4_mixed\\V4-J8-ALL.ini",
+      "jobs": [
+        {
+          "role": "train",
+          "application": "resnet",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "resnet",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "gpt2",
+          "qos_constraint": 4.0
+        },
+        {
+          "role": "infer",
+          "application": "gpt2",
+          "qos_constraint": 3.0
+        },
+        {
+          "role": "train",
+          "application": "llama",
+          "qos_constraint": 4.5
+        },
+        {
+          "role": "infer",
+          "application": "llama",
+          "qos_constraint": 3.5
+        },
+        {
+          "role": "train",
+          "application": "bloom",
+          "qos_constraint": 5.0
+        },
+        {
+          "role": "infer",
+          "application": "bloom",
+          "qos_constraint": 4.0
+        }
+      ]
+    }
+  ]
+}
