@@ -1,0 +1,53 @@
+# Foundation V1 approved full campaign
+
+Start with FULL_CAMPAIGN_GUIDE.md and FULL_CAMPAIGN_VALIDATION.md. Scientific definitions, profiles and all300000 master Phase-A rows are unchanged. The locked synthetic outcomes are precomputed in the same collection but sealed from fitting and selection.
+
+# Foundation V1: one command on one SCC fat node
+
+Use the committed foundation-dataset-v1-prep branch. Do not merge into main to deploy this campaign. Run from the FlexDC repository root.
+
+## Environment (entire campaign and every resume)
+
+Python3.10.x, NumPy2.2.6, pandas2.3.3, SciPy1.15.3. Use a Python3.10 environment; install the local simulator editable and requirements-foundation-v1.txt. The full orchestrator and adaptive plan generator reject numerical stack mismatches. Do not change versions between stages or resumes.
+
+```
+python -m pip install -e .
+python -m pip install -r requirements-foundation-v1.txt
+```
+
+## One invocation
+
+Dry-run the entire sequence first (no generated adaptive coordinates, no SQLite ledger, no FlexDC):
+```
+python -B am_run_flexdc_foundation_campaign_v1.py --full-campaign --partition ALL --unlock-locked-test --max-workers 96 --dry-run
+```
+
+After allocating the ONE FAT NODE and separately authorizing scientific collection:
+```
+python -u -B am_run_flexdc_foundation_campaign_v1.py --full-campaign --partition ALL --unlock-locked-test --max-workers 96 --execute --resume
+```
+96 is an example, not a hard-coded limit; choose a worker count appropriate for the allocated node. That exact value reaches EVERY stage's unchanged parallel-combo-runner. No nested pools, multi-node orchestration, network workers, MPI or distributed DB are added. A global local lock prevents a second orchestrator, including stage-only commands.
+
+TRAIN_DEV: Phase A -> audit -> measured Wave1 -> audit -> Wave2 -> audit -> Wave3 -> audit -> Wave4 -> audit -> measured repeat selection -> repeats -> audit/export TRAIN, DEVELOPMENT, TRAIN_DEV. Then LOCKED: the same six stages -> isolated locked export. Finally a counts/provenance completion manifest/report. Normal successful execution represents500000 observations; hard technical/scientific gates can safely halt it.
+
+TRAIN_DEV270000 Phase-A +144000 adaptive +36000 repeats =450000. LOCKED30000 +16000 +4000 =50000. Eventual total300000 +160000 +40000 =500000;250 per task across2000 tasks. Master Phase-A SHA256 remains bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f.
+
+## Sealed test, not post-freeze generation
+
+The researcher explicitly chose to precompute LOCKED_SYNTHETIC_TEST in this same collection campaign before Meta V4/FlexPFN development. It is predeclared, operationally isolated and SEALED. Never use it for training, normalization, architecture/hyperparameter selection or other development choices. Do not claim outcomes were generated after model freeze. Future completely new real profiles remain the strongest untouched external holdout. --unlock-locked-test authorizes collection only.
+
+Ledgers/status/exports: foundation_v1_runs/train_dev/ and foundation_v1_runs/locked_synthetic_test/. Raw worker trees: src/peacsim/output/optimization/foundation_v1_runs/<group>/. TRAIN/DEVELOPMENT/TRAIN_DEV exports never contain locked rows; no mixed model-training CSV is created. Root full-campaign reports contain counts/provenance, not detailed locked QoS metrics.
+
+## Recovery / safety
+
+Rerun the SAME full command with --resume after interruption. Progress is rebuilt from immutable plans/receipts and checksum-validated partition ledgers; cached COMPLETE flags are not trusted. Previously generated adaptive coordinates are reused rather than regenerated from later observations. Every stage re-ingests/audits, skips all terminal row IDs and submits only nonterminal rows. Missing atomic plan receipts can be reconstructed only by deterministic generation from the unchanged prerequisite evidence. A fully complete rerun validates ledgers/exports and returns FOUNDATION_V1_COMPLETE with simulation_calls_this_invocation=0.
+
+Technically complete insufficient-evidence rows stay terminal and are never automatically rerun, never scored feasible/infeasible, never adaptive anchors or valid training labels. STAGE_COMPLETE_WITH_EVIDENCE_SHORTFALL / EVIDENCE_SHORTFALL_REQUIRES_POLICY stop automatic progression. No replacement coordinates or silent quota changes. Genuine missing/corrupt/crashed executions remain same-ID retryable. Scientific input/output mismatches stop for review.
+
+Machine progress: foundation_v1_runs/full_campaign_status__ALL.json. Final manifest/report: foundation_v1_runs/foundation_v1_completion__ALL.json and .md. They include exact stage/count/source/seed/retry/evidence/provenance/version/Git/timestamp fields. Export receipts seal the isolated output files. Incomplete/unreceipted technical executions cannot be claimed as valid simulations; submitted rows and audited newly completed rows are reported separately.
+
+## Byte hashes: Windows to SCC
+
+The hash guard remains byte-exact. .gitattributes preserves the reviewed source/config/plan bytes across checkouts; two canonical ISO templates retain their existing approved CRLF bytes in the committed branch. No values or scientific hashes are changed. Before commit all sealed Git-index blobs are checked against the reviewed seal. SCC must use the exact approved source/config bytes; editor or Git newline conversion is NOT normalized at runtime. A mismatch must stop or be addressed by a newly reviewed release seal, never silently accepted. Do not run the release-sealing preparation utility on SCC to bypass a disagreement.
+
+Review ZIPs, runtime ledgers, worker outputs, temporary logs and scientific simulator results are excluded from source commits. Frozen pre-execution scientific manifests/INIs/plans are intentional versioned inputs. No actual Foundation simulations were run during implementation.

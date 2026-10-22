@@ -1,0 +1,22 @@
+{
+  "am_flexdc_foundation_v1_common.py::Domain": "aefaae8fade232291b39bcf36e668f79646157d7f1d851760ff229e2dd5ca566",
+  "am_flexdc_foundation_v1_common.py::make_row": "177b26d1b75f3ac3e77b8bf3b608d14407f82489da37aa6a52b845741998e116",
+  "am_flexdc_foundation_v1_common.py::maximin": "7862221b591ce45e415383fe3f7b65bac67d01447e340f5683a5f842fa6f8045",
+  "am_flexdc_foundation_v1_common.py::novel": "8a97608e0c20364f1b0f92545b1b0a5a2dc861cc874435f12b18d3195d9aac12",
+  "am_flexdc_foundation_v1_common.py::seed": "8c0e0c062af58c5c0d7d13173da315c84e5c7bb903f3dbd6a0c0b17be3b74438",
+  "am_flexdc_foundation_v1_common.py::violations": "453fcaf27e80e06d31ec0d02f7056fa4195ef8f0c26a16d4fbaf18d649d11f9c",
+  "am_flexdc_foundation_v1_common.py::weight_bounds": "6d9e0d75b2d719911c1bbe2b94d8346b7fce76ce361ef61865e6491084ef0693",
+  "foundation_v1/adaptive.py::boundary_pairs": "d9ff3c0558626cff1053f3d6b75704971ac2154f1901a691e97f213a1921b6ca",
+  "foundation_v1/adaptive.py::flags": "f622c0cf0c450237b37c95ad3e727fd28285c0ce824945530497d772ad2e099c",
+  "foundation_v1/adaptive.py::rank": "320ea0e482fba5b60a00bccb8f0d55c031f525fc1028fb4b4ee26b6c03abf059",
+  "foundation_v1/adaptive.py::repeats": "06e81efddee7428b569aa299163857aae07a9c0ec1c85a9982886b02461a18da",
+  "foundation_v1/adaptive.py::usable": "446c561c9767c136330ba5062809c8ff4a16e23ac50313fe0a03fff6bdc83201",
+  "foundation_v1/adaptive.py::wave": "639bc6674509966c8ea177c5a42b74c846b689659abbefd654eac7fec3e7a4d5",
+  "foundation_v1/planning.py::corners": "cdf017da5afd82c34842bd51b7b61b41b39b7433ac1aab2286560e68b05d08a3",
+  "foundation_v1/planning.py::static_candidates": "e4e50aa8d4d46a799f7224358844f90351e0afb69acaccb444fba485116fd0bf",
+  "foundation_v1/planning.py::weight_bank": "dc5c66a49a30898f28078e9a76bed661d6efed4833ac34f58e09c05641505a13",
+  "foundation_v1/profiles.py::anchors": "3c2308d70414a961f4d33102fb4b1115ba07c52f3e28624bf814a2f88d6a0657",
+  "foundation_v1/profiles.py::generate": "309745322e39f6bb808fba149ff5c604912371a15c5094ca11e1f486911c1d1d",
+  "foundation_v1/profiles.py::latent": "b4711917226e3ae8a96b867586114b44830c66e40e1c02916ee3549e410d8fc6",
+  "foundation_v1/profiles.py::physical": "640518d2e539e06aff5db2ccf915d5bb6cd85a521871e7bd9d48a08290464bbb"
+}

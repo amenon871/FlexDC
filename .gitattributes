@@ -1,0 +1,24 @@
+
+# Foundation V1 release seals are byte-exact across Windows and SCC.
+# -text preserves reviewed bytes; never normalize hashes at runtime.
+/am_*foundation*v1*.py -text
+/foundation_v1/** -text
+/tests/test_foundation_v1*.py -text
+/requirements-foundation-v1.txt -text
+/configs/foundation_v1/** -text
+/configs/workload/foundation_v1/** -text
+/foundation_v1_artifacts/** -text
+/src/peacsim/**/*.py -text
+/am_generate_flexdc_exact_sweep_plan.py -text
+/am_run_flexdc_dataset_parallel_combo.py -text
+/configs/optimization/simulated_annealing/SA_train_low_util_RSR_1000server.ini -text
+/configs/gradient_descent/gradient_descent.ini -text
+/configs/cluster/cluster.ini -text
+/data/1-17-2025_traditional.csv -text
+/configs/workload/W1-train-qos4444.ini -text
+/configs/workload/W2-short-qos5555.ini -text
+/configs/experiment/new_iso/traditional_signal/generated_server_counts/exp_traditional_iso16_servers_250.ini -text
+/configs/experiment/new_iso/traditional_signal/generated_server_counts/exp_traditional_iso16_servers_1000.ini -text
+
+/.gitattributes -text
+/.gitignore -text

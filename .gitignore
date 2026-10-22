@@ -208,3 +208,23 @@ alpha_results/
 alpha_plots.zip
 alpha_results.zip
 *.log
+
+# Foundation review bundles and collection runtime are never source commits.
+/FOUNDATION_DATASET_V1_*REVIEW*.zip
+/foundation_v1_runs/
+/foundation_v1_artifacts/execution_plans/
+/foundation_v1_artifacts/*.sqlite*
+/foundation_v1_artifacts/*campaign_status*.json
+/foundation_v1_artifacts/patch_v1/before_source/
+/foundation_v1_artifacts/full_campaign_validation/*log*.txt
+
+# Review-only logs/snapshots are retained locally, not published as source.
+/foundation_v1_artifacts/*.txt
+/foundation_v1_artifacts/*.patch
+/foundation_v1_artifacts/PATCH_FILE_INVENTORY.json
+/foundation_v1_artifacts/repository_state.json
+/foundation_v1_artifacts/patch_v1/*
+!/foundation_v1_artifacts/patch_v1/before_hashes.json
+# Future measured adaptive/repeat coordinates are runtime campaign evidence.
+/foundation_v1_artifacts/foundation_v1_wave*.csv*
+/foundation_v1_artifacts/foundation_v1_repeat*.csv*

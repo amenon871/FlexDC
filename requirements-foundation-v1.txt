@@ -1,0 +1,6 @@
+# Use Python 3.10.x. This file pins the numerical stack for the ENTIRE campaign.
+# Install the local simulator editable, then the existing requirements constrained here.
+-r requirements.txt
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3

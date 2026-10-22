@@ -1720,6 +1720,13 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         writer = csv.writer(f)
         writer.writerow(diagnostic_results)
 
+    # Opt-in observational evidence only. Historical plans and simulator behavior
+    # are unchanged; Foundation needs counts to distinguish unobserved Pj=0.
+    if (plan_row_metadata or {}).get('design_version') == 'FOUNDATION_V1':
+        from peacsim.foundation_v1_evidence import write_evidence
+        write_evidence(output_dir, plan_row_metadata, simulator, experiment_config,
+                       job_config, params, raw_results, diagnostic_results)
+
     return simulator_rsr_total_cost
 
 
