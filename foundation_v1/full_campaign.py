@@ -11,6 +11,7 @@ from am_flexdc_foundation_v1_common import (ROOT,ARTIFACTS,PHASE_A,Domain,contex
     read_json,write_json,iter_csv,file_hash,make_row,row_geometry,digest)
 from foundation_v1 import campaign,adaptive,audit,scope
 from foundation_v1.environment import versions
+from peacsim.foundation_v1_cleanup import telemetry
 
 STAGES=('phaseA','wave01','wave02','wave03','wave04','repeat')
 MASTER_SHA256='bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f'
@@ -135,7 +136,8 @@ def ledger_metrics(part):
         'evidence_shortfall_rows':insufficient,'technical_or_interrupted_attempts':technical_attempts,
         'technical_retry_row_submissions':max(0,submitted-len(unique)),
         'invalid_receipt_count':len(invalid),'invalid_execution_count_definition':'unique invalid technical receipt paths retained in per-stage audits; not scientific infeasibility',
-        'database_content_sha256':audit.verify_database(dbpath)}
+        'database_content_sha256':audit.verify_database(dbpath),
+        'transient_cleanup': telemetry(sorted(scope.raw_root(part).glob('foundation_v1_*')))}
 
 def run_full(a,partition):
     partition=scope.normalize(partition)
@@ -189,12 +191,13 @@ def run_full(a,partition):
                         raise RuntimeError('Stage scientific gate failed: '+result['status'])
                     state['simulation_calls_this_invocation']+=result.get('simulation_calls_this_invocation',0)
                     state['simulation_rows_submitted_this_invocation']+=result.get('simulation_rows_submitted_this_invocation',0)
-                    state['scopes'][part][stage]={'status':'COMPLETE','counts':result['counts'],'plan':plan_audit};save()
+                    state['scopes'][part][stage]={'status':'COMPLETE','counts':result['counts'],'plan':plan_audit,'transient_cleanup':result.get('transient_cleanup',{})};save()
                 active=(part,'export');state['active']={'partition':part,'stage':'export'};save()
                 receipt=export_scope(part,a.unlock_locked_test)
                 state['scopes'][part]['export']={'status':'COMPLETE','receipt':str(scope.run_root(part)/'full_export_receipt.json')};save()
             metrics={part:ledger_metrics(part) for part in scopes_for(partition)}
             total=sum(m['valid_rows'] for m in metrics.values())
+            state['transient_cleanup']={name:sum(m.get('transient_cleanup',{}).get(name,0) for m in metrics.values()) for name in ('transient_cleanup_files_deleted','transient_cleanup_bytes_deleted','transient_cleanup_failures','transient_cleanup_retries','transient_cleanup_pending')}
             if total!=sum(counts_for(p)['total'] for p in scopes_for(partition)):raise ValueError('Final full corpus total differs')
             state.update(status='FOUNDATION_V1_COMPLETE' if partition=='ALL' else 'FOUNDATION_SCOPE_COMPLETE',
                 ended_at=now(),valid_rows=total,expected={p:counts_for(p) for p in scopes_for(partition)},metrics=metrics,
@@ -210,7 +213,7 @@ def run_full(a,partition):
             print(json.dumps({'status':state['status'],'valid_rows':total,'simulation_calls_this_invocation':state['simulation_calls_this_invocation'],'manifest':str(manifest)},indent=2));return state
         except BaseException as error:
             text=str(error)
-            state['status']='EVIDENCE_SHORTFALL_REQUIRES_POLICY' if 'SHORTFALL' in text else 'STOPPED_REQUIRES_REVIEW_OR_RESUME'
+            state['status']='TRANSIENT_CLEANUP_REQUIRED' if 'TRANSIENT_CLEANUP_REQUIRED' in text else 'EVIDENCE_SHORTFALL_REQUIRES_POLICY' if 'SHORTFALL' in text else 'STOPPED_REQUIRES_REVIEW_OR_RESUME'
             state['error']={'type':type(error).__name__,'message':text}
             if active:state['scopes'][active[0]][active[1]]={'status':state['status']}
             save();raise

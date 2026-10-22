@@ -91,6 +91,8 @@ def execute_scope(a,partition):
         recovered=ingest(plan,outputs,database)
         if any('mismatch' in r['reason'].lower() or 'conflicting' in r['reason'].lower() or 'differs' in r['reason'].lower() for r in recovered['failures']):
             write_json(directory/'recovery_stop.json',recovered,False);raise ValueError('Scientific input/output disagreement:stop for review')
+        from foundation_v1.storage import gate as storage_gate
+        cleanup = storage_gate(outputs, directory, retry=True)
         # Stable shard membership is assigned before removing completed executions.
         allowed={r['plan_row_id'] for r in members()}
         missing=[r for r in pending_rows(plan,database,partition,a.task) if r['plan_row_id'] in allowed]
@@ -98,6 +100,7 @@ def execute_scope(a,partition):
         if not missing:
             summary=stage_summary(plan,database,allowed)
             summary['whole_scope_progress']=recovered
+            summary['transient_cleanup']=cleanup
             summary['selected_scope']={'task':a.task,'chunk_index':a.chunk_index,'chunk_count':a.chunk_count}
             summary['simulation_calls_this_invocation']=0
             summary['simulation_rows_submitted_this_invocation']=0
@@ -137,6 +140,8 @@ def execute_scope(a,partition):
             for row in missing:
                 if row['plan_row_id'] not in completed:execution_state(db,row['plan_row_id'],row['Task_ID'],'TECHNICAL_RETRY_REQUIRED',{'attempt':run_id,'returncode':code})
         db.close()
+        write_json(status_path,{'status':status,'returncode':code,'stage':a.stage,'partition':partition,'attempt':run_id,'audit':verified},False)
+        verified['transient_cleanup']=storage_gate(sorted(raw_root(partition).glob('foundation_v1_*')), directory, retry=False)
         write_json(status_path,{'status':status,'returncode':code,'stage':a.stage,'partition':partition,'attempt':run_id,'audit':verified},False)
         if status=='STAGE_COMPLETE_WITH_EVIDENCE_SHORTFALL':raise RuntimeError('Terminal evidence shortfall requires scientific policy; identical rows will NOT rerun')
         if status!='VALID_COMPLETE':raise RuntimeError('Partial outputs preserved;explicit same-identity resume schedules only nonterminal rows')

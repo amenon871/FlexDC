@@ -241,6 +241,8 @@ def test_foundation_evidence_hook_is_observational(task,tmp_path,monkeypatch):
     assert [r['observations'] for r in result['evidence_counts']]==[1]*j
     assert result['evidence_status']=='SUFFICIENT_JOB_TYPE_EVIDENCE'
     assert max(abs(v) for v in result['power_quantization_delta_watts'])<=.5
+    from peacsim.foundation_v1_cleanup import finalize_row
+    assert finalize_row(tmp_path,row['plan_row_id'])['cleanup_status']=='CLEANUP_COMPLETE'
 
 
 def test_historical_worker_ast_unchanged_except_guard():
@@ -250,11 +252,11 @@ def test_historical_worker_ast_unchanged_except_guard():
     current=ast.parse((ROOT/path).read_text(encoding='utf8'))
     count=0
     for node in ast.walk(current):
-        if isinstance(node,ast.FunctionDef) and node.name=='objective_function':
+        if isinstance(node,ast.FunctionDef) and node.name in ('objective_function','grid_search_plan_rows'):
             for statement in list(node.body):
                 if isinstance(statement,ast.If) and "'FOUNDATION_V1'" in ast.unparse(statement.test):
                     node.body.remove(statement);count+=1
-    assert count==1 and ast.dump(historical,include_attributes=False)==ast.dump(current,include_attributes=False)
+    assert count==3 and ast.dump(historical,include_attributes=False)==ast.dump(current,include_attributes=False)
 
 
 def test_repeat_selection_does_not_fill_with_catastrophe_when_better_exists(task):

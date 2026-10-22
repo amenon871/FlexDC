@@ -228,3 +228,6 @@ alpha_results.zip
 # Future measured adaptive/repeat coordinates are runtime campaign evidence.
 /foundation_v1_artifacts/foundation_v1_wave*.csv*
 /foundation_v1_artifacts/foundation_v1_repeat*.csv*
+
+# Storage-safety validation logs are local review evidence, not runtime source.
+/foundation_v1_artifacts/storage_safety_validation/*log*.txt

@@ -26,7 +26,7 @@ After allocating the ONE FAT NODE and separately authorizing scientific collecti
 ```
 python -u -B am_run_flexdc_foundation_campaign_v1.py --full-campaign --partition ALL --unlock-locked-test --max-workers 96 --execute --resume
 ```
-96 is an example, not a hard-coded limit; choose a worker count appropriate for the allocated node. That exact value reaches EVERY stage's unchanged parallel-combo-runner. No nested pools, multi-node orchestration, network workers, MPI or distributed DB are added. A global local lock prevents a second orchestrator, including stage-only commands.
+96 is an example, not a hard-coded limit; choose a worker count appropriate for the allocated node. That exact value reaches EVERY stage's bounded parallel-combo-runner. No nested pools, multi-node orchestration, network workers, MPI or distributed DB are added. A global local lock prevents a second orchestrator, including stage-only commands.
 
 TRAIN_DEV: Phase A -> audit -> measured Wave1 -> audit -> Wave2 -> audit -> Wave3 -> audit -> Wave4 -> audit -> measured repeat selection -> repeats -> audit/export TRAIN, DEVELOPMENT, TRAIN_DEV. Then LOCKED: the same six stages -> isolated locked export. Finally a counts/provenance completion manifest/report. Normal successful execution represents500000 observations; hard technical/scientific gates can safely halt it.
 
@@ -51,3 +51,43 @@ Machine progress: foundation_v1_runs/full_campaign_status__ALL.json. Final manif
 The hash guard remains byte-exact. .gitattributes preserves the reviewed source/config/plan bytes across checkouts; two canonical ISO templates retain their existing approved CRLF bytes in the committed branch. No values or scientific hashes are changed. Before commit all sealed Git-index blobs are checked against the reviewed seal. SCC must use the exact approved source/config bytes; editor or Git newline conversion is NOT normalized at runtime. A mismatch must stop or be addressed by a newly reviewed release seal, never silently accepted. Do not run the release-sealing preparation utility on SCC to bypass a disagreement.
 
 Review ZIPs, runtime ledgers, worker outputs, temporary logs and scientific simulator results are excluded from source commits. Frozen pre-execution scientific manifests/INIs/plans are intentional versioned inputs. No actual Foundation simulations were run during implementation.
+
+
+## Foundation-only per-row SCC storage safety
+
+After EACH row the worker closes and fsyncs both compact CSVs, atomically writes
+its Foundation evidence receipt, verifies its checksum and exact CSV row identity,
+and only then unlinks the explicit transient allowlist. It verifies absence
+(in particular power_trace.csv) before the next candidate starts.
+
+Allowlist: power_trace.csv, job_table.csv, PRtable.csv, base_weights.csv,
+waiting_jobs_by_job_type.csv, probabilistic_results.csv. The last two are optional
+per-second QoS arrays, created by Simulator.final_output only when availability_qos
+is enabled; all active extraction consumers have finished before finalization.
+Small QoS/cost/tracking summaries, results/diagnostics, evidence, logs, plans,
+ledgers and provenance remain. No wildcard or recursive deletion is used.
+
+Science and cleanup have separate states. EXECUTION_COMPLETE remains terminal
+whether evidence is sufficient or insufficient. CLEANUP_REQUIRED receives at most
+three deletion attempts per file (0.05s and 0.10s backoff). Unresolved deletion
+records its exact path/error and raises TRANSIENT_CLEANUP_REQUIRED. A shared local
+stop signal prevents subsequent rows/chunks; already running rows may finish and
+persist/clean normally. No global cleanup lock serializes the worker pool.
+
+Resume the SAME full campaign command after resolving permissions/storage issues.
+It ingests scientific receipts first, retries ONLY pending cleanup, and excludes
+all terminal row IDs from scientific scheduling. A crash immediately after the
+evidence receipt but before the cleanup-state update is also recovered. True
+unreceipted execution failures retain raw debugging files and remain retryable.
+Use campaign resume, not manual reexecution/overwriting of a partially used chunk.
+
+Cleanup receipts: each worker's foundation_cleanup/F1_*.json and current.json.
+Scoped storage gate: foundation_v1_runs/<group>/transient_cleanup_status.json.
+Stage/full-campaign summaries include files/bytes deleted, deletion failures,
+retries, and pending cleanup counts. Telemetry uses cheap per-file stat calls,
+never per-row recursive size scans. A power loss between unlink and its telemetry
+write can undercount deleted bytes; it cannot cause scientific reexecution.
+
+This storage policy is opt-in for FOUNDATION_V1 rows only. Historical simulator
+artifact retention is unchanged. Reviewed source byte hashes remain strict; use
+the NEW reviewed release bytes on SCC rather than resealing modified files there.

@@ -1124,6 +1124,7 @@ def prepare_plan_invocations(args) -> tuple[list[dict], Path, Path]:
                 "output_label": output_label,
                 "expected_plan_ids": chunk["plan_row_id"].astype(str).tolist(),
                 "expected_rows": int(len(chunk)),
+                "foundation_v1": bool("design_version" in chunk and (chunk["design_version"] == "FOUNDATION_V1").all()),
                 "log_path": str(log_path),
                 "command": cmd,
             })
@@ -1179,6 +1180,17 @@ def run_exact_plan(args) -> None:
         print(f"Manifest: {manifest_path}")
         return
 
+    # Foundation-only shared stop signal. Current rows may finish and persist;
+    # no worker starts another row or chunk after a storage-safety failure.
+    foundation_mode = any(item.get("foundation_v1", False) for item in invocations)
+    storage_stop = log_root / "foundation_storage_stop.json" if foundation_mode else None
+    if foundation_mode:
+        if not all(item.get("foundation_v1", False) for item in invocations):
+            raise ValueError("Do not mix Foundation and historical plan chunks")
+        env["FOUNDATION_V1_STORAGE_STOP"] = str(storage_stop.resolve())
+        if storage_stop.exists():
+            raise SystemExit("TRANSIENT_CLEANUP_REQUIRED: resume through the Foundation campaign after cleanup recovery")
+
     max_workers = min(args.plan_max_workers, max(1, len(pending)))
     running: list[dict] = []
     next_index = 0
@@ -1196,7 +1208,7 @@ def run_exact_plan(args) -> None:
         running.append({**item, "proc": proc, "log_handle": log_f, "started": time.time()})
         print(f"Launched {item['output_label']} ({item['expected_rows']} rows)")
 
-    while next_index < len(pending) and len(running) < max_workers:
+    while next_index < len(pending) and len(running) < max_workers and not (storage_stop and storage_stop.exists()):
         start_one(pending[next_index]); next_index += 1
 
     while running:
@@ -1229,15 +1241,23 @@ def run_exact_plan(args) -> None:
             else:
                 record["status"] = "failed_process"
                 failures += 1
+                if storage_stop and not storage_stop.exists():
+                    with storage_stop.open("w", encoding="utf8") as stop_stream:
+                        json.dump({"status": "FOUNDATION_WORKER_STOP", "worker": item["output_label"],
+                                   "return_code": int(rc), "log": item["log_path"]}, stop_stream)
+                        stop_stream.flush()
+                        os.fsync(stop_stream.fileno())
             rows.append(record)
             write_manifest()
             print(f"Finished {completed}/{len(pending)} {item['output_label']} status={record['status']}")
         running = still_running
-        while next_index < len(pending) and len(running) < max_workers:
+        while next_index < len(pending) and len(running) < max_workers and not (storage_stop and storage_stop.exists()):
             start_one(pending[next_index]); next_index += 1
 
     write_manifest()
     print(f"Plan launch manifest: {manifest_path}")
+    if storage_stop and storage_stop.exists():
+        raise SystemExit("TRANSIENT_CLEANUP_REQUIRED: stopped pending launches; scientific receipts preserved; " + str(storage_stop))
     if failures:
         raise SystemExit(f"{failures} exact-plan worker(s) failed. Inspect {log_root} and the manifest.")
     print("All exact-plan workers completed and passed row/Plan_Row_ID validation.")

@@ -187,3 +187,14 @@ def test_real_stage_plan_quota_and_identity_checks():
     # audit; this unit test checks the known stage-count algebra without workers.
     assert full.counts_for('TRAIN_DEV')=={'tasks':1800,'phaseA':270000,'adaptive':144000,'repeat':36000,'total':450000}
     assert full.counts_for('LOCKED_SYNTHETIC_TEST')=={'tasks':200,'phaseA':30000,'adaptive':16000,'repeat':4000,'total':50000}
+
+
+def test_storage_failure_preserves_explicit_full_campaign_stop_state(backend,monkeypatch):
+    from peacsim.foundation_v1_cleanup import CleanupRequired
+    def stop(*args,**kwargs):
+        raise CleanupRequired('TRANSIENT_CLEANUP_REQUIRED: FAKE file lock; scientific row remains terminal')
+    monkeypatch.setattr(campaign,'execute_scope',stop)
+    with pytest.raises(CleanupRequired):full.run_full(args(),'ALL')
+    state=read_json(backend.root/'foundation_v1_runs/full_campaign_status__ALL.json')
+    assert state['status']=='TRANSIENT_CLEANUP_REQUIRED'
+    assert not backend.generated and not backend.submitted
