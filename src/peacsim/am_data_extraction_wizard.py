@@ -354,6 +354,9 @@ def same_config_reference(plan_value, cli_value):
 
 def plan_provenance_values(plan_row_metadata):
     row = plan_row_metadata or {}
+    if row.get('design_version') == 'FOUNDATION_V1':
+        from peacsim.foundation_v1_schema import normalize_metadata
+        row = normalize_metadata(row)
     return [
         row.get('plan_row_id', ''),
         row.get('base_plan_row_id', ''),

@@ -6,6 +6,7 @@ import sqlite3
 from pathlib import Path
 
 import numpy as np
+from peacsim.foundation_v1_schema import validate_required_labels
 
 from am_flexdc_foundation_v1_common import (ROOT,ARTIFACTS,Domain,canonical,contexts,
     read_json,read_csv,row_geometry,make_row,digest,file_hash,write_json,write_csv,violations,parser)
@@ -28,6 +29,7 @@ def observation(row,receipt,task):
             if not math.isclose(float(record[key]),expected_value,rel_tol=0,abs_tol=1e-9):raise ValueError('Serialized request differs:'+key)
         if str(record['Plan_Row_ID'])!=row['plan_row_id']:raise ValueError('CSV/receipt row differs')
     if not np.allclose([float(r[f'Weight_{i}']) for i in range(d.j)],x[2:],rtol=0,atol=1e-9):raise ValueError('Serialized weights differ')
+    validate_required_labels(r,diag,d.j)
     pj=json.loads(r['QoS_Delay_Probabilities'])
     p90=float(diag['Ctrack_Epsilon_90th']);mean=float(r['Mtrack_Error_MeanAbs_Normalized'])
     if len(pj)!=d.j or not np.isfinite([mean,p90,*pj]).all() or mean<0:raise ValueError('Missing/nonfinite behavior vector')

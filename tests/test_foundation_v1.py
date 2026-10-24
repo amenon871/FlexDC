@@ -252,11 +252,11 @@ def test_historical_worker_ast_unchanged_except_guard():
     current=ast.parse((ROOT/path).read_text(encoding='utf8'))
     count=0
     for node in ast.walk(current):
-        if isinstance(node,ast.FunctionDef) and node.name in ('objective_function','grid_search_plan_rows'):
+        if isinstance(node,ast.FunctionDef) and node.name in ('objective_function','grid_search_plan_rows','plan_provenance_values'):
             for statement in list(node.body):
                 if isinstance(statement,ast.If) and "'FOUNDATION_V1'" in ast.unparse(statement.test):
                     node.body.remove(statement);count+=1
-    assert count==3 and ast.dump(historical,include_attributes=False)==ast.dump(current,include_attributes=False)
+    assert count==4 and ast.dump(historical,include_attributes=False)==ast.dump(current,include_attributes=False)
 
 
 def test_repeat_selection_does_not_fill_with_catastrophe_when_better_exists(task):

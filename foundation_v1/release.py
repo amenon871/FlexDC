@@ -14,7 +14,7 @@ def seal():
         names.update(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern))
     names.add('requirements-foundation-v1.txt');names.add('.gitattributes');names.add('configs/foundation_v1/approved_scientific_function_hashes.json')
     provenance={name:file_hash(ROOT/name) for name in sorted(names)}
-    result={**old,'status':'PREPARED_NOT_RUN','revision':'FOUNDATION_V1_PER_ROW_STORAGE_SAFETY',
+    result={**old,'status':'PREPARED_NOT_RUN','revision':'FOUNDATION_V1_SCC_OPTIONAL_PROVENANCE_JSON_FIX',
         'source_files':provenance,'uncommitted_source_sha256':digest(provenance),
         'versions':versions(require=True)['actual'],'sealed_test_policy':'outcomes precomputed in isolated collection; never model fitting/selection',
         'scientific_simulations_started':False}

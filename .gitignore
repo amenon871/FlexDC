@@ -231,3 +231,7 @@ alpha_results.zip
 
 # Storage-safety validation logs are local review evidence, not runtime source.
 /foundation_v1_artifacts/storage_safety_validation/*log*.txt
+
+# Isolated SCC NaN regression simulator outputs remain local test evidence.
+/foundation_v1_artifacts/scc_nan_validation/*_real_results.json
+/foundation_v1_artifacts/scc_nan_validation/test_execution_seal.json

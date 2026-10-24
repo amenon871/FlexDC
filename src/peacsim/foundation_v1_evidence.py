@@ -7,6 +7,7 @@ import os
 import subprocess
 from functools import lru_cache
 from pathlib import Path
+from peacsim.foundation_v1_schema import (validate_required_labels, json_safe, safe_record, normalize_metadata)
 
 
 @lru_cache(None)
@@ -21,6 +22,7 @@ def write_evidence(output_dir, metadata, simulator, experiment, job, params,
                    raw_results, diagnostic_results):
     if metadata.get('design_version') != 'FOUNDATION_V1':
         raise ValueError('Foundation evidence hook requires Foundation plan identity')
+    metadata=normalize_metadata(metadata)
     row_id=str(metadata['plan_row_id'])
     if not row_id.startswith('F1_') or not row_id.replace('_','').isalnum():raise ValueError('Invalid Foundation row ID')
     directory=Path(output_dir)
@@ -42,12 +44,9 @@ def write_evidence(output_dir, metadata, simulator, experiment, job, params,
             'eligible_completed':len(finished),'eligible_unfinished':len(unfinished),
             'observations':len(finished)+len(unfinished)})
     policy=simulator._runtime_policy
-    def clean(value):
-        if isinstance(value,dict):return {k:clean(v) for k,v in value.items()}
-        if isinstance(value,(list,tuple)):return [clean(v) for v in value]
-        if hasattr(value,'item'):value=value.item()
-        return None if isinstance(value,float) and not math.isfinite(value) else value
-    body={'schema':'FOUNDATION_V1_EVIDENCE','Plan_Row_ID':row_id,'plan_metadata':clean(metadata),
+    validate_required_labels(records[0],records[1],job.job_type_count)
+    records=[safe_record(records[0],'results'),safe_record(records[1],'diagnostics')]
+    body={'schema':'FOUNDATION_V1_EVIDENCE','Plan_Row_ID':row_id,'plan_metadata':json_safe(metadata,'plan_metadata',optional=True),
         'results':records[0],'diagnostics':records[1],'evidence_counts':counts,
         'runtime_provenance':runtime_provenance(),
         'applied':{'P_watts':policy.P,'R_watts':policy.R,'weights':[policy.weights[i] for i in range(job.job_type_count)],
@@ -64,11 +63,8 @@ def write_evidence(output_dir, metadata, simulator, experiment, job, params,
         'power_quantization_delta_watts':[float(policy.P)-float(params[0])*1000*experiment.server_count,
                                           float(policy.R)-float(params[1])*1000*experiment.server_count],
         'evidence_status':'SUFFICIENT_JOB_TYPE_EVIDENCE' if all(c['observations']>0 for c in counts) else 'INSUFFICIENT_JOB_TYPE_EVIDENCE'}
-    # Normalize NumPy scalars and integer mapping keys using JSON-compatible values.
-    def scalar(x):
-        if hasattr(x,'item'):return x.item()
-        raise TypeError(type(x).__name__)
-    content=json.dumps(body,sort_keys=True,separators=(',',':'),allow_nan=False,default=scalar)
+    body=json_safe(body)
+    content=json.dumps(body,sort_keys=True,separators=(',',':'),allow_nan=False)
     body=json.loads(content);body['body_sha256']=hashlib.sha256(content.encode()).hexdigest()
     encoded=(json.dumps(body,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
     folder=directory/'foundation_evidence';folder.mkdir(exist_ok=True)

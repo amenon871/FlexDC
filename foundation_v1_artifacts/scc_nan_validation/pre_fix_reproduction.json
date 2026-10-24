@@ -1,0 +1,1 @@
+{"exception": "ValueError: Out of range float values are not JSON compliant", "field": "Replicate_Of_Plan_Row_ID", "pytest_returncode": 1, "scientific_outputs_finite": true, "source_commit": "24ed05c3845ade024f63214a6ab00dd08ad84a67", "status": "REPRODUCED", "test": "test_exact_scc_nonrepeat_nan_parent_regression", "value": "np.nan"}
