@@ -97,7 +97,7 @@ def test_campaign_insufficient_resume_launches_zero_more_processes(task,tmp_path
     row,r=fake_receipt(task);plan,db=prepare_fake_campaign(task,tmp_path,monkeypatch,row)
     out=receipt_folder(tmp_path,row,insufficient(r));audit.ingest(plan,[out],db)
     def forbidden(*args,**kwargs):raise AssertionError('Terminal insufficient row reran')
-    monkeypatch.setattr(campaign.subprocess,'call',forbidden)
+    monkeypatch.setattr(campaign,'call_combo',forbidden)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
     for _ in range(2):
         with pytest.raises(RuntimeError,match='EVIDENCE_SHORTFALL'):campaign.main()
@@ -107,13 +107,13 @@ def test_campaign_insufficient_resume_launches_zero_more_processes(task,tmp_path
 def test_campaign_successful_resume_launches_zero_more_processes(task,tmp_path,monkeypatch):
     row,r=fake_receipt(task);plan,db=prepare_fake_campaign(task,tmp_path,monkeypatch,row)
     out=receipt_folder(tmp_path,row,r);audit.ingest(plan,[out],db)
-    monkeypatch.setattr(campaign.subprocess,'call',lambda *a,**k:pytest.fail('Valid row reran'))
+    monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Valid row reran'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
     assert campaign.main()['status']=='VALID_COMPLETE'
 
 @pytest.mark.parametrize('partition',['LOCKED_SYNTHETIC_TEST','ALL'])
 def test_locked_execution_refuses_before_launch(partition,monkeypatch):
-    monkeypatch.setattr(campaign.subprocess,'call',lambda *a,**k:pytest.fail('Locked run launched'))
+    monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Locked run launched'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--partition',partition])
     with pytest.raises(ValueError,match='sealed synthetic test partition'):campaign.main()
     scope.require_unlock(partition,True)
@@ -209,7 +209,7 @@ def test_fake_crash_then_success_retries_same_identity(task,tmp_path,monkeypatch
         if len(calls)==1:raise OSError('SYNTHETIC subprocess launch crash')
         out=scope.raw_root('TRAIN_DEV')/'foundation_v1_FAKE'/'foundation_evidence';out.mkdir(parents=True)
         write_json(out/(row['plan_row_id']+'.json'),r);return 0
-    monkeypatch.setattr(campaign.subprocess,'call',launch)
+    monkeypatch.setattr(campaign,'call_combo',launch)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
     with pytest.raises(RuntimeError,match='Partial outputs'):campaign.main()
     with sqlite3.connect(db) as conn:
@@ -251,7 +251,7 @@ def test_completed_chunk_is_not_misreported_as_technical_failure(task,tmp_path,m
     row,r=fake_receipt(task);other,_=fake_receipt(contexts()[1])
     plan,db=prepare_fake_campaign(task,tmp_path,monkeypatch,[row,other])
     out=receipt_folder(tmp_path,row,r);audit.ingest(plan,[out],db)
-    monkeypatch.setattr(campaign.subprocess,'call',lambda *a,**k:pytest.fail('Completed chunk relaunched'))
+    monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Completed chunk relaunched'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--chunk-count','2','--chunk-index','0'])
     report=campaign.main()
     assert report['status']=='VALID_COMPLETE' and report['counts']['planned']==1

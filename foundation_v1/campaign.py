@@ -1,6 +1,7 @@
 """Exact-plan combo-runner orchestration; dry-run unless explicitly executed."""
 import argparse
 from contextlib import nullcontext
+from foundation_v1.resilient import call_combo
 import json
 import sqlite3
 import subprocess
@@ -124,7 +125,7 @@ def execute_scope(a,partition):
         (ROOT/'.flexdc_worker_logs'/f'plan_{run_id}'/Path(prefix).parent).mkdir(parents=True,exist_ok=True)
         status_path=directory/f'{a.stage}__{partition}_status.json'
         write_json(status_path,{'status':'RUNNING','stage':a.stage,'partition':partition,'attempt':run_id,'rows':len(missing)},False)
-        try:code=subprocess.call(command,cwd=ROOT)
+        try:code=call_combo(command,cwd=ROOT)
         except OSError as error:code=-1;write_json(directory/f'{run_id}_launch_error.json',{'error':str(error),'status':'TECHNICAL_RETRY_REQUIRED'},False)
         verified=ingest(plan,sorted(raw_root(partition).glob('foundation_v1_*')),database)
         whole=verified
@@ -133,6 +134,13 @@ def execute_scope(a,partition):
             simulation_calls_this_invocation=max(0,verified['counts']['EXECUTION_COMPLETE']-recovered['counts']['EXECUTION_COMPLETE']),
             simulation_rows_submitted_this_invocation=len(missing))
         status=verified['status']
+        scheduler_file=ROOT/'.flexdc_worker_logs'/f'plan_{run_id}'/'scheduler_summary.json'
+        scheduler=read_json(scheduler_file) if scheduler_file.exists() else {}
+        scheduler_status=scheduler.get('status')
+        if scheduler_status in ('SYSTEMIC_TECHNICAL_FAILURE','GLOBAL_FATAL_INVARIANT','INTERRUPTED','TRANSIENT_CLEANUP_REQUIRED','STAGE_COMPLETE_WITH_TECHNICAL_SHORTFALL'):
+            status=scheduler_status;verified['status']=status
+        elif status=='TECHNICAL_RETRY_REQUIRED':
+            status='STAGE_COMPLETE_WITH_TECHNICAL_SHORTFALL';verified['status']=status
         db=connection(database)
         with db:
             db.execute('UPDATE attempts SET status=? WHERE attempt_id=?',(status,run_id))
@@ -144,7 +152,7 @@ def execute_scope(a,partition):
         verified['transient_cleanup']=storage_gate(sorted(raw_root(partition).glob('foundation_v1_*')), directory, retry=False)
         write_json(status_path,{'status':status,'returncode':code,'stage':a.stage,'partition':partition,'attempt':run_id,'audit':verified},False)
         if status=='STAGE_COMPLETE_WITH_EVIDENCE_SHORTFALL':raise RuntimeError('Terminal evidence shortfall requires scientific policy; identical rows will NOT rerun')
-        if status!='VALID_COMPLETE':raise RuntimeError('Partial outputs preserved;explicit same-identity resume schedules only nonterminal rows')
+        if status!='VALID_COMPLETE':raise RuntimeError(status+': Partial outputs preserved; explicit same-identity resume schedules only nonterminal rows')
         print(f'{status}: advance next wave only through measured-result planner')
         return verified
 

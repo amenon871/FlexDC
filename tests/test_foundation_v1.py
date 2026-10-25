@@ -185,7 +185,7 @@ def test_resume_database_and_corruption(task,tmp_path):
 def test_no_execution_by_default_and_no_hidden_simulator(task,monkeypatch,tmp_path):
     from foundation_v1 import campaign
     def forbidden(*a,**k):raise AssertionError('No process may launch')
-    monkeypatch.setattr(campaign.subprocess,'call',forbidden)
+    monkeypatch.setattr(campaign,'call_combo',forbidden)
     plan=tmp_path/'foundation_v1_phaseA_plan.csv.gz'
     write_csv(plan,[make_row(task,Domain(task['domain']).global_pool(1,'dry')[0],'GLOBAL_ESCAPE')])
     monkeypatch.setattr(campaign,'ARTIFACTS',tmp_path)

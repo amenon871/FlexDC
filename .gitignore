@@ -235,3 +235,6 @@ alpha_results.zip
 # Isolated SCC NaN regression simulator outputs remain local test evidence.
 /foundation_v1_artifacts/scc_nan_validation/*_real_results.json
 /foundation_v1_artifacts/scc_nan_validation/test_execution_seal.json
+
+# Resilience validation simulator outputs stay outside scientific commits.
+/foundation_v1_artifacts/resilience_validation/*_real_results.json

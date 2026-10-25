@@ -1,0 +1,33 @@
+{
+  "modified_existing_files": [
+    ".gitignore",
+    "FILE_HASHES.sha256",
+    "am_run_flexdc_dataset_parallel_combo.py",
+    "foundation_v1/campaign.py",
+    "foundation_v1/full_campaign.py",
+    "foundation_v1/release.py",
+    "foundation_v1/storage.py",
+    "foundation_v1_artifacts/preexecution_release.json",
+    "src/peacsim/foundation_v1_cleanup.py",
+    "tests/test_foundation_v1.py",
+    "tests/test_foundation_v1_cleanup.py",
+    "tests/test_foundation_v1_nan.py",
+    "tests/test_foundation_v1_patch.py"
+  ],
+  "new_files": [
+    "foundation_v1/resilience_integration.py",
+    "foundation_v1/resilient.py",
+    "foundation_v1_artifacts/FOUNDATION_V1_WORKER_RESILIENCE_AND_SOAK_AUDIT.md",
+    "foundation_v1_artifacts/resilience_validation/changed_files.json",
+    "foundation_v1_artifacts/resilience_validation/fault-final_throughput.json",
+    "foundation_v1_artifacts/resilience_validation/final_gates.json",
+    "foundation_v1_artifacts/resilience_validation/pre_fix.json",
+    "foundation_v1_artifacts/resilience_validation/scientific_identity.json",
+    "foundation_v1_artifacts/resilience_validation/soak_throughput.json",
+    "foundation_v1_artifacts/resilience_validation/source_guard_changes.json",
+    "foundation_v1_artifacts/resilience_validation/stop_path_audit.json",
+    "foundation_v1_artifacts/resilience_validation/tests.json",
+    "tests/test_foundation_v1_resilience.py"
+  ],
+  "excluded": "Raw simulator test outputs, real-result JSON labels, worker logs, runtime SQLite databases and test chunk plans remain ignored; no .env paths are read or included."
+}

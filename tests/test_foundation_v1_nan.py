@@ -173,7 +173,7 @@ def test_resume_exact_scc_csv_without_receipt_uses_new_attempt(tmp_path,monkeypa
         write_json(output/'foundation_evidence'/(row['plan_row_id']+'.json'),receipt)
         assert stale.exists()  # historical marker does not need destructive removal
         return 0
-    monkeypatch.setattr(campaign.subprocess,'call',execute)
+    monkeypatch.setattr(campaign,'call_combo',execute)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
     result=campaign.main()
     assert result['status']=='VALID_COMPLETE' and result['simulation_calls_this_invocation']==1

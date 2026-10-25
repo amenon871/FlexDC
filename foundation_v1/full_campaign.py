@@ -214,6 +214,10 @@ def run_full(a,partition):
         except BaseException as error:
             text=str(error)
             state['status']='TRANSIENT_CLEANUP_REQUIRED' if 'TRANSIENT_CLEANUP_REQUIRED' in text else 'EVIDENCE_SHORTFALL_REQUIRES_POLICY' if 'SHORTFALL' in text else 'STOPPED_REQUIRES_REVIEW_OR_RESUME'
+            if isinstance(error,(ValueError,sqlite3.DatabaseError)):state['status']='GLOBAL_FATAL_INVARIANT'
+            if isinstance(error,KeyboardInterrupt):state['status']='INTERRUPTED'
+            for category in ('GLOBAL_FATAL_INVARIANT','SYSTEMIC_TECHNICAL_FAILURE','INTERRUPTED','STAGE_COMPLETE_WITH_TECHNICAL_SHORTFALL'):
+                if category in text:state['status']=category
             state['error']={'type':type(error).__name__,'message':text}
             if active:state['scopes'][active[0]][active[1]]={'status':state['status']}
             save();raise

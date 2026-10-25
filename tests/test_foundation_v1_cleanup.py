@@ -168,7 +168,7 @@ def test_cleanup_failure_bounded_terminal_and_cleanup_only_resume(task, tmp_path
     with pytest.raises(cleanup.CleanupRequired): storage.gate([out], tmp_path, retry=False)
     # Same real campaign resume path: terminal ingest BEFORE cleanup, no simulator
     # subprocess even while cleanup still fails, nor after the filesystem recovers.
-    monkeypatch.setattr(campaign.subprocess, 'call', lambda *a, **k: pytest.fail('Completed row was resimulated'))
+    monkeypatch.setattr(campaign, 'call_combo', lambda *a, **k: pytest.fail('Completed row was resimulated'))
     monkeypatch.setattr('sys.argv', ['foundation', '--execute', '--resume', '--database', str(db), '--task', task['Task_ID']])
     with pytest.raises(cleanup.CleanupRequired): campaign.main()
     assert campaign.pending_rows(plan, db) == []
@@ -246,8 +246,8 @@ def test_hook_order_and_foundation_stop_barriers():
     assert objective.index('writer.writerow(raw_results)') < objective.index('writer.writerow(diagnostic_results)')
     assert objective.index('writer.writerow(diagnostic_results)') < objective.index('sync_compact_csvs(') < objective.index('write_evidence(') < objective.index('finalize_row(')
     combo = (ROOT / 'am_run_flexdc_dataset_parallel_combo.py').read_text(encoding='utf8')
-    assert combo.count('and not (storage_stop and storage_stop.exists())') == 2
-    assert 'env["FOUNDATION_V1_STORAGE_STOP"]' in combo
+    assert 'from foundation_v1.resilient import run' in combo
+    assert 'FOUNDATION_WORKER_STOP' not in combo
 
 
 def test_unowned_files_not_deleted_and_existing_evidence_not_overwritten(task, tmp_path):
@@ -265,34 +265,15 @@ def test_allowlist_cannot_escape_output(tmp_path):
     with pytest.raises(ValueError): cleanup._path(tmp_path, 'foundation_evidence/x.json')
 
 
-def test_pool_stops_pending_foundation_chunks_on_worker_failure(tmp_path, monkeypatch):
-    import am_run_flexdc_dataset_parallel_combo as combo
-    invocations = []
-    for i in range(7):
-        invocations.append({'context_id': 'FAKE', 'chunk_index': i, 'chunk_count': 7,
-            'chunk_file': str(tmp_path / 'fake.csv'), 'output_label': 'fake_' + str(i),
-            'expected_plan_ids': ['F1_FAKE_' + str(i)], 'expected_rows': 1,
-            'log_path': str(tmp_path / (str(i) + '.log')), 'command': ['MOCK_NOT_A_SIMULATOR'],
-            'foundation_v1': True})
-    monkeypatch.setattr(combo, 'REPO_ROOT', tmp_path)
-    monkeypatch.setattr(combo, 'prepare_plan_invocations', lambda _: (invocations, tmp_path / 'chunk', tmp_path))
-    monkeypatch.setattr(combo.time, 'sleep', lambda _: None)
-    monkeypatch.setattr(combo, 'validate_plan_worker_output', lambda *args: {'rows': 1})
-    launches = []
-    class Process:
-        def __init__(self, index): self.index = index
-        def poll(self): return 1 if self.index == 0 else 0
-    def launch(command, **kwargs):
-        assert command == ['MOCK_NOT_A_SIMULATOR']
-        assert kwargs['env'][cleanup.STOP_ENV] == str((tmp_path / 'foundation_storage_stop.json').resolve())
-        launches.append(command)
-        return Process(len(launches) - 1)
-    monkeypatch.setattr(combo.subprocess, 'Popen', launch)
-    args = SimpleNamespace(plan_resume=False, plan_dry_run=False, plan_max_workers=2, policy_name='AQA')
-    with pytest.raises(SystemExit, match='TRANSIENT_CLEANUP_REQUIRED'):
-        combo.run_exact_plan(args)
-    assert len(launches) == 2  # no five queued chunks launched after the failure
-    assert (tmp_path / 'foundation_storage_stop.json').exists()
+def test_pool_stops_pending_foundation_chunks_on_worker_failure(tmp_path,monkeypatch):
+    # The historical test's generic-process global-stop expectation was the SCC
+    # regression. Keep the storage invariant, but inject a TRUE cleanup failure.
+    from tests.test_foundation_v1_resilience import queue_fixture
+    from foundation_v1 import resilient
+    fixture=queue_fixture(tmp_path,monkeypatch,cleanup_failure=True)
+    with pytest.raises(SystemExit,match='TRANSIENT_CLEANUP_REQUIRED'):fixture.run()
+    assert (fixture.logs/'foundation_cleanup_stop.json').exists()
+    assert len(fixture.launched)<=2
 
 
 def test_after_cleanup_only_recovery_next_row_can_begin(task, tmp_path, monkeypatch):

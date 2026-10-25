@@ -61,7 +61,9 @@ def _state_path(output, row_id):
 
 def _save(output, state):
     _atomic(_state_path(output, state['Plan_Row_ID']), state)
-    _atomic(_area(output) / 'current.json', {'Plan_Row_ID': state['Plan_Row_ID']})
+    pointer=_area(output) / 'current.json'
+    if not pointer.exists() or _read(pointer).get('Plan_Row_ID')!=state['Plan_Row_ID']:
+        _atomic(pointer, {'Plan_Row_ID': state['Plan_Row_ID']})
 
 
 def _current(output):
@@ -88,15 +90,49 @@ def assert_absent(output):
             raise CleanupRequired('TRANSIENT_CLEANUP_REQUIRED: previous transient still exists: ' + str(path))
 
 
+class FoundationInterrupted(RuntimeError):
+    pass
+
+
+def parent_changed(expected):
+    if not expected:return False
+    if os.name != 'nt':return int(expected) != os.getppid()
+    # Windows venv python.exe is a redirector process: getppid() need not be
+    # the queue PID. Test the recorded parent's liveness instead of ancestry.
+    import ctypes
+    from ctypes import wintypes
+    kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+    kernel.OpenProcess.argtypes=(wintypes.DWORD,wintypes.BOOL,wintypes.DWORD)
+    kernel.OpenProcess.restype=wintypes.HANDLE
+    kernel.GetExitCodeProcess.argtypes=(wintypes.HANDLE,ctypes.POINTER(wintypes.DWORD))
+    kernel.CloseHandle.argtypes=(wintypes.HANDLE,)
+    handle=kernel.OpenProcess(0x1000,False,int(expected))
+    if not handle:
+        return ctypes.get_last_error() not in (5,) # access denied is unknown, not dead
+    try:
+        code=wintypes.DWORD()
+        if not kernel.GetExitCodeProcess(handle,ctypes.byref(code)):return False
+        return code.value != 259 # STILL_ACTIVE
+    finally:kernel.CloseHandle(handle)
+
+
 def check_stop():
+    parent=os.environ.get('FOUNDATION_V1_PARENT_PID')
+    if parent_changed(parent):
+        raise FoundationInterrupted('INTERRUPTED: queue parent exited; do not start another row')
     signal = os.environ.get(STOP_ENV)
     if signal and Path(signal).exists():
-        raise CleanupRequired('TRANSIENT_CLEANUP_REQUIRED: another Foundation worker stopped; ' + str(signal))
+        raise CleanupRequired('TRANSIENT_CLEANUP_REQUIRED: actual Foundation cleanup safety stop; ' + str(signal))
+    interrupted = os.environ.get('FOUNDATION_V1_INTERRUPTION_STOP')
+    if interrupted and Path(interrupted).exists():
+        raise FoundationInterrupted('INTERRUPTED: finish current row then stop for resumable shutdown')
 
 
 def prepare_worker(output):
     """Before CSV initialization: never overwrite compact evidence on chunk reuse."""
     check_stop()
+    pointer=os.environ.get('FOUNDATION_V1_WORKER_OUTPUT_RECEIPT')
+    if pointer:_atomic(pointer,{'output':str(Path(output).resolve())})
     recover_output(output)
     if any((Path(output) / 'foundation_evidence').glob('F1_*.json')):
         raise ValueError('Foundation compact evidence already exists: resume through the Foundation campaign, not by overwriting a worker chunk')
@@ -248,7 +284,11 @@ def telemetry(outputs):
     result['transient_cleanup_pending'] = 0
     for output in outputs:
         for path in _area(output).glob('F1_*.json'):
-            state = _read(path)
+            try:state = _read(path)
+            except (ValueError,OSError):
+                result.setdefault('malformed_local_cleanup_records',0);result['malformed_local_cleanup_records']+=1;continue
+            if not isinstance(state,dict) or not all(k in state for k in ('Plan_Row_ID','execution_status','cleanup_status')):
+                result.setdefault('malformed_local_cleanup_records',0);result['malformed_local_cleanup_records']+=1;continue
             for name in tuple(result):
                 if name in state:
                     result[name] += state[name]
