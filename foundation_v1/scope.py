@@ -32,9 +32,11 @@ def run_root(scope):return ROOT/'foundation_v1_runs'/group(scope)
 def database_path(scope):return run_root(scope)/'observations.sqlite'
 def raw_root(scope):return ROOT/'src/peacsim/output/optimization/foundation_v1_runs'/group(scope)
 
+PLAN_ROOT = None  # Set only by the clean-slate collector, never changes scientific rows.
+
 def plan_path(stage,scope=None,task_id=None):
     suffix=normalize(scope)+(('__'+task_id) if task_id else '')
-    return ARTIFACTS/f'foundation_v1_{stage}__{suffix}.csv.gz'
+    return (PLAN_ROOT or ARTIFACTS)/f'foundation_v1_{stage}__{suffix}.csv.gz'
 
 def make_phaseA_view(scope=None):
     scope=normalize(scope);master=ARTIFACTS/'foundation_v1_phaseA_plan.csv.gz'

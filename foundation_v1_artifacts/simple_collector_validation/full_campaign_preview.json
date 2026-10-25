@@ -1,0 +1,160 @@
+{
+  "status": "PLANNED_NOT_RUN",
+  "mode": "SIMPLE_COLLECTOR_V2",
+  "partition": "ALL",
+  "steps": [
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "phaseA",
+      "rows": 270000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_phaseA__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_COPY_IMMUTABLE_MASTER_VIEW",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "wave01",
+      "rows": 36000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave01__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "wave02",
+      "rows": 36000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave02__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "wave03",
+      "rows": 36000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave03__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "wave04",
+      "rows": 36000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave04__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "repeat",
+      "rows": 36000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_repeat__TRAIN_DEV.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "TRAIN_DEV",
+      "stage": "export",
+      "partitions": [
+        "TRAIN",
+        "DEVELOPMENT",
+        "TRAIN_DEV"
+      ]
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "phaseA",
+      "rows": 30000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_phaseA__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_COPY_IMMUTABLE_MASTER_VIEW",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "wave01",
+      "rows": 4000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave01__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "wave02",
+      "rows": 4000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave02__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "wave03",
+      "rows": 4000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave03__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "wave04",
+      "rows": 4000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_wave04__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "repeat",
+      "rows": 4000,
+      "plan": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_runs\\scientific_stage_plans\\foundation_v1_repeat__LOCKED_SYNTHETIC_TEST.csv.gz",
+      "plan_status": "WILL_GENERATE_AFTER_PREVIOUS_STAGE_AUDIT",
+      "collector": "simple_collector.collect -> direct exact-plan wizard workers",
+      "max_workers": 32,
+      "chunk_rows": 25,
+      "after_collection": "bounded repair -> strong stage audit"
+    },
+    {
+      "partition": "LOCKED_SYNTHETIC_TEST",
+      "stage": "export",
+      "partitions": [
+        "LOCKED_SYNTHETIC_TEST"
+      ]
+    }
+  ],
+  "expected_rows": 500000,
+  "source_identity": "75109d5f0953dcf60a6e2761db1f838d97dda4554d9937a06436a281fe25f0d5",
+  "simulation_calls": 0,
+  "adaptive_coordinates_generated": false,
+  "completion_authority": "durable per-row receipts; SQLite derived only"
+}

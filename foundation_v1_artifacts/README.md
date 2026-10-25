@@ -1,3 +1,5 @@
+> **Current execution release:** use [FOUNDATION_V1_SIMPLE_COLLECTOR_FINAL_AUDIT.md](FOUNDATION_V1_SIMPLE_COLLECTOR_FINAL_AUDIT.md) for deployment, fresh reset, 32-worker collection, receipt-based resume and status. The older implementation notes below describe retained historical APIs; they do not override the new collector instructions.
+
 # Foundation V1 approved full campaign
 
 Start with FULL_CAMPAIGN_GUIDE.md and FULL_CAMPAIGN_VALIDATION.md. Scientific definitions, profiles and all300000 master Phase-A rows are unchanged. The locked synthetic outcomes are precomputed in the same collection but sealed from fitting and selection.

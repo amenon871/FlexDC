@@ -1,3 +1,4 @@
+from tests.test_foundation_v1_legacy_entry_fixture import invoke as legacy_stage_entry
 """Narrow release-blocker regression tests; all outcomes are synthetic."""
 import copy
 import json
@@ -100,7 +101,7 @@ def test_campaign_insufficient_resume_launches_zero_more_processes(task,tmp_path
     monkeypatch.setattr(campaign,'call_combo',forbidden)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
     for _ in range(2):
-        with pytest.raises(RuntimeError,match='EVIDENCE_SHORTFALL'):campaign.main()
+        with pytest.raises(RuntimeError,match='EVIDENCE_SHORTFALL'):legacy_stage_entry()
     report=read_json(tmp_path/'runs/train_dev/phaseA__TRAIN_DEV_status.json')
     assert report['counts']['missing']==0 and not report['scientifically_complete']
 
@@ -109,19 +110,19 @@ def test_campaign_successful_resume_launches_zero_more_processes(task,tmp_path,m
     out=receipt_folder(tmp_path,row,r);audit.ingest(plan,[out],db)
     monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Valid row reran'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
-    assert campaign.main()['status']=='VALID_COMPLETE'
+    assert legacy_stage_entry()['status']=='VALID_COMPLETE'
 
 @pytest.mark.parametrize('partition',['LOCKED_SYNTHETIC_TEST','ALL'])
 def test_locked_execution_refuses_before_launch(partition,monkeypatch):
     monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Locked run launched'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--partition',partition])
-    with pytest.raises(ValueError,match='sealed synthetic test partition'):campaign.main()
+    with pytest.raises(ValueError,match='sealed synthetic test partition'):legacy_stage_entry()
     scope.require_unlock(partition,True)
 
 def test_locked_explicit_unlock_dispatches_to_isolated_scope(monkeypatch):
     calls=[];monkeypatch.setattr(campaign,'execute_scope',lambda a,p:calls.append((p,a.unlock_locked_test)))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--partition','ALL','--unlock-locked-test'])
-    campaign.main()
+    legacy_stage_entry()
     assert calls==[('TRAIN_DEV',True),('LOCKED_SYNTHETIC_TEST',True)]
     assert scope.database_path('TRAIN')==scope.database_path('DEVELOPMENT')
     assert scope.database_path('TRAIN')!=scope.database_path('LOCKED_SYNTHETIC_TEST')
@@ -129,7 +130,7 @@ def test_locked_explicit_unlock_dispatches_to_isolated_scope(monkeypatch):
 
 def test_default_scope_is_train_dev(monkeypatch):
     calls=[];monkeypatch.setattr(campaign,'execute_scope',lambda a,p:calls.append((p,a.execute)))
-    monkeypatch.setattr('sys.argv',['foundation']);campaign.main()
+    monkeypatch.setattr('sys.argv',['foundation']);legacy_stage_entry()
     assert calls==[('TRAIN_DEV',False)] and scope.normalize('TRAIN+DEVELOPMENT')=='TRAIN_DEV'
 
 @pytest.mark.parametrize('partition',['TRAIN','DEVELOPMENT','TRAIN_DEV','LOCKED_SYNTHETIC_TEST'])
@@ -211,12 +212,12 @@ def test_fake_crash_then_success_retries_same_identity(task,tmp_path,monkeypatch
         write_json(out/(row['plan_row_id']+'.json'),r);return 0
     monkeypatch.setattr(campaign,'call_combo',launch)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
-    with pytest.raises(RuntimeError,match='Partial outputs'):campaign.main()
+    with pytest.raises(RuntimeError,match='Partial outputs'):legacy_stage_entry()
     with sqlite3.connect(db) as conn:
         assert conn.execute('SELECT status FROM execution_states').fetchone()[0]=='TECHNICAL_RETRY_REQUIRED'
-    assert campaign.main()['status']=='VALID_COMPLETE'
+    assert legacy_stage_entry()['status']=='VALID_COMPLETE'
     assert calls==[[row['plan_row_id']],[row['plan_row_id']]]
-    campaign.main();assert len(calls)==2
+    legacy_stage_entry();assert len(calls)==2
 
 
 def test_scoped_exports_never_mix_locked_outcomes(task,tmp_path,monkeypatch):
@@ -253,7 +254,7 @@ def test_completed_chunk_is_not_misreported_as_technical_failure(task,tmp_path,m
     out=receipt_folder(tmp_path,row,r);audit.ingest(plan,[out],db)
     monkeypatch.setattr(campaign,'call_combo',lambda *a,**k:pytest.fail('Completed chunk relaunched'))
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--chunk-count','2','--chunk-index','0'])
-    report=campaign.main()
+    report=legacy_stage_entry()
     assert report['status']=='VALID_COMPLETE' and report['counts']['planned']==1
     assert report['whole_scope_progress']['counts']['missing']==1
     assert not report['whole_scope_progress']['scientifically_complete']

@@ -1,3 +1,4 @@
+from tests.test_foundation_v1_legacy_entry_fixture import invoke as legacy_stage_entry
 """Per-row storage/recovery tests. All executions and scientific labels are fake."""
 import ast
 import copy
@@ -170,11 +171,11 @@ def test_cleanup_failure_bounded_terminal_and_cleanup_only_resume(task, tmp_path
     # subprocess even while cleanup still fails, nor after the filesystem recovers.
     monkeypatch.setattr(campaign, 'call_combo', lambda *a, **k: pytest.fail('Completed row was resimulated'))
     monkeypatch.setattr('sys.argv', ['foundation', '--execute', '--resume', '--database', str(db), '--task', task['Task_ID']])
-    with pytest.raises(cleanup.CleanupRequired): campaign.main()
+    with pytest.raises(cleanup.CleanupRequired): legacy_stage_entry()
     assert campaign.pending_rows(plan, db) == []
     monkeypatch.setattr(cleanup, '_unlink', original)
     monkeypatch.delenv(cleanup.STOP_ENV)
-    result = campaign.main()
+    result = legacy_stage_entry()
     assert result['status'] == 'VALID_COMPLETE'
     assert result['simulation_calls_this_invocation'] == 0
     assert cleanup._current(out)['cleanup_status'] == 'CLEANUP_COMPLETE'

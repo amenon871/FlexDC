@@ -1,3 +1,4 @@
+from tests.test_foundation_v1_legacy_entry_fixture import invoke as legacy_stage_entry
 """SCC missing-provenance regression; no simulator is used by this unit file."""
 import ast
 import csv
@@ -175,7 +176,7 @@ def test_resume_exact_scc_csv_without_receipt_uses_new_attempt(tmp_path,monkeypa
         return 0
     monkeypatch.setattr(campaign,'call_combo',execute)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(db),'--task',task['Task_ID']])
-    result=campaign.main()
+    result=legacy_stage_entry()
     assert result['status']=='VALID_COMPLETE' and result['simulation_calls_this_invocation']==1
     assert len(launches)==1 and stale.exists()
     assert (old/'power_trace.csv').exists()  # incomplete old attempt debugging kept
@@ -186,7 +187,7 @@ def test_resume_exact_scc_csv_without_receipt_uses_new_attempt(tmp_path,monkeypa
         source=json.loads(conn.execute('SELECT source FROM observations').fetchone()[0])
         assert 'foundation_v1_new_attempt' in source['receipt']
     assert campaign.pending_rows(plan,db)==[]
-    assert campaign.main()['simulation_calls_this_invocation']==0
+    assert legacy_stage_entry()['simulation_calls_this_invocation']==0
     assert len(launches)==1
 
 

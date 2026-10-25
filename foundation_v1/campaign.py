@@ -170,15 +170,10 @@ def main():
     execution=p.add_mutually_exclusive_group();execution.add_argument('--execute',action='store_true');execution.add_argument('--dry-run',action='store_true',help='Explicit no-execution plan preview (also the default)')
     p.add_argument('--resume',action='store_true')
     p.add_argument('--database',type=Path,help='Override ledger path; partition contamination checks still apply')
+    p.add_argument('--fresh-start',action='store_true')
+    p.add_argument('--confirm-fresh-start',action='store_true')
+    p.add_argument('--status',action='store_true')
+    p.add_argument('--storage-emergency-gib',type=float,default=10.0)
     a=p.parse_args();partition=normalize(a.partition)
-    if a.max_workers<1 or a.chunk_count<1 or not 0<=a.chunk_index<a.chunk_count:p.error('Invalid worker/chunk bounds')
-    if a.execute:require_unlock(partition,a.unlock_locked_test)
-    if a.full_campaign:
-        if a.task or a.database or a.chunk_count!=1 or a.chunk_index!=0:p.error('--full-campaign owns whole isolated scopes; do not combine with task/database/chunk overrides')
-        from foundation_v1.full_campaign import run_full
-        return run_full(a,partition)
-    a.stage=a.stage or 'phaseA'
-    if partition=='ALL':
-        if a.database or a.task:p.error('ALL uses separate default ledgers; select a single scope for --database/--task')
-        return [execute_scope(a,s) for s in ('TRAIN_DEV','LOCKED_SYNTHETIC_TEST')]
-    return execute_scope(a,partition)
+    from foundation_v1.simple_campaign import dispatch
+    return dispatch(a,p)

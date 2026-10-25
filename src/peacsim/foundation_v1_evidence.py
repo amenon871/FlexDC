@@ -18,6 +18,11 @@ def runtime_provenance():
         'planning_base_git_SHA':release['base_git_SHA'],'reviewed_source_identity':release['uncommitted_source_sha256']}
 
 
+@lru_cache(None)
+def _input_sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
 def write_evidence(output_dir, metadata, simulator, experiment, job, params,
                    raw_results, diagnostic_results):
     if metadata.get('design_version') != 'FOUNDATION_V1':
@@ -57,8 +62,8 @@ def write_evidence(output_dir, metadata, simulator, experiment, job, params,
             'iso_file_path':experiment.iso_file_path,'iso_signal_start_hour':experiment.iso_signal_start_hour,
             'iso_signal_granularity':experiment.iso_signal_granularity,'normalize_iso_signal':experiment.normalize_iso_signal,
             'randomize_iso_start':experiment.randomize_iso_start,
-            'iso_sha256':hashlib.sha256(Path(experiment.iso_file_path).read_bytes()).hexdigest(),
-            'workload_sha256':hashlib.sha256(Path(job.workload_mix_name).read_bytes()).hexdigest()},
+            'iso_sha256':_input_sha(experiment.iso_file_path),
+            'workload_sha256':_input_sha(job.workload_mix_name)},
         'power_serialization':'int(round(kW_per_server*1000*N));at most0.5W cluster rounding',
         'power_quantization_delta_watts':[float(policy.P)-float(params[0])*1000*experiment.server_count,
                                           float(policy.R)-float(params[1])*1000*experiment.server_count],

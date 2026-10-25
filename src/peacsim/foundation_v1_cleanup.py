@@ -198,7 +198,7 @@ def _unlink(path):
     path.unlink()
 
 
-def finalize_row(output, row_id):
+def _legacy_finalize_row(output, row_id, global_stop=True):
     # Never clean incomplete/invalid compact extraction. Verification happens
     # BEFORE changing scientific execution state or touching a transient file.
     verify_compact(output, row_id)
@@ -245,7 +245,7 @@ def finalize_row(output, row_id):
     if errors:
         state['cleanup_status'] = 'CLEANUP_REQUIRED'
         _save(output, state)
-        signal = os.environ.get(STOP_ENV)
+        signal = os.environ.get(STOP_ENV) if global_stop else None
         if signal:
             _atomic(signal, {'status': 'TRANSIENT_CLEANUP_REQUIRED', 'output': str(Path(output).resolve()),
                 'Plan_Row_ID': row_id, 'errors': errors})
@@ -294,3 +294,21 @@ def telemetry(outputs):
                     result[name] += state[name]
             result['transient_cleanup_pending'] += (Path(output) / 'foundation_evidence' / (state['Plan_Row_ID'] + '.json')).exists() and state['cleanup_status'] != 'CLEANUP_COMPLETE'
     return result
+
+
+class CleanupDebt(RuntimeError):
+    """Local debt: completed row stays terminal; fresh output for subsequent rows."""
+
+
+def finalize_row(output, row_id, *, best_effort=False):
+    if not best_effort and not os.environ.get('FOUNDATION_V1_SIMPLE_AREA'):
+        return _legacy_finalize_row(output,row_id)
+    try:return _legacy_finalize_row(output,row_id,global_stop=False)
+    except CleanupRequired as error:
+        # No global storage-stop variable is supplied by the new collector.
+        # Stop this local chunk to avoid overwriting undeleted raw files. Other
+        # worker slots continue, and remaining rows use fresh output directories.
+        state=_read(_state_path(output,row_id))
+        state['cleanup_status']='CLEANUP_DEBT'
+        _save(output,state)
+        raise CleanupDebt('CLEANUP_DEBT: scientific completion preserved: '+str(error)) from error

@@ -1,0 +1,15 @@
+{
+  "status": "FRESH_START_DRY_RUN",
+  "targets": [
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\src\\peacsim\\output\\optimization\\foundation_v1_simple",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_plan_chunks\\foundation_v1_storage_validation_dry_only",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_plan_chunks\\foundation_v1_TRAIN_DEV_patch_validation_dry_only",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_worker_logs\\plan_foundation_v1_storage_validation_dry_only",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_worker_logs\\plan_foundation_v1_TRAIN_DEV_patch_validation_dry_only",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_worker_logs\\plan_foundation_v1_TRAIN_DEV_phaseA_0af0074989298c04_attempt0002",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\.flexdc_worker_logs\\plan_foundation_v1_TRAIN_DEV_phaseA_62be0cb675efbffd_attempt0005",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\dataset_plan_launch_manifest_AQA_foundation_v1_storage_validation_dry_only.csv",
+    "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\dataset_plan_launch_manifest_AQA_foundation_v1_TRAIN_DEV_patch_validation_dry_only.csv"
+  ],
+  "scientific_artifacts_deleted": false
+}

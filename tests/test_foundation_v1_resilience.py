@@ -1,3 +1,4 @@
+from tests.test_foundation_v1_legacy_entry_fixture import invoke as legacy_stage_entry
 """Resilient local queue tests: no real simulator processes in this module."""
 import json
 import signal
@@ -237,9 +238,9 @@ def test_actual_four_state_resume_and_attempt0001_to0004_history(tmp_path,monkey
         return 0
     monkeypatch.setattr(campaign,'call_combo',execute)
     monkeypatch.setattr('sys.argv',['foundation','--execute','--resume','--database',str(database)])
-    result=campaign.main();assert result['status']=='VALID_COMPLETE' and len(calls)==1
+    result=legacy_stage_entry();assert result['status']=='VALID_COMPLETE' and len(calls)==1
     with sqlite3.connect(database) as conn:assert conn.execute('SELECT count(*) FROM observations').fetchone()[0]==4
-    assert campaign.main()['simulation_calls_this_invocation']==0 and len(calls)==1
+    assert legacy_stage_entry()['simulation_calls_this_invocation']==0 and len(calls)==1
     assert marker.exists() and (oldroot/'foundation_v1_old_attempt2/power_trace.csv').exists()
 
 

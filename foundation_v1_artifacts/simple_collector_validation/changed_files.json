@@ -1,0 +1,52 @@
+{
+  "intentionally_excluded": [
+    "isolated real simulator results and worker trees",
+    "SQLite runtime/cache files",
+    "temporary plans and receipts",
+    "local validation logs/XML",
+    "all review ZIPs",
+    "all .env files"
+  ],
+  "modified_existing": [
+    ".gitignore",
+    "FILE_HASHES.sha256",
+    "foundation_v1/campaign.py",
+    "foundation_v1/release.py",
+    "foundation_v1/scope.py",
+    "foundation_v1_artifacts/FULL_CAMPAIGN_GUIDE.md",
+    "foundation_v1_artifacts/README.md",
+    "foundation_v1_artifacts/SCC_COMMANDS.md",
+    "foundation_v1_artifacts/preexecution_release.json",
+    "src/peacsim/am_data_extraction_wizard.py",
+    "src/peacsim/foundation_v1_cleanup.py",
+    "src/peacsim/foundation_v1_evidence.py",
+    "tests/test_foundation_v1.py",
+    "tests/test_foundation_v1_cleanup.py",
+    "tests/test_foundation_v1_nan.py",
+    "tests/test_foundation_v1_patch.py",
+    "tests/test_foundation_v1_resilience.py"
+  ],
+  "new_files": [
+    "foundation_v1/collector_receipts.py",
+    "foundation_v1/simple_campaign.py",
+    "foundation_v1/simple_collector.py",
+    "foundation_v1/simple_integration.py",
+    "foundation_v1_artifacts/FOUNDATION_V1_SIMPLE_COLLECTOR_FINAL_AUDIT.md",
+    "foundation_v1_artifacts/simple_collector_validation/additional_safety_gates.json",
+    "foundation_v1_artifacts/simple_collector_validation/changed_files.json",
+    "foundation_v1_artifacts/simple_collector_validation/final_gates.json",
+    "foundation_v1_artifacts/simple_collector_validation/fresh_start_preview.json",
+    "foundation_v1_artifacts/simple_collector_validation/full_campaign_preview.json",
+    "foundation_v1_artifacts/simple_collector_validation/geometry_incident.json",
+    "foundation_v1_artifacts/simple_collector_validation/real_validation_summary.json",
+    "foundation_v1_artifacts/simple_collector_validation/scientific_identity.json",
+    "foundation_v1_artifacts/simple_collector_validation/source_guard_changes.json",
+    "foundation_v1_artifacts/simple_collector_validation/status_no_campaign.json",
+    "foundation_v1_artifacts/simple_collector_validation/status_receipt_benchmark.json",
+    "foundation_v1_artifacts/simple_collector_validation/stop_path_audit.json",
+    "foundation_v1_artifacts/simple_collector_validation/test_summary.json",
+    "tests/test_foundation_v1_legacy_entry_fixture.py",
+    "tests/test_foundation_v1_simple_collector.py"
+  ],
+  "scientific_master_changed": false
+}

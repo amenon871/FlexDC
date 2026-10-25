@@ -238,3 +238,10 @@ alpha_results.zip
 
 # Resilience validation simulator outputs stay outside scientific commits.
 /foundation_v1_artifacts/resilience_validation/*_real_results.json
+
+# Isolated simple-collector validation, never scientific corpus/source artifacts.
+/foundation_v1_artifacts/simple_collector_validation/runtime/
+/foundation_v1_artifacts/simple_collector_validation/*_real_results.json
+/foundation_v1_artifacts/simple_collector_validation/*.log
+/foundation_v1_campaign.lock
+/foundation_v1_artifacts/simple_collector_validation/*.xml

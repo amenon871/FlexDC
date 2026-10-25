@@ -1,3 +1,5 @@
+> **Current execution release:** use [FOUNDATION_V1_SIMPLE_COLLECTOR_FINAL_AUDIT.md](FOUNDATION_V1_SIMPLE_COLLECTOR_FINAL_AUDIT.md) for deployment, fresh reset, 32-worker collection, receipt-based resume and status. The older implementation notes below describe retained historical APIs; they do not override the new collector instructions.
+
 # Foundation V1: one command on one SCC fat node
 
 Use the committed foundation-dataset-v1-prep branch. Do not merge into main to deploy this campaign. Run from the FlexDC repository root.

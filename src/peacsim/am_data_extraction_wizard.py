@@ -399,7 +399,7 @@ def load_sweep_plan_rows(path, args, job_config, experiment_config):
             data = data.get('rows', data.get('plan', data))
         plan_df = pd.DataFrame(data)
     else:
-        plan_df = pd.read_csv(plan_path)
+        plan_df = pd.read_csv(plan_path, float_precision="round_trip") if os.environ.get("FOUNDATION_V1_SIMPLE_AREA") else pd.read_csv(plan_path)
 
     required = [
         'plan_row_id', 'utilization', 'Pbar_kw_per_server',
@@ -1735,6 +1735,9 @@ def objective_function(params, cost_function_config, policy_config, experiment_c
         from peacsim.foundation_v1_evidence import write_evidence
         write_evidence(output_dir, plan_row_metadata, simulator, experiment_config,
                        job_config, params, raw_results, diagnostic_results)
+        if os.environ.get('FOUNDATION_V1_SIMPLE_AREA'):
+            from foundation_v1.collector_receipts import publish
+            publish(output_dir, plan_row_metadata)
         from peacsim.foundation_v1_cleanup import finalize_row
         finalize_row(output_dir, str(plan_row_metadata['plan_row_id']))
 
