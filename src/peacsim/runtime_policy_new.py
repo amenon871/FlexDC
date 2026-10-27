@@ -8,6 +8,8 @@ from peacsim import scheduler
 
 
 class RuntimePolicyNew:
+    supports_deferred_realtime_qos = False
+
     def __init__(self, policy_config, exp_config, job_config, node_table, job_table):
         self._runtime_policy_name = policy_config.runtime_policy_name
         self._P = policy_config.P
@@ -15,6 +17,8 @@ class RuntimePolicyNew:
         self._policy_parameters = policy_config.policy_parameters
         self._node_table = node_table
         self._job_table = job_table
+        arrivals = job_table[arrival_time]
+        self._arrivals_sorted = bool(np.all(arrivals[1:] >= arrivals[:-1]))
         self._idle_power = exp_config.idle_power
         self._job_config = job_config
         self._server_count = exp_config.server_count
@@ -63,7 +67,9 @@ class RuntimePolicyNew:
         
 
     def schedule_jobs(self, current_time, p_target):
-        job_queue = get_job_queue(self._job_table, current_time)
+        arrived_end = (np.searchsorted(self._job_table[arrival_time], current_time, side="right")
+                       if self._arrivals_sorted else None)
+        job_queue = get_job_queue(self._job_table, current_time, arrived_end)
         idle_server_ids = get_idle_servers(self._node_table)
 
         if job_queue.size != 0 and len(idle_server_ids) != 0:

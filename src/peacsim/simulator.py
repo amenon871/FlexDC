@@ -36,6 +36,7 @@ class Simulator:
     def __init__(self, job_table, node_table, runtime_policy,
                  experiment_config, job_config, cluster_config, qos_violation_percentile_cut_off=0.9, output_dir=None):
 
+        self._trace_format_cache = {}
         self.qos_emergency = None
         self.standby_power = None
         self.tracking_num = None
@@ -46,6 +47,11 @@ class Simulator:
         self.server_state_at_update = None
         self._job_config = job_config
         self._job_table = job_table
+        arrivals = job_table[arrival_time]
+        self._arrivals_sorted = bool(np.all(arrivals[1:] >= arrivals[:-1]))
+        # Inheritance alone cannot opt an unaudited future policy into deferral.
+        self._defer_realtime_qos = (type(runtime_policy).__dict__.get(
+            "supports_deferred_realtime_qos", False) is True)
         self._finished_job_table = pd.DataFrame()
         self._node_table = node_table
         self._server_count = experiment_config.server_count
@@ -114,15 +120,14 @@ class Simulator:
         # Output variables
         self.standby_power = 0
 
+        arrived = self._arrived_table(current_time)
+        waiting_mask = (arrived[start_time] == self._idle_status) & (arrived[arrival_time] <= current_time)
         if self._runtime_policy.availability_qos:
-            waiting_mask = (self._job_table[start_time] == self._idle_status) & (
-                    self._job_table[arrival_time] <= current_time)
-            waiting_jobs = self._job_table[:, waiting_mask]
+            waiting_jobs = arrived[:, waiting_mask]
             job_type_ids, waiting_counts = np.unique(waiting_jobs[job_type_id], return_counts=True)
 
             self.waiting_jobs_by_job_type.append(waiting_counts)
-        self.waiting_sum = len(np.where(
-            (self._job_table[start_time] == self._idle_status) & (self._job_table[arrival_time] <= current_time))[0])
+        self.waiting_sum = int(np.count_nonzero(waiting_mask))
         self.server_state_at_update = self._node_table[server_state]
         if current_time >= self._iso_signal_granularity:
             last_power = self._cluster_power_cap_per_signal[current_time // self._iso_signal_granularity - 1]
@@ -162,13 +167,23 @@ class Simulator:
         self.tracking_num = int(math.ceil(real_delta_power / (
                 sum(self._job_config.all_max_job_power.values()) / float(self._job_type_count) - self._idle_power)))
 
+    def _arrived_table(self, t, side="right"):
+        if self._arrivals_sorted:
+            end = np.searchsorted(self._job_table[arrival_time], t, side=side)
+            return self._job_table[:, :end]
+        return self._job_table
+
+    def update_waiting_job_times(self, t):
+        table = self._arrived_table(t, side="left")
+        table[update_time, np.where((table[start_time] == self._idle_status)
+                                    & (table[arrival_time] < t))[0]] = t
+
     def update_realtime_qos(self, t):
         """
         realtime_qos = (waitingTime + elapsedTime + minRemainingTime - minExecutionTime) / minExecutionTime
         Also sets update_time to current_time for all jobs that have not started but have arrived.
         """
-        self._job_table[update_time, np.where((self._job_table[start_time] == self._idle_status)
-                                              & (self._job_table[arrival_time] < t))[0]] = t
+        self.update_waiting_job_times(t)
         self._job_table[realtime_qos] = ((self._job_table[update_time] -
                                          self._job_table[arrival_time]) / self._job_table[min_execution_time] -
                                          self._job_table[estimate_finished])
@@ -177,8 +192,9 @@ class Simulator:
         """
         Sets qos_emergency to True if any job has passed its deadline. Otherwise, sets it to False.
         """
+        table = self._arrived_table(current_time)
         queued_jobs = np.where(
-            (self._job_table[start_time] == self._idle_status) & (self._job_table[arrival_time] <= current_time))[0]
+            (table[start_time] == self._idle_status) & (table[arrival_time] <= current_time))[0]
         boundary_start_time = (self._job_table[arrival_time, queued_jobs] +
                                np.multiply(self._job_table[qos_constraint, queued_jobs],
                                            self._job_table[min_execution_time, queued_jobs]))
@@ -190,6 +206,27 @@ class Simulator:
             emergency_end = -1
         self.qos_emergency = start_emergency or (current_time <= emergency_end)
 
+    def _format_trace_values(self, values):
+        # Only native float64 arrays use bit-key caching. Every other type retains
+        # ordinary str() semantics. Distinct signed zeros/NaN payloads stay distinct.
+        if values.ndim != 1 or values.dtype != np.dtype("float64"):
+            return ','.join(map(str, values))
+        cache = self._trace_format_cache
+        bits, first, inverse = np.unique(values.view(np.uint64), return_index=True, return_inverse=True)
+        if len(bits) > 4096:
+            return ','.join(map(str, values))
+        # Bounded per Simulator; never retain a per-timestep or per-server history.
+        if len(cache) + len(bits) > 4096:
+            cache.clear()
+        text = []
+        for key, index in zip(bits, first):
+            value = cache.get(key)
+            if value is None:
+                value = str(values[index])
+                cache[key] = value
+            text.append(value)
+        return ','.join(np.asarray(text, dtype=object)[inverse])
+
     def record_state(self, t, qos_emergency, real_power, p_target, tracking_num, waiting_sum, tracking_error,
                      qos_job_sum, standby_power, f):
         """
@@ -198,11 +235,11 @@ class Simulator:
         f.write('%d,%d,%d,%d,%.1f,%.1f,%.3f,%.1f,%.1f,' % (
             t, int(qos_emergency), tracking_num, waiting_sum, p_target, real_power,
             tracking_error, qos_job_sum, standby_power))
-        f.write(','.join([str(x) for x in self._node_table[server_power]]))
+        f.write(self._format_trace_values(self._node_table[server_power]))
         sum_estimate_power = np.sum(self._node_table[estimate_power])
         f.write(',%.1f,' % sum_estimate_power)
         # f.write(','.join([str(x) for x in self.server_state_at_update]))
-        f.write(','.join([str(x) for x in self._node_table[server_state]]))
+        f.write(self._format_trace_values(self._node_table[server_state]))
         f.write('\n')
 
     def run(self):
@@ -223,7 +260,10 @@ class Simulator:
                 if current_time > 0:
                     self.update_job_progress(current_time)
                 self.update_cluster(current_time)
-                self.update_realtime_qos(current_time)
+                # Audited AQA decisions consume neither intermediate QoS nor waiting timestamps.
+                # Refresh the canonical full state BEFORE terminal scheduling; others stay legacy.
+                if not self._defer_realtime_qos or cycle == self._simulation_duration:
+                    self.update_realtime_qos(current_time)
                 self.calc_qos_emergency(current_time)
                 self._runtime_policy.execute(current_time, p_target)
                 # self.probabilistic_results.append(self._runtime_policy.probabilistic_results)
@@ -252,7 +292,7 @@ class Simulator:
         Checking whether tracking error is violated. Uses output csv file to check for this.
         """
         # get the percentage of error < 0.3.
-        power_trace_df = pd.read_csv(self._output_dir + 'power_trace.csv')
+        power_trace_df = pd.read_csv(self._output_dir + 'power_trace.csv', usecols=['trackingError'])
         error_at_90 = get_write_tracking_error_90th(power_trace_df=power_trace_df, output_dir=self._output_dir)
         print('Tracking error at 90%% percentile: %.4f' % error_at_90)
         if error_at_90 > 0.3:

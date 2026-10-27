@@ -70,8 +70,7 @@ def adjust_weights(current_time, job_table, weights, job_queue):
     Normalizes weights for job queues that are not empty by replacing weights with zero for empty queues.
     Returns a dictionary with the active weight and the associated job_type.
     """
-    queued_job_types = np.unique(job_table[job_type_id, (job_table[start_time] == JOB_NOT_STARTED) &  ### TODO use job queue instead
-                                                              (job_table[arrival_time] <= current_time)])
+    queued_job_types = np.unique(job_queue[1])
 
     adjusted_weights = {job_type: weight if job_type in queued_job_types else 0 for job_type, weight in
                         weights.items()}

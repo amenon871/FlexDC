@@ -9,6 +9,9 @@ from peacsim.job_table_dao import *
 from peacsim.power_capper import equal_proportional_power_capping
 
 class AQARuntimePolicy(RuntimePolicyNew):
+    # Audited lower-case AQA does not consume realtime_qos during execution.
+    supports_deferred_realtime_qos = True
+
     def __init__(self, policy_config, exp_config, job_config, node_table, job_table):
         super().__init__(policy_config, exp_config, job_config, node_table, job_table)
 
