@@ -1,0 +1,34 @@
+[
+  {
+    "test": "test_full_production_state_machine_real_planners_synthetic_simulator",
+    "seconds": 15103.802
+  },
+  {
+    "test": "test_status_50000_events_fast_cache_and_pending_crash_window",
+    "seconds": 71.967
+  },
+  {
+    "test": "test_thousands_of_historical_receipts_not_reopened",
+    "seconds": 53.285
+  },
+  {
+    "test": "test_fully_complete_rerun_and_deleted_status_cache_make_zero_calls",
+    "seconds": 8.929
+  },
+  {
+    "test": "test_scheduler_fills_requested_worker_slots[32]",
+    "seconds": 8.159
+  },
+  {
+    "test": "test_technical_failure_then_same_command_resumes_and_advances",
+    "seconds": 4.652
+  },
+  {
+    "test": "test_resume_after_train_dev_then_locked_wave1",
+    "seconds": 4.525
+  },
+  {
+    "test": "test_resume_from_partial_stage_skips_terminal_rows[wave03]",
+    "seconds": 4.352
+  }
+]

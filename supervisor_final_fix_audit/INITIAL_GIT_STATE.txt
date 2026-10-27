@@ -1,0 +1,30 @@
+$ git status --short
+ M foundation_v1/collector_receipts.py
+ M foundation_v1/simple_campaign.py
+ M foundation_v1/simple_collector.py
+ M foundation_v1_artifacts/preexecution_release.json
+?? foundation_successor_models/
+?? foundation_v1/recovery_index.py
+?? foundation_v1_artifacts/fast_resume_validation/
+?? supervisor_bundles/
+?? supervisor_patch_audit/
+?? tests/test_foundation_v1_fast_resume.py
+
+$ git branch --show-current
+foundation-successor-models-prep
+
+$ git rev-parse HEAD
+0190fe60d53cddb6afbaffad9a67b82e50ccf0de
+
+$ git diff --name-only
+foundation_v1/collector_receipts.py
+foundation_v1/simple_campaign.py
+foundation_v1/simple_collector.py
+foundation_v1_artifacts/preexecution_release.json
+
+$ git diff --stat
+ foundation_v1/collector_receipts.py               |  2 ++
+ foundation_v1/simple_campaign.py                  |  2 ++
+ foundation_v1/simple_collector.py                 | 13 ++++++-------
+ foundation_v1_artifacts/preexecution_release.json |  2 +-
+ 4 files changed, 11 insertions(+), 8 deletions(-)

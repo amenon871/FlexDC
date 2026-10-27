@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "master_phaseA_sha256": "bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f",
+  "scientific_master_changed": false,
+  "candidate_generation_changed": false,
+  "profile_generation_changed": false,
+  "workload_generation_changed": false,
+  "adaptive_wave_science_changed": false,
+  "objective_cost_constants_changed": false,
+  "real_foundation_data_modified": false,
+  "historical_v3_files_modified": false,
+  "model_and_objective_byte_identical": {
+    "baseline.py": {
+      "previous_sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e",
+      "current_sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e"
+    },
+    "meta_v4.py": {
+      "previous_sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5",
+      "current_sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5"
+    },
+    "flexpfn.py": {
+      "previous_sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84",
+      "current_sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84"
+    },
+    "objective.py": {
+      "previous_sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c",
+      "current_sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c"
+    }
+  },
+  "historical_preexecution_release_restored_byte_identical": true,
+  "tracked_files_checked": 1107,
+  "only_allowed_operational_tracked_changes": {
+    "foundation_v1/collector_receipts.py": {
+      "base_sha256": "4b5c00bdc8c0b15dfa79a07060f106522ba0bcbeb155e54bead8db035d1ca4c0",
+      "current_sha256": "a2faa0dd76035ddce6993b0cf8bafa39fe000c936f3ce9465cd146399717db55"
+    },
+    "foundation_v1/full_campaign.py": {
+      "base_sha256": "30fe673e95c09a330873b08995f88ed60b0dd66b70ef2c5cac42dd77d909b46c",
+      "current_sha256": "4870dcd8f6f45522993066b5e5d2c065bbd696f04c046fe06d24a5ec02725156"
+    },
+    "foundation_v1/simple_campaign.py": {
+      "base_sha256": "c352fb4346f316e10b8e77f7c076d714630daf51eef8d1227a746f810faeeb04",
+      "current_sha256": "1ae54874308e8d6fdd6882d6010519fa051078c6b20dbf73bd5f6c59e059ae16"
+    },
+    "foundation_v1/simple_collector.py": {
+      "base_sha256": "43ee3396f1e76c820000b468dae433de81b3ad8377ce369e263210ee6f74221b",
+      "current_sha256": "cb23a67f605ea5b0b2fb94c3bdc9ab8b2e5f4545b335da5000ed7ac9011efca6"
+    }
+  },
+  "previous_supervisor_zip_unchanged": true,
+  "no_simulator_calls": true,
+  "no_real_training": true,
+  "no_scc_access": true
+}

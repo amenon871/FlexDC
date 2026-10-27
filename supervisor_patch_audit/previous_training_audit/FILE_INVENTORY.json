@@ -1,0 +1,348 @@
+{
+  "schema": "SUCCESSOR_REVIEW_INVENTORY_V1",
+  "base_HEAD": "0190fe60d53cddb6afbaffad9a67b82e50ccf0de",
+  "files": [
+    {
+      "relative_path": ".gitignore",
+      "size_bytes": 111,
+      "sha256": "b9acc72d5138ec4af12691c5b3ae313e8db3de052bc427490a862f07e8ea2ab0",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "audit/BASE_STATE.json",
+      "size_bytes": 238,
+      "sha256": "a21eb35b691c92cc783d6e16c213f68488e9114eed00391144230cc4d12f1eaa",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/benchmark_console.txt",
+      "size_bytes": 6184,
+      "sha256": "e51487ef9b50f93667c39b06867cfc7023f81b6b72a80cf0f047906e8187c050",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/BENCHMARK_RESULTS.json",
+      "size_bytes": 2912,
+      "sha256": "dcb6584d7bec6a68cb0ea2bd2caefc8c8afad1638f33de77247ca1b541ea1ba1",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/development_tests.txt",
+      "size_bytes": 183,
+      "sha256": "3e92508231682d8c358a608107c22c92d504ee85157a907079bc5ba4279f567d",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/first_test_pass.txt",
+      "size_bytes": 2464,
+      "sha256": "98373787cafebec0ceb68e95f1a30e58b123ed3ca8d49ce160fb09d38131c93e",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/FOUNDATION_DATA_CONTRACT.md",
+      "size_bytes": 4722,
+      "sha256": "ee87a0e3e2c37bb05e4864fa809043b99dda6c079a41e4d97fe7ab366d6d4069",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/IMPLEMENTATION_AUDIT.md",
+      "size_bytes": 14378,
+      "sha256": "07f9a79c56eb687b16f191f3eeb6163929beeae292ad6ac08c0bf6104fbef6fa",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/ISOLATION_RESULT.json",
+      "size_bytes": 395,
+      "sha256": "8fae6e1b18d4aa03ddf37a6bcaba6d614670a6587d0573337b1a04937b72399d",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/mini_pipeline_launch.txt",
+      "size_bytes": 451,
+      "sha256": "a78457dd79069fb08b83c0d9b872513e10f2944c1f3040a2d26f01ec2c29732e",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/MINI_PIPELINE_RESULT.json",
+      "size_bytes": 695,
+      "sha256": "678278605abc7293e829d0ce3b3b30a3d80240199d96a262a3dc08bfce9f3d41",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/ORIGINAL_FILE_HASHES.json",
+      "size_bytes": 140642,
+      "sha256": "7de6d2ca9f544247c06e2882bed83d597393df18e92d8db2cc6ee64bcc187380",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/REFERENCE_FILES.json",
+      "size_bytes": 5039,
+      "sha256": "be088bcbe245aba35a6080a608e8167d5f664b66b2084693068ae7f25886328a",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/REVIEW_GUIDE.md",
+      "size_bytes": 3042,
+      "sha256": "700943b7b6ecd0eac86714d14b9c183c984d98e7d247a5e298113bbd364bd1ec",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/sample_training_output.txt",
+      "size_bytes": 2251,
+      "sha256": "bcec5588863034693eacaf935e31185ccd5167b55190b841e198dbb60c8a42fe",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/second_test_pass.txt",
+      "size_bytes": 183,
+      "sha256": "81d4af1141ac1f8dbf53c6fe06a66f09a3902696bc5e1f05a82121df0148f0d6",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/TEST_RESULTS.txt",
+      "size_bytes": 183,
+      "sha256": "908982d7b09d19e060605cb05b01b1d23b4c43fc605377e0d0696f3a4d991dd5",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/test_results.xml",
+      "size_bytes": 11571,
+      "sha256": "5db53f7f09af2d66a5d111a2bb6c3125178067729f815485ec693a58ec2799c4",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/V3_DEFAULT_WIDTH_PARITY.json",
+      "size_bytes": 524,
+      "sha256": "a619793c71fa650059e289335892af92b35591b39b47b51274627f6e761c7c49",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/V3_REFERENCE_AUDIT.md",
+      "size_bytes": 4796,
+      "sha256": "2d8a08743a5aeb0819ec3815cfedbd790fc49e3ddc4f8f3c211a0a52aed7eaec",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "audit/VALIDATION_SUMMARY.json",
+      "size_bytes": 2494,
+      "sha256": "47815bbbbc3088dd4ca4718e4f5cda5672e99b2ae9bb0bb1e28f245aed14a1d3",
+      "purpose": "validation and audit"
+    },
+    {
+      "relative_path": "benchmark.py",
+      "size_bytes": 654,
+      "sha256": "e633c7f8c782cb8e291398d12889a174e60f19365135f2eabcafd7020a183a6b",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "configs/baseline.yaml",
+      "size_bytes": 642,
+      "sha256": "25c42a6870901d1bfc835a6bb6b363a702abc53fdf65bbe2d8403ae7b62e4174",
+      "purpose": "configuration"
+    },
+    {
+      "relative_path": "configs/flexpfn.yaml",
+      "size_bytes": 745,
+      "sha256": "6a246df244757ac1ed37687958e000eb0a8b02da95c25f5e15ae219598ed8265",
+      "purpose": "configuration"
+    },
+    {
+      "relative_path": "configs/meta_v4.yaml",
+      "size_bytes": 741,
+      "sha256": "d34a470708f5147ede73b2aa95d7d97fb2eb0ec19fc3f671d8f05dc987f4f620",
+      "purpose": "configuration"
+    },
+    {
+      "relative_path": "evaluate.py",
+      "size_bytes": 4606,
+      "sha256": "468098c6c2978fc9c0d67b78ff16bdbfdaeb425c51c69f63322df5b678fe7dec",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "fixtures/make_fixture.py",
+      "size_bytes": 3611,
+      "sha256": "3e16b6a5674b5c38cf74748ffba2f3c0edde526c408304a98b8f6c8973cab73a",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/observations.csv.gz",
+      "size_bytes": 395800,
+      "sha256": "e36f07d6a5dded9e3f60b60d0a8c19ab75c4aea290a57cde87df730654589155",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/profiles.json",
+      "size_bytes": 20490,
+      "sha256": "edb0fec1fb26a3b846e17eb5bc8c34ce2ac39db1c16d46eedf6046f0c6d12b95",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/README.md",
+      "size_bytes": 175,
+      "sha256": "07d0b305121f08e8c839278e3e95ba727fa911b4ac993387d30db239d2c4e11f",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/workloads.json",
+      "size_bytes": 6953,
+      "sha256": "a448accb9ad052beceb0cdaf6f71aea8d322983d4ad620efe61ccba6e276f434",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "flexmodels/__init__.py",
+      "size_bytes": 79,
+      "sha256": "db09293c1ce654c3359e91e1941982ec439f536436b1138a214af1fee88ce40a",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/baseline.py",
+      "size_bytes": 5175,
+      "sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/checkpoint.py",
+      "size_bytes": 3509,
+      "sha256": "0be5efeb867108d19cb81741c97280a4d5b744eb417f9918dbf4ecda1deaf80c",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/data.py",
+      "size_bytes": 13123,
+      "sha256": "6e17508c0865dc06bd09cb268c310d9ea02dc5b2564102bd6b0da452f6044190",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/episodes.py",
+      "size_bytes": 6079,
+      "sha256": "f055304ac7ecb43ee1ae81b27261816d63f77f1ef5dfcd393ef8805c4702c1ad",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/features.py",
+      "size_bytes": 2909,
+      "sha256": "6274fcc58b2f147e00ffb5c312299772c368e01f841ec097d3adbdd99fe474b7",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/flexpfn.py",
+      "size_bytes": 2933,
+      "sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/meta_v4.py",
+      "size_bytes": 3513,
+      "sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/metrics.py",
+      "size_bytes": 8133,
+      "sha256": "cbc7dbf8c9a76d1cdbce4ee2e7dd71cb418526eceb2042205ff7ce740cd8c61b",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/objective.py",
+      "size_bytes": 3302,
+      "sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "flexmodels/training.py",
+      "size_bytes": 21994,
+      "sha256": "f18bde33a6534bce984e67ad117570ebbe91b25c65483c1d7129befb4cf5ed45",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "package_review.py",
+      "size_bytes": 6542,
+      "sha256": "d11c9c1e5b05cdefa3969ada468a7ebcf0bde9bea36d19f8d9148909bccdedad",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "prepare_cache.py",
+      "size_bytes": 647,
+      "sha256": "23ae897c92b97f5985700ab3b0cbd25c53ed4b55ba61bed432b8d74df23ec82e",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "pytest.ini",
+      "size_bytes": 71,
+      "sha256": "ee2ede50702af0d87aa1be3a5e990161b60b04dfa4de8b92ffadd897759ac25e",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "README.md",
+      "size_bytes": 14689,
+      "sha256": "ed1df3d5d5b5b461f70e65b5f850c9e0f2921c15eec888f7944e9f044577a910",
+      "purpose": "documentation"
+    },
+    {
+      "relative_path": "requirements.txt",
+      "size_bytes": 184,
+      "sha256": "c2f7e0bdc3ba285991a1d3595399c94738f070b15e1a60b9b36cfb06b33400af",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "smoke.py",
+      "size_bytes": 4578,
+      "sha256": "84e2847e8184949f051cdf5b40793ee96178db3535b8c64ffdf463428621dc26",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "tests/conftest.py",
+      "size_bytes": 1813,
+      "sha256": "4fab3601b59dc673d306c419f25a6f249d485666a0a89f00b651db7e3dcf49e4",
+      "purpose": "CPU correctness tests"
+    },
+    {
+      "relative_path": "tests/test_additional_gates.py",
+      "size_bytes": 8370,
+      "sha256": "7f9ea04023efd213f54ae56c017025a9cb1c787f3131315d9f2a1a7e1eab6a67",
+      "purpose": "CPU correctness tests"
+    },
+    {
+      "relative_path": "tests/test_data_episodes.py",
+      "size_bytes": 7346,
+      "sha256": "d79c63438f2eaea5999018581418c61cfc82de19f609dd04ae5dea3efb8d153a",
+      "purpose": "CPU correctness tests"
+    },
+    {
+      "relative_path": "tests/test_models.py",
+      "size_bytes": 9118,
+      "sha256": "95e343331ae101b1e044adc2d388dbaa03917722b39240eae492ea409c6d4da8",
+      "purpose": "CPU correctness tests"
+    },
+    {
+      "relative_path": "tests/test_training.py",
+      "size_bytes": 6572,
+      "sha256": "ba0747a557e27eff813eb9e57a10cdb9ee1972afc15f77d281e1d3360b876cc5",
+      "purpose": "CPU correctness tests"
+    },
+    {
+      "relative_path": "train_baseline.py",
+      "size_bytes": 86,
+      "sha256": "6fe5679985c810ae4777208c871b460312f81ad494d2acf60184a407d9182d4f",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "train_flexpfn.py",
+      "size_bytes": 85,
+      "sha256": "6e9274504c26d737f36cdad915a41cc13a5c062fb810772ac016fbd9e9aaa730",
+      "purpose": "training/evaluation source or dependencies"
+    },
+    {
+      "relative_path": "train_meta_v4.py",
+      "size_bytes": 85,
+      "sha256": "eaa8bd9494d78e1c4a6f7ee19eb7fb86b4d09b27c435c752431280b4c8f6dd2a",
+      "purpose": "training/evaluation source or dependencies"
+    }
+  ],
+  "exclusions": [
+    "dist (no recursive ZIP)",
+    "runtime caches/checkpoints/W&B/pytest/pycache",
+    "any .env file or directory",
+    "FILE_INVENTORY.json self-hash (covered instead by the ZIP top-level manifest)"
+  ]
+}

@@ -1,0 +1,6 @@
+Synthetic/local validation only; no real FlexDC or Foundation training.
+["C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\ARGOS Hybrid\\.venv\\Scripts\\python.exe", "-X", "utf8", "-B", "-m", "pytest", "foundation_successor_models/tests", "-q", "--junitxml=C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\supervisor_final_fix_audit\\training_results.xml"]
+........................................................................ [ 42%]
+........................................................................ [ 84%]
+...........................                                              [100%]
+171 passed in 54.42s

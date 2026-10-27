@@ -11,6 +11,7 @@ from pathlib import Path
 from collections import Counter
 from am_flexdc_foundation_v1_common import ROOT,ARTIFACTS,contexts,iter_csv,read_json,write_json,file_hash,make_row,row_geometry,digest
 from foundation_v1 import scope,audit,adaptive,collector_receipts as receipts,simple_collector as collector
+from foundation_v1 import stage_certification as certificates
 from foundation_v1.full_campaign import STAGES,verify_release,counts_for
 from foundation_v1.campaign import CampaignLock
 from foundation_v1.environment import versions
@@ -40,6 +41,7 @@ def mismatch(row,plan,body,error):
 
 def certify(plan,area,database):
     """Strong scientific checks happen only after ALL current-stage collection."""
+    certificates.invalidate(area,'strong audit started')
     tasks={t['Task_ID']:t for t in contexts()};db=audit.connection(database)
     bad={};missing=[];short=[];cleanup_debts=[];passed=0;seen=set()
     with db:
@@ -98,6 +100,8 @@ def execute_stage(a,part):
         if report['evidence_shortfalls']:raise RuntimeError('EVIDENCE_SHORTFALL_REQUIRES_POLICY: all unrelated collection completed; no deterministic insufficient-evidence retries')
         # Only invalid rows lose their success marker. Clean IDs never rerun.
         for key,reason in report['QUARANTINED'].items():receipts.archive(area,key,reason)
+        from foundation_v1.recovery_index import invalidate
+        for key in report['MISSING']:invalidate(area,key)
         if cycle==collector.REPAIR_CYCLES:
             raise RuntimeError('STAGE_AUDIT_SHORTFALL: all unrelated collection completed; see '+str(area/'stage_audit.json'))
     raise AssertionError('unreachable')
@@ -107,7 +111,9 @@ def run_full(a,part):
     release=verify_release();environment=versions(require=True);scope.require_unlock(part,a.unlock_locked_test)
     root=ROOT/'foundation_v1_runs';root.mkdir(exist_ok=True)
     scope.PLAN_ROOT=root/'scientific_stage_plans'
-    state={'schema':'FOUNDATION_V1_SIMPLE_CAMPAIGN_V2','status':'RUNNING','started':time.time(),
+    from foundation_v1.operational_release import require_transition
+    transitions=require_transition(ROOT,release)
+    state={'operational_patch_release':release.get('operational_patch_release'),'operational_patch_release_sha256':release.get('operational_patch_release_sha256'),'source_transition_receipts':transitions,'collection_initial_source_identity':release.get('collection_initial_source_identity',release['uncommitted_source_sha256']),'resume_telemetry':{'certificates_checked':0,'stages_skipped':0},'schema':'FOUNDATION_V1_SIMPLE_CAMPAIGN_V2','status':'RUNNING','started':time.time(),
         'max_workers':a.max_workers,'environment':environment,'pid':os.getpid(),'active':None,'stages':{},'source_identity':release['uncommitted_source_sha256'],'expected':{p:counts_for(p) for p in (('TRAIN_DEV','LOCKED_SYNTHETIC_TEST') if part=='ALL' else (part,))}}
     state_file=root/'simple_campaign_status.json'
     from foundation_v1.full_campaign import export_scope,ledger_metrics,validate_plan
@@ -130,9 +136,22 @@ def run_full(a,part):
                     # Byte integrity before execution, geometry certification after.
                     plan_receipt=read_json(path.with_suffix('.receipt.json'))
                     if plan_receipt.get('plan_sha256',plan_receipt.get('sha256'))!=file_hash(path):raise ValueError('Immutable stage plan hash changed')
-                    call=copy.copy(a);call.stage=stage
-                    report=execute_stage(call,selected)
-                    validate_plan(path,selected,stage)
+                    expected_rows=int(plan_receipt.get('rows',state['expected'][selected]['tasks']*(150 if stage=='phaseA' else 20)))
+                    area=stage_area(selected,stage);database=scope.database_path(selected)
+                    certificate,reason=certificates.validate(path,area,database,selected,stage,expected_rows,release)
+                    state['resume_telemetry']['certificates_checked']+=1
+                    if certificate:
+                        print('STAGE CERTIFIED '+selected+':'+stage+' rows='+str(expected_rows)+'/'+str(expected_rows)+'; previously PASS; historical receipt re-scan skipped',flush=True)
+                        report={'status':'VALID_COMPLETE','scientifically_complete':True,'certified_stage_skipped':True,
+                            'counts':{'planned':expected_rows,'VALID_COMPLETE':expected_rows,'EXECUTION_COMPLETE':expected_rows},
+                            'simulation_calls_this_invocation':0,'simulation_rows_submitted_this_invocation':0}
+                        state['resume_telemetry']['stages_skipped']+=1
+                    else:
+                        print('STAGE CERTIFICATION REQUIRED '+selected+':'+stage+'; '+reason,flush=True)
+                        call=copy.copy(a);call.stage=stage
+                        report=execute_stage(call,selected)
+                        validate_plan(path,selected,stage)
+                        certificates.create(path,area,database,selected,stage,expected_rows,release)
                     state['stages'][selected+':'+stage]=report;write_json(state_file,state,False)
                 export_scope(selected,a.unlock_locked_test)
             metrics={p:ledger_metrics(p) for p in (('TRAIN_DEV','LOCKED_SYNTHETIC_TEST') if part=='ALL' else (part,))}
@@ -208,52 +227,60 @@ def process_alive(pid):
     except PermissionError:return True
 
 
-def live_status(root=ROOT):
-    """Incremental event offsets; per-worker pending pointer closes crash window.
+def _status_event(db,stage,key,t,valid=True):
+    # Status is a projection of the newest durable event, not completion authority.
+    db.execute('''INSERT INTO events(stage,id,t,valid_complete) VALUES(?,?,?,?)
+        ON CONFLICT(stage,id) DO UPDATE SET t=excluded.t,valid_complete=excluded.valid_complete
+        WHERE excluded.t>=events.t''',(stage,key,float(t),int(valid)))
 
-    The SQLite file here is a disposable status cache, never execution authority.
-    Deleting it rebuilds from worker journals and pending completion receipts.
-    """
+
+def live_status(root=ROOT):
+    """Disposable, timestamp-ordered status projection; collection never uses it."""
     root=Path(root);base=root/'foundation_v1_runs'
     if not base.exists():return {'overall_complete':0,'overall_expected':500000,'status':'NOT_STARTED'}
-    db=sqlite3.connect(base/'status_cache.sqlite');db.execute('CREATE TABLE IF NOT EXISTS events(stage TEXT,id TEXT,t REAL,PRIMARY KEY(stage,id))');db.execute('CREATE TABLE IF NOT EXISTS offsets(path TEXT PRIMARY KEY,position INTEGER)')
+    db=sqlite3.connect(base/'status_cache.sqlite')
+    columns=[r[1] for r in db.execute('PRAGMA table_info(events)')]
+    if columns and columns!=['stage','id','t','valid_complete']:
+        # Legacy cache may already have consumed invalidations as successes.
+        with db:db.execute('DROP TABLE events');db.execute('DROP TABLE IF EXISTS offsets')
+    db.execute('CREATE TABLE IF NOT EXISTS events(stage TEXT,id TEXT,t REAL,valid_complete INTEGER NOT NULL,PRIMARY KEY(stage,id))')
+    db.execute('CREATE TABLE IF NOT EXISTS offsets(path TEXT PRIMARY KEY,position INTEGER)')
     stages=[]
     for part in ('train_dev','locked_synthetic_test'):
         for area in (base/part/'collector_v2').glob('*'):
             if not area.is_dir():continue
             stage=part+':'+area.name
-            for path in (area/'events').glob('*.jsonl'):
+            for path in sorted((area/'events').glob('*.jsonl')):
                 old=db.execute('SELECT position FROM offsets WHERE path=?',(str(path),)).fetchone();offset=old[0] if old else 0
                 if path.stat().st_size<offset:offset=0
                 with path.open('r',encoding='utf8') as stream:
                     stream.seek(offset)
                     while True:
                         line=stream.readline()
-                        if not line:break
+                        if not line or not line.endswith('\n'):break
                         try:event=json.loads(line)
                         except ValueError:break
-                        db.execute('INSERT OR REPLACE INTO events VALUES(?,?,?)',(stage,event['id'],event['time']));offset=stream.tell()
+                        _status_event(db,stage,event['id'],event['time'],not event.get('invalidated',False));offset=stream.tell()
                 db.execute('INSERT OR REPLACE INTO offsets VALUES(?,?)',(str(path),offset))
             for path in (area/'events').glob('*.pending.json'):
                 try:
                     pending=read_json(path);body=receipts.load(area,pending['Plan_Row_ID'])
-                    db.execute('INSERT OR REPLACE INTO events VALUES(?,?,?)',(stage,body['Plan_Row_ID'],body['timestamp']))
+                    _status_event(db,stage,body['Plan_Row_ID'],body['timestamp'])
                 except (ValueError,OSError,KeyError):pass
             progress=read_json(area/'progress.json') if (area/'progress.json').exists() else {}
-            complete=db.execute('SELECT count(*) FROM events WHERE stage=?',(stage,)).fetchone()[0]
             audited=read_json(area/'stage_audit.json') if (area/'stage_audit.json').exists() else {}
-            for key in audited.get('QUARANTINED',{}):
-                if not receipts.receipt_path(area,key).exists():db.execute('DELETE FROM events WHERE stage=? AND id=?',(stage,key))
-            complete=db.execute('SELECT count(*) FROM events WHERE stage=?',(stage,)).fetchone()[0]
+            for key in [*audited.get('QUARANTINED',{}),*audited.get('MISSING',[])]:
+                _status_event(db,stage,key,audited.get('audited_at',0),False)
+            complete=db.execute('SELECT count(*) FROM events WHERE stage=? AND valid_complete=1',(stage,)).fetchone()[0]
             live=sum(process_alive(pid) for pid in progress.get('worker_pids',[]))
             stages.append(dict(progress,stage=stage,completed=complete,pending=max(0,progress.get('planned',complete)-complete),
                 estimated_workers_active=live,audit_failures=len(audited.get('QUARANTINED',{})),cleanup_debts=len(audited.get('cleanup_debts',[]))))
-    db.commit();now=time.time();total=db.execute('SELECT count(*) FROM events').fetchone()[0]
-    hour=db.execute('SELECT count(*) FROM events WHERE t>=?',(now-3600,)).fetchone()[0]
-    minute=db.execute('SELECT count(*) FROM events WHERE t>=?',(now-60,)).fetchone()[0]
-    counts={part:db.execute('SELECT count(*) FROM events WHERE stage LIKE ?',(part+':%',)).fetchone()[0] for part in ('train_dev','locked_synthetic_test')};db.close()
+    db.commit();now=time.time();total=db.execute('SELECT count(*) FROM events WHERE valid_complete=1').fetchone()[0]
+    hour=db.execute('SELECT count(*) FROM events WHERE valid_complete=1 AND t>=?',(now-3600,)).fetchone()[0]
+    minute=db.execute('SELECT count(*) FROM events WHERE valid_complete=1 AND t>=?',(now-60,)).fetchone()[0]
+    counts={part:db.execute('SELECT count(*) FROM events WHERE valid_complete=1 AND stage LIKE ?',(part+':%',)).fetchone()[0] for part in ('train_dev','locked_synthetic_test')};db.close()
     state=read_json(base/'simple_campaign_status.json') if (base/'simple_campaign_status.json').exists() else {}
-    return {'status':('INTERRUPTED_RECOVERABLE' if state.get('status')=='RUNNING' and not process_alive(state.get('pid')) else state.get('status','COLLECTING')),'active':state.get('active'),'overall_complete':total,'overall_expected':500000,
+    return {'status':('INTERRUPTED_RECOVERABLE' if state.get('status')=='RUNNING' and not process_alive(state.get('pid')) else state.get('status','COLLECTING')),'active':state.get('active'),'source_identity':state.get('source_identity'),'overall_complete':total,'overall_expected':500000,
         'partition_complete':counts,'rows_completed_last_hour':hour,'rows_per_second_last_minute':minute/60,'stages':stages}
 
 

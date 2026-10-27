@@ -1,0 +1,5 @@
+Synthetic/local validation only; no real FlexDC or Foundation training.
+["C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\venv\\Scripts\\python.exe", "-X", "utf8", "-B", "-m", "pytest", "tests/test_foundation_v1_final_fixes.py", "-q", "--junitxml=C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\supervisor_final_fix_audit\\focused_results.xml"]
+.......................                                                  [100%]
+- generated xml file: C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\supervisor_final_fix_audit\focused_results.xml -
+23 passed in 33.12s

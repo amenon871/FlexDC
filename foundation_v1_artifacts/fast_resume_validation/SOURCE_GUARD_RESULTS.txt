@@ -1,0 +1,4 @@
+PASS: all 623 source/config hashes verified.
+PASS: no previously guarded path removed.
+PASS: canonical master Phase-A SHA bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f
+Local review seal only; not deployed.

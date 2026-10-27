@@ -1,0 +1,32 @@
+lr: 0.0003
+min_lr: 1.0e-06
+weight_decay: 0.0001
+gradient_clip_norm: 1.0
+checkpoint_every_steps: 200
+first_validation_min_seconds: 300
+checkpoint_margin_seconds: 30
+log_every_steps: 10
+eval_batch_size: 2048
+loss:
+  qos_weight: 4.0
+  tracking_boundary_multiplier: 2.0
+  qos_boundary_multiplier: 2.0
+cpu_threads: 4
+model:
+  dim_job_mix: 13
+  dim_dc_features: 14
+  st_dim_hidden: 512
+  st_num_heads: 4
+  st_num_outputs: 1
+  global_projection_dim: 128
+  linear_dim_hidden: 512
+  qos_projection_dim: 256
+  skip_connections: true
+  layer_norm: true
+  include_masked_mean_pool: true
+batch_size: 2048
+max_epochs: 250
+warmup_epochs: 5
+early_stopping:
+  patience: 30
+  min_delta: 1.0e-05

@@ -1,0 +1,391 @@
+{
+  "schema": "SUCCESSOR_FINAL_REVIEW_INVENTORY_V1",
+  "base_HEAD": "0190fe60d53cddb6afbaffad9a67b82e50ccf0de",
+  "files": [
+    {
+      "relative_path": ".gitignore",
+      "size_bytes": 111,
+      "sha256": "b9acc72d5138ec4af12691c5b3ae313e8db3de052bc427490a862f07e8ea2ab0",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "audit/ADVERSARIAL_TEST_RESULTS.md",
+      "size_bytes": 1152,
+      "sha256": "9dbc9435f240cf2119d8905cf01242ca396eaf822c61c15c1b8af140e97c782b",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/BASE_STATE.json",
+      "size_bytes": 238,
+      "sha256": "a21eb35b691c92cc783d6e16c213f68488e9114eed00391144230cc4d12f1eaa",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/benchmark_console.txt",
+      "size_bytes": 6184,
+      "sha256": "e51487ef9b50f93667c39b06867cfc7023f81b6b72a80cf0f047906e8187c050",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/BENCHMARK_RESULTS.json",
+      "size_bytes": 2912,
+      "sha256": "dcb6584d7bec6a68cb0ea2bd2caefc8c8afad1638f33de77247ca1b541ea1ba1",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/development_tests.txt",
+      "size_bytes": 183,
+      "sha256": "3e92508231682d8c358a608107c22c92d504ee85157a907079bc5ba4279f567d",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/first_test_pass.txt",
+      "size_bytes": 2464,
+      "sha256": "98373787cafebec0ceb68e95f1a30e58b123ed3ca8d49ce160fb09d38131c93e",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/FOUNDATION_DATA_CONTRACT.md",
+      "size_bytes": 4722,
+      "sha256": "ee87a0e3e2c37bb05e4864fa809043b99dda6c079a41e4d97fe7ab366d6d4069",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/IMPLEMENTATION_AUDIT.md",
+      "size_bytes": 15173,
+      "sha256": "1c45f97b73289f7e23a6fe310656ab596559ddaa117a5b09045a7bdee3df9473",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/ISOLATION_RESULT.json",
+      "size_bytes": 2590,
+      "sha256": "61e541f33eb282fd824dd7569785263c537603ff415f38d8564bdd8ff6a14e06",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/mini_pipeline_launch.txt",
+      "size_bytes": 451,
+      "sha256": "a78457dd79069fb08b83c0d9b872513e10f2944c1f3040a2d26f01ec2c29732e",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/MINI_PIPELINE_RESULT.json",
+      "size_bytes": 695,
+      "sha256": "678278605abc7293e829d0ce3b3b30a3d80240199d96a262a3dc08bfce9f3d41",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/MINI_PIPELINE_RESULT_PATCHED.json",
+      "size_bytes": 825,
+      "sha256": "7316d83a8a90d147fd30f322bc5b988eaf5669be37c34e5769e0557d94514ca8",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/MINI_TEST_RESULTS.txt",
+      "size_bytes": 1249,
+      "sha256": "8cb7049817d68da0ddd6f7384136b4c754709d9d3d7ef8101ff486208c2c3372",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/ORIGINAL_FILE_HASHES.json",
+      "size_bytes": 140642,
+      "sha256": "7de6d2ca9f544247c06e2882bed83d597393df18e92d8db2cc6ee64bcc187380",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/PATCH_AUDIT.md",
+      "size_bytes": 4448,
+      "sha256": "b83479e7e33f1fac6a1438e9b2fd870dbd4accad7ef2946edbc37dd4c405be08",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/PATCH_INTERIM_TESTS.xml",
+      "size_bytes": 17024,
+      "sha256": "03b97a882b8cf3dd1099094b0959c90a39230dad7a5f7c038c881094c4941c40",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/PATCH_TEST_RESULTS.xml",
+      "size_bytes": 15555,
+      "sha256": "6ab039625627cf9a401f7ec8d31f27fae89c7e12a29b2c077208790d4386dec1",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/REFERENCE_FILES.json",
+      "size_bytes": 5039,
+      "sha256": "be088bcbe245aba35a6080a608e8167d5f664b66b2084693068ae7f25886328a",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/REVIEW_GUIDE.md",
+      "size_bytes": 4008,
+      "sha256": "d072d8342a73e95273c3d3e1510d13a30724b6db66607c93897296faaa5bb584",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/sample_training_output.txt",
+      "size_bytes": 34307,
+      "sha256": "a2bfa1f6ba23ceaf0f2848a628678e18450835ca691c9a2a47a9da1bb6e4128d",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/second_test_pass.txt",
+      "size_bytes": 183,
+      "sha256": "81d4af1141ac1f8dbf53c6fe06a66f09a3902696bc5e1f05a82121df0148f0d6",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/TEST_RESULTS.txt",
+      "size_bytes": 574,
+      "sha256": "75eaceb23fe115658961f00e392ef71f58991c6e741b7e81a0ae8a8922e976a0",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/test_results.xml",
+      "size_bytes": 11571,
+      "sha256": "5db53f7f09af2d66a5d111a2bb6c3125178067729f815485ec693a58ec2799c4",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/V3_DEFAULT_WIDTH_PARITY.json",
+      "size_bytes": 524,
+      "sha256": "a619793c71fa650059e289335892af92b35591b39b47b51274627f6e761c7c49",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/V3_REFERENCE_AUDIT.md",
+      "size_bytes": 4796,
+      "sha256": "2d8a08743a5aeb0819ec3815cfedbd790fc49e3ddc4f8f3c211a0a52aed7eaec",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "audit/VALIDATION_SUMMARY.json",
+      "size_bytes": 857,
+      "sha256": "a9a994b7b3b17d6644ed6c18cbcff3857c87f328cb151dc8d960ab0e526091f8",
+      "purpose": "audit/test/benchmark evidence and tooling"
+    },
+    {
+      "relative_path": "benchmark.py",
+      "size_bytes": 654,
+      "sha256": "e633c7f8c782cb8e291398d12889a174e60f19365135f2eabcafd7020a183a6b",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "configs/baseline.yaml",
+      "size_bytes": 677,
+      "sha256": "93f1e8afe75343e3096f36eb79957443a7904c7fa756fed4376c07a1fd0494ac",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "configs/flexpfn.yaml",
+      "size_bytes": 775,
+      "sha256": "584398cebdf2b112f50ce392b4f426732e0a42f961003839d0701bec6f1bfabb",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "configs/meta_v4.yaml",
+      "size_bytes": 772,
+      "sha256": "e0a1d314663b9453e2736cafd90b435db6c1d5c205b5f3eabf580d4d25701670",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "evaluate.py",
+      "size_bytes": 4606,
+      "sha256": "468098c6c2978fc9c0d67b78ff16bdbfdaeb425c51c69f63322df5b678fe7dec",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "fixtures/make_fixture.py",
+      "size_bytes": 3598,
+      "sha256": "1eb20af419f41855188efc3edb71207b7fb1f50531f61fd37fc546841056cf02",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/observations.csv.gz",
+      "size_bytes": 395800,
+      "sha256": "b53df0a67b2a5a71e1efac39552d19913ca9e543d2c3ff610fefb4595ab2a43f",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/profiles.json",
+      "size_bytes": 20490,
+      "sha256": "edb0fec1fb26a3b846e17eb5bc8c34ce2ac39db1c16d46eedf6046f0c6d12b95",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/README.md",
+      "size_bytes": 175,
+      "sha256": "07d0b305121f08e8c839278e3e95ba727fa911b4ac993387d30db239d2c4e11f",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "fixtures/tiny/workloads.json",
+      "size_bytes": 6953,
+      "sha256": "a448accb9ad052beceb0cdaf6f71aea8d322983d4ad620efe61ccba6e276f434",
+      "purpose": "TEST FIXTURE ONLY; NOT SCIENTIFIC DATA"
+    },
+    {
+      "relative_path": "flexmodels/__init__.py",
+      "size_bytes": 79,
+      "sha256": "db09293c1ce654c3359e91e1941982ec439f536436b1138a214af1fee88ce40a",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/baseline.py",
+      "size_bytes": 5175,
+      "sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/checkpoint.py",
+      "size_bytes": 3509,
+      "sha256": "0be5efeb867108d19cb81741c97280a4d5b744eb417f9918dbf4ecda1deaf80c",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/data.py",
+      "size_bytes": 15089,
+      "sha256": "9a4feb2261b7333ff75a128f5976a6379466976111a1a512bb0806875331991e",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/episodes.py",
+      "size_bytes": 7304,
+      "sha256": "62afa9e5f81645711f0e71be82ea5de10602d368e39d4a311e5ae3dd03a4fe65",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/features.py",
+      "size_bytes": 3421,
+      "sha256": "2ce521c25499c812fb55bd37bec0fd070c17bde80ec98da6943302bf3888b1e4",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/flexpfn.py",
+      "size_bytes": 2933,
+      "sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/meta_v4.py",
+      "size_bytes": 3513,
+      "sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/metrics.py",
+      "size_bytes": 8107,
+      "sha256": "8d20b9d9c20c5217d0576c35b00900015402723e81680cb8877e71fe65cc77b3",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/objective.py",
+      "size_bytes": 3302,
+      "sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "flexmodels/training.py",
+      "size_bytes": 24988,
+      "sha256": "7a1c9764bf6e9d0dbe0ff649694af97ebedefc3bc82b8cc91b2ce9bdae2a0464",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "package_review.py",
+      "size_bytes": 6542,
+      "sha256": "d11c9c1e5b05cdefa3969ada468a7ebcf0bde9bea36d19f8d9148909bccdedad",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "prepare_cache.py",
+      "size_bytes": 647,
+      "sha256": "23ae897c92b97f5985700ab3b0cbd25c53ed4b55ba61bed432b8d74df23ec82e",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "pytest.ini",
+      "size_bytes": 71,
+      "sha256": "ee2ede50702af0d87aa1be3a5e990161b60b04dfa4de8b92ffadd897759ac25e",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "README.md",
+      "size_bytes": 15811,
+      "sha256": "9fdaa8dcb8418758a651d8b2b1f413cee7261b2b97656ede5ead3e76fbad6fa6",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "requirements.txt",
+      "size_bytes": 184,
+      "sha256": "c2f7e0bdc3ba285991a1d3595399c94738f070b15e1a60b9b36cfb06b33400af",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "smoke.py",
+      "size_bytes": 6113,
+      "sha256": "a670bbcc28042651b02c1fed0e9e96484299027454a55a90818d3bc91598ebe0",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "tests/conftest.py",
+      "size_bytes": 2076,
+      "sha256": "62fa68d900ca9bb7c07a73e324aa11fb7ee4c64f9431e2e36833fbdac49a1038",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_additional_gates.py",
+      "size_bytes": 8255,
+      "sha256": "190a014a7b6b1f13a8ae822a96bd6fad9fc9461d7b2ae9311d907106d0f51436",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_data_episodes.py",
+      "size_bytes": 7346,
+      "sha256": "d79c63438f2eaea5999018581418c61cfc82de19f609dd04ae5dea3efb8d153a",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_models.py",
+      "size_bytes": 9118,
+      "sha256": "95e343331ae101b1e044adc2d388dbaa03917722b39240eae492ea409c6d4da8",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_supervisor_corrections.py",
+      "size_bytes": 11632,
+      "sha256": "7683348cab167c40b73bab6ed8fdda9bc1bc995c320a8868a0cae50d5bf2acf3",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_training.py",
+      "size_bytes": 6499,
+      "sha256": "aee951d17a010607cf727ec6e8902a42d4726e4c3ef502d249a44d9485ca758e",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "tests/test_training_run_directory.py",
+      "size_bytes": 2356,
+      "sha256": "49d84544b9e4ce821232df17dc3d46d56e85aad82831a253d48bb312162a54eb",
+      "purpose": "synthetic/unit regression tests"
+    },
+    {
+      "relative_path": "train_baseline.py",
+      "size_bytes": 86,
+      "sha256": "6fe5679985c810ae4777208c871b460312f81ad494d2acf60184a407d9182d4f",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "train_flexpfn.py",
+      "size_bytes": 85,
+      "sha256": "6e9274504c26d737f36cdad915a41cc13a5c062fb810772ac016fbd9e9aaa730",
+      "purpose": "source/config/provenance/documentation"
+    },
+    {
+      "relative_path": "train_meta_v4.py",
+      "size_bytes": 85,
+      "sha256": "eaa8bd9494d78e1c4a6f7ee19eb7fb86b4d09b27c435c752431280b4c8f6dd2a",
+      "purpose": "source/config/provenance/documentation"
+    }
+  ],
+  "self_hash": "covered by master ZIP manifest/archive SHA"
+}

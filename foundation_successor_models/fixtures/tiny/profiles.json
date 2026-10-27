@@ -1,0 +1,725 @@
+{
+  "real_anchors": [],
+  "synthetic_profiles": [
+    {
+      "profile_id": "SYN_TRAIN_P100_2_0",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_2_1",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_4_0",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_4_1",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_4_2",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_4_3",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_0",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_1",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_2",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_3",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_4",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_P100_6_5",
+      "split": "TRAIN",
+      "hardware_class": "P100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_2_0",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_2_1",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_4_0",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_4_1",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_4_2",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_4_3",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_0",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_1",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_2",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_3",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_4",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_TRAIN_A100_6_5",
+      "split": "TRAIN",
+      "hardware_class": "A100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_2_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_2_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_4_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_4_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_4_2",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_4_3",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_2",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_3",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_4",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_P100_6_5",
+      "split": "DEVELOPMENT",
+      "hardware_class": "P100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_2_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_2_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_4_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_4_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_4_2",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_4_3",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_0",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_1",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_2",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_3",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_4",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_DEVELOPMENT_A100_6_5",
+      "split": "DEVELOPMENT",
+      "hardware_class": "A100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_2_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_2_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_4_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_4_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_4_2",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_4_3",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_2",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_3",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_4",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_P100_6_5",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "P100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_2_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_2_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_4_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_4_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_4_2",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_4_3",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_0",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 180,
+      "max_job_power_watts": 650,
+      "min_time_seconds": 20,
+      "max_time_seconds": 50,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_1",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 190,
+      "max_job_power_watts": 665,
+      "min_time_seconds": 25,
+      "max_time_seconds": 60,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_2",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 200,
+      "max_job_power_watts": 680,
+      "min_time_seconds": 30,
+      "max_time_seconds": 70,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_3",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 210,
+      "max_job_power_watts": 695,
+      "min_time_seconds": 35,
+      "max_time_seconds": 80,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_4",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 220,
+      "max_job_power_watts": 710,
+      "min_time_seconds": 40,
+      "max_time_seconds": 90,
+      "job_size": 1
+    },
+    {
+      "profile_id": "SYN_LOCKED_SYNTHETIC_TEST_A100_6_5",
+      "split": "LOCKED_SYNTHETIC_TEST",
+      "hardware_class": "A100",
+      "min_job_power_watts": 230,
+      "max_job_power_watts": 725,
+      "min_time_seconds": 45,
+      "max_time_seconds": 100,
+      "job_size": 1
+    }
+  ]
+}

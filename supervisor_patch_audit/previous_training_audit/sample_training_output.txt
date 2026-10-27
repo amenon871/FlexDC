@@ -1,0 +1,27 @@
+ACTUAL SYNTHETIC FIXTURE TRAINING OUTPUT — NOT SCIENTIFIC RESULTS
+All values are copied from actual logs; ETA/speed applies only to the tiny fixture.
+
+=== baseline ===
+FlexDC Foundation Baseline Training | Run=baseline
+Device=cpu GPU=None Precision=fp32
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 30.10step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]Checkpoint: latest.pt saved at step 1
+Checkpoint: best_loss.pt saved at step 3
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\handoff_smoke\baseline\latest.pt epoch=1 step=3 lr=0.0003 best_f1=0.0
+Training exit: {'model': 'baseline', 'optimizer_steps_this_invocation': 3, 'global_step': 6, 'status': 'COMPLETE', 'wall_seconds': 2.921933599980548, 'fixture': True}
+
+=== meta_v4 ===
+FlexDC Meta V4 Training | Run=meta_v4
+Device=cpu GPU=None Precision=fp32
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 23.98step/s, Kmean=64.0, loss=61.039, lr=0.00015, mean=3.724, mem=CPU, nll=5.183, p90=3.043, qos=13.57]Checkpoint: latest.pt saved at step 1
+Checkpoint: best_loss.pt saved at step 2
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\handoff_smoke\meta_v4\latest.pt epoch=1 step=2 lr=0.0003 best_f1=0.0
+Training exit: {'model': 'meta_v4', 'optimizer_steps_this_invocation': 2, 'global_step': 4, 'status': 'COMPLETE', 'wall_seconds': 3.5805762999807484, 'fixture': True}
+
+=== flexpfn ===
+FlexDC FlexPFN Training | Run=flexpfn
+Device=cpu GPU=None Precision=fp32
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 17.28step/s, Kmean=64.0, loss=182.76, lr=0.00015, mean=10.02, mem=CPU, nll=13.21, p90=2.164, qos=42.64]Checkpoint: latest.pt saved at step 1
+Checkpoint: best_loss.pt saved at step 2
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\handoff_smoke\flexpfn\latest.pt epoch=1 step=2 lr=0.0003 best_f1=0.0
+Training exit: {'model': 'flexpfn', 'optimizer_steps_this_invocation': 2, 'global_step': 4, 'status': 'COMPLETE', 'wall_seconds': 4.3397801000392064, 'fixture': True}
+

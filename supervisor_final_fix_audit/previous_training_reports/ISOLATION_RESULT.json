@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "scope": "Supervisor-authorized training corrections and collector recovery bookkeeping only",
+  "base_HEAD": "0190fe60d53cddb6afbaffad9a67b82e50ccf0de",
+  "branch": "foundation-successor-models-prep",
+  "allowed_existing_tracked_changes": [
+    "foundation_v1/collector_receipts.py",
+    "foundation_v1/simple_campaign.py",
+    "foundation_v1/simple_collector.py",
+    "foundation_v1_artifacts/preexecution_release.json"
+  ],
+  "pre_existing_tracked_files": 1107,
+  "unchanged_tracked_files": 1103,
+  "architecture_and_objective_byte_identical": {
+    "baseline.py": {
+      "previous_sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e",
+      "current_sha256": "9e496bcd62e2479ad4f6bd6e71388dd8242f1b9ccc541bb6c8cda17dd9ac441e"
+    },
+    "meta_v4.py": {
+      "previous_sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5",
+      "current_sha256": "b2a520bc059a32207a8c05408fa728372fd3ece01ff2f5b6477d22e6b5c5c4e5"
+    },
+    "flexpfn.py": {
+      "previous_sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84",
+      "current_sha256": "576f06a3035979bcf013f0df7c61169eaf00ffc19849dbfde83384d6ab939c84"
+    },
+    "objective.py": {
+      "previous_sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c",
+      "current_sha256": "5c20c2cdde14a006628f7b7dfa3548bc62ce95805c6dc3a93f00661d071c0f4c"
+    }
+  },
+  "no_historical_v3_change": true,
+  "no_scientific_plan_profile_workload_change": true,
+  "no_real_foundation_data_change": true,
+  "no_commit": true,
+  "no_push": true,
+  "no_merge": true,
+  "no_scc_deployment": true
+}

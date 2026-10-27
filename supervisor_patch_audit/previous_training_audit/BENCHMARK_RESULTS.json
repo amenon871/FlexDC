@@ -1,0 +1,78 @@
+{
+  "status": "PASS",
+  "fixture_only": true,
+  "steps_per_model": 2,
+  "gpu_tested": false,
+  "warning": "Tiny CPU path validation only. Not a production throughput/runtime estimate. Run500\u20131000 steps on the real L40S before full training.",
+  "results": {
+    "baseline": {
+      "model": "baseline",
+      "optimizer_steps_this_invocation": 2,
+      "global_step": 2,
+      "status": "REQUESTED_STEP_LIMIT",
+      "wall_seconds": 2.5418101999675855,
+      "fixture": true,
+      "steps_per_second": 29.685834800926447,
+      "compute_wall_seconds": 0.0673722000210546,
+      "query_predictions_per_second": 7599.57370903717,
+      "projected_training_compute_hours": 5.61435000175455e-05,
+      "validation_and_checkpoint_overhead_excluded": true,
+      "peak_allocated_vram": 0,
+      "peak_reserved_vram": 0,
+      "cpu_utilization_fraction": 0.10146525566722907,
+      "gpu_utilization": null,
+      "timing_cpu_seconds": {
+        "data_wait": 0.0011403000098653138,
+        "forward": 0.02806010004132986,
+        "backward": 0.02605699998093769,
+        "optimizer": 0.009060300013516098
+      }
+    },
+    "meta_v4": {
+      "model": "meta_v4",
+      "optimizer_steps_this_invocation": 2,
+      "global_step": 2,
+      "status": "REQUESTED_STEP_LIMIT",
+      "wall_seconds": 2.7985198000096716,
+      "fixture": true,
+      "steps_per_second": 28.225226003327535,
+      "compute_wall_seconds": 0.0708586000255309,
+      "query_predictions_per_second": 225.80180802662028,
+      "projected_training_compute_hours": 3.9365888903072724e-05,
+      "validation_and_checkpoint_overhead_excluded": true,
+      "peak_allocated_vram": 0,
+      "peak_reserved_vram": 0,
+      "cpu_utilization_fraction": 0.04134554590331182,
+      "gpu_utilization": null,
+      "timing_cpu_seconds": {
+        "data_wait": 0.003748800023458898,
+        "forward": 0.030474300030618906,
+        "backward": 0.01808030006941408,
+        "optimizer": 0.00359139998909086
+      }
+    },
+    "flexpfn": {
+      "model": "flexpfn",
+      "optimizer_steps_this_invocation": 2,
+      "global_step": 2,
+      "status": "REQUESTED_STEP_LIMIT",
+      "wall_seconds": 2.5295811999822035,
+      "fixture": true,
+      "steps_per_second": 27.36408600215766,
+      "compute_wall_seconds": 0.07308850000845268,
+      "query_predictions_per_second": 218.91268801726127,
+      "projected_training_compute_hours": 4.0604722226918156e-05,
+      "validation_and_checkpoint_overhead_excluded": true,
+      "peak_allocated_vram": 0,
+      "peak_reserved_vram": 0,
+      "cpu_utilization_fraction": 0.06680685059120522,
+      "gpu_utilization": null,
+      "timing_cpu_seconds": {
+        "data_wait": 0.0031586000113748014,
+        "forward": 0.03057320002699271,
+        "backward": 0.019946500018704683,
+        "optimizer": 0.005869299988262355
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.validation_runs/
+.cache/
+dist/
+*.pyc
+wandb/
+cache/
+runs/
+training_runs/

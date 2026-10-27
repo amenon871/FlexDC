@@ -1,0 +1,49 @@
+{
+  "existing_tracked_files": [
+    {
+      "path": "foundation_v1/collector_receipts.py",
+      "reason": "Prior approved quarantine-to-recovery invalidation hook, retained.",
+      "scientific_behavior_changed": false,
+      "base_sha256": "4b5c00bdc8c0b15dfa79a07060f106522ba0bcbeb155e54bead8db035d1ca4c0",
+      "current_sha256": "a2faa0dd76035ddce6993b0cf8bafa39fe000c936f3ce9465cd146399717db55"
+    },
+    {
+      "path": "foundation_v1/full_campaign.py",
+      "reason": "Select and validate explicit operational release while preserving historical preexecution bytes and scientific guard.",
+      "scientific_behavior_changed": false,
+      "base_sha256": "30fe673e95c09a330873b08995f88ed60b0dd66b70ef2c5cac42dd77d909b46c",
+      "current_sha256": "4870dcd8f6f45522993066b5e5d2c065bbd696f04c046fe06d24a5ec02725156"
+    },
+    {
+      "path": "foundation_v1/simple_campaign.py",
+      "reason": "Skip certified stages; revoke certificate before audit; timestamp-order status success/invalidation; preserve source-transition provenance.",
+      "scientific_behavior_changed": false,
+      "base_sha256": "c352fb4346f316e10b8e77f7c076d714630daf51eef8d1227a746f810faeeb04",
+      "current_sha256": "1ae54874308e8d6fdd6882d6010519fa051078c6b20dbf73bd5f6c59e059ae16"
+    },
+    {
+      "path": "foundation_v1/simple_collector.py",
+      "reason": "Prior approved derived recovery-index integration and telemetry, retained.",
+      "scientific_behavior_changed": false,
+      "base_sha256": "43ee3396f1e76c820000b468dae433de81b3ad8377ce369e263210ee6f74221b",
+      "current_sha256": "cb23a67f605ea5b0b2fb94c3bdc9ab8b2e5f4545b335da5000ed7ac9011efca6"
+    }
+  ],
+  "restored_historical_file": "foundation_v1_artifacts/preexecution_release.json (now identical to base HEAD; no tracked diff)",
+  "new_collector_sources": [
+    "foundation_v1/recovery_index.py",
+    "foundation_v1/stage_certification.py",
+    "foundation_v1/operational_release.py"
+  ],
+  "new_collector_tests": [
+    "tests/test_foundation_v1_fast_resume.py",
+    "tests/test_foundation_v1_final_fixes.py"
+  ],
+  "training_changes": [
+    "flexmodels/training.py shared fresh-directory guard",
+    "tests/test_training.py isolated temporary prior fixture",
+    "tests/conftest.py audit-only reference import bootstrap",
+    "tests/test_training_run_directory.py"
+  ],
+  "nothing_staged": true
+}

@@ -1,0 +1,37 @@
+lr: 0.0003
+min_lr: 1.0e-06
+weight_decay: 0.0001
+gradient_clip_norm: 1.0
+checkpoint_every_steps: 500
+first_validation_min_seconds: 300
+checkpoint_margin_seconds: 30
+log_every_steps: 10
+eval_batch_size: 2048
+loss:
+  qos_weight: 4.0
+  tracking_boundary_multiplier: 2.0
+  qos_boundary_multiplier: 2.0
+cpu_threads: 4
+microbatch_episodes: 16
+gradient_accumulation: 4
+query_count: 32
+max_steps: 50000
+steps_per_virtual_epoch: 200
+warmup_steps: 1000
+early_stopping_steps: 6000
+eval_every_steps: 1000
+eval_episode_batch_size: 8
+dev_episodes_per_task: 10
+dev_selection: random
+dev_seed: 73
+diverse_fraction: 0.5
+provisional:
+- qos_logit_epsilon
+- latent_dim_or_transformer_width_depth
+- microbatch_episodes
+- lr
+model:
+  d_model: 256
+  layers: 4
+  heads: 8
+  qos_logit_epsilon: 0.0001

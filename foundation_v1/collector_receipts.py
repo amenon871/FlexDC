@@ -91,3 +91,5 @@ def archive(area,key,reason):
         target=Path(area)/'quarantined_receipts'/(str(time.time_ns())+'_'+key+'.json')
         target.parent.mkdir(exist_ok=True,parents=True);os.replace(path,target)
     write_json(Path(area)/'audit_failures'/(key+'.json'),reason,False)
+    from foundation_v1.recovery_index import invalidate
+    invalidate(area,key)

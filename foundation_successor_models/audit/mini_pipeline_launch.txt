@@ -1,0 +1,27 @@
+{
+  "K0_saved_predictions_exact": true,
+  "status": "PASS",
+  "test_fixture_only": true,
+  "scientific_training": false,
+  "baseline_prior_hash": "6741654bc4b0601831dc39b7b4882857edb1152cbea441367004f57d292f2df0",
+  "steps": {
+    "baseline": 6,
+    "meta_v4": 4,
+    "flexpfn": 4
+  },
+  "methods": [
+    "baseline",
+    "meta_v4",
+    "flexpfn"
+  ],
+  "K": [
+    0,
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ]
+}

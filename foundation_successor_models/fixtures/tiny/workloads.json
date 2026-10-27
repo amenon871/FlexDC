@@ -1,0 +1,326 @@
+[
+  {
+    "Workload_ID": "F1_TRAIN_P100_J2_000",
+    "split": "TRAIN",
+    "hardware_class": "P100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_TRAIN_P100_2_0",
+      "SYN_TRAIN_P100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_TRAIN_P100_J4_001",
+    "split": "TRAIN",
+    "hardware_class": "P100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_TRAIN_P100_4_0",
+      "SYN_TRAIN_P100_4_1",
+      "SYN_TRAIN_P100_4_2",
+      "SYN_TRAIN_P100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_TRAIN_P100_J6_002",
+    "split": "TRAIN",
+    "hardware_class": "P100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_TRAIN_P100_6_0",
+      "SYN_TRAIN_P100_6_1",
+      "SYN_TRAIN_P100_6_2",
+      "SYN_TRAIN_P100_6_3",
+      "SYN_TRAIN_P100_6_4",
+      "SYN_TRAIN_P100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_TRAIN_A100_J2_003",
+    "split": "TRAIN",
+    "hardware_class": "A100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_TRAIN_A100_2_0",
+      "SYN_TRAIN_A100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_TRAIN_A100_J4_004",
+    "split": "TRAIN",
+    "hardware_class": "A100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_TRAIN_A100_4_0",
+      "SYN_TRAIN_A100_4_1",
+      "SYN_TRAIN_A100_4_2",
+      "SYN_TRAIN_A100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_TRAIN_A100_J6_005",
+    "split": "TRAIN",
+    "hardware_class": "A100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_TRAIN_A100_6_0",
+      "SYN_TRAIN_A100_6_1",
+      "SYN_TRAIN_A100_6_2",
+      "SYN_TRAIN_A100_6_3",
+      "SYN_TRAIN_A100_6_4",
+      "SYN_TRAIN_A100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_P100_J2_006",
+    "split": "DEVELOPMENT",
+    "hardware_class": "P100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_P100_2_0",
+      "SYN_DEVELOPMENT_P100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_P100_J4_007",
+    "split": "DEVELOPMENT",
+    "hardware_class": "P100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_P100_4_0",
+      "SYN_DEVELOPMENT_P100_4_1",
+      "SYN_DEVELOPMENT_P100_4_2",
+      "SYN_DEVELOPMENT_P100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_P100_J6_008",
+    "split": "DEVELOPMENT",
+    "hardware_class": "P100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_P100_6_0",
+      "SYN_DEVELOPMENT_P100_6_1",
+      "SYN_DEVELOPMENT_P100_6_2",
+      "SYN_DEVELOPMENT_P100_6_3",
+      "SYN_DEVELOPMENT_P100_6_4",
+      "SYN_DEVELOPMENT_P100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_A100_J2_009",
+    "split": "DEVELOPMENT",
+    "hardware_class": "A100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_A100_2_0",
+      "SYN_DEVELOPMENT_A100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_A100_J4_010",
+    "split": "DEVELOPMENT",
+    "hardware_class": "A100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_A100_4_0",
+      "SYN_DEVELOPMENT_A100_4_1",
+      "SYN_DEVELOPMENT_A100_4_2",
+      "SYN_DEVELOPMENT_A100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_DEVELOPMENT_A100_J6_011",
+    "split": "DEVELOPMENT",
+    "hardware_class": "A100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_DEVELOPMENT_A100_6_0",
+      "SYN_DEVELOPMENT_A100_6_1",
+      "SYN_DEVELOPMENT_A100_6_2",
+      "SYN_DEVELOPMENT_A100_6_3",
+      "SYN_DEVELOPMENT_A100_6_4",
+      "SYN_DEVELOPMENT_A100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_P100_J2_012",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "P100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_2_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_P100_J4_013",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "P100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_4_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_4_1",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_4_2",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_P100_J6_014",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "P100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_1",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_2",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_3",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_4",
+      "SYN_LOCKED_SYNTHETIC_TEST_P100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_A100_J2_015",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "A100",
+    "J": 2,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_2_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_2_1"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_A100_J4_016",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "A100",
+    "J": 4,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_4_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_4_1",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_4_2",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_4_3"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  },
+  {
+    "Workload_ID": "F1_LOCKED_SYNTHETIC_TEST_A100_J6_017",
+    "split": "LOCKED_SYNTHETIC_TEST",
+    "hardware_class": "A100",
+    "J": 6,
+    "Profile_IDs": [
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_0",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_1",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_2",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_3",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_4",
+      "SYN_LOCKED_SYNTHETIC_TEST_A100_6_5"
+    ],
+    "QoS_values": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ]
+  }
+]

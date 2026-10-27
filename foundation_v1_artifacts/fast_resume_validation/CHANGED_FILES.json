@@ -1,0 +1,36 @@
+{
+  "existing_tracked_files": [
+    {
+      "path": "foundation_v1/collector_receipts.py",
+      "reason": "Append derived-index invalidation only after existing authoritative quarantine.",
+      "scientific_behavior_changed": false,
+      "old_sha256": "4b5c00bdc8c0b15dfa79a07060f106522ba0bcbeb155e54bead8db035d1ca4c0",
+      "new_sha256": "a2faa0dd76035ddce6993b0cf8bafa39fe000c936f3ce9465cd146399717db55"
+    },
+    {
+      "path": "foundation_v1/simple_campaign.py",
+      "reason": "Invalidate cached missing IDs reported by strong certification before bounded repair.",
+      "scientific_behavior_changed": false,
+      "old_sha256": "c352fb4346f316e10b8e77f7c076d714630daf51eef8d1227a746f810faeeb04",
+      "new_sha256": "67c10baee0cd5445c78429b780c99b37c176aa5d1452f0a77f5a50ce7cd76a70"
+    },
+    {
+      "path": "foundation_v1/simple_collector.py",
+      "reason": "Replace full-scan startup with recovery index; batch accepted IDs and add startup telemetry.",
+      "scientific_behavior_changed": false,
+      "old_sha256": "43ee3396f1e76c820000b468dae433de81b3ad8377ce369e263210ee6f74221b",
+      "new_sha256": "cb23a67f605ea5b0b2fb94c3bdc9ab8b2e5f4545b335da5000ed7ac9011efca6"
+    },
+    {
+      "path": "foundation_v1_artifacts/preexecution_release.json",
+      "reason": "Refresh local byte-exact source seal for the three allowed source edits and two new source/test files; retain every old guarded path.",
+      "scientific_behavior_changed": false,
+      "old_sha256": "6ec7b03948026f36f5387e8fd8677e02b2ffaf36fab9c231d69396aee9f3a304",
+      "new_sha256": "e0352aa204d1d9d1a88b411b6e4d76ba5ffa29905bef5afbb8a87fc37ead015d"
+    }
+  ],
+  "new_implementation": "foundation_v1/recovery_index.py",
+  "new_tests": "tests/test_foundation_v1_fast_resume.py",
+  "new_validation_directory": "foundation_v1_artifacts/fast_resume_validation/",
+  "deployed": false
+}

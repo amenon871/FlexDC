@@ -1,0 +1,74 @@
+{
+  "status": "ALL_CPU_ACCEPTANCE_GATES_PASS",
+  "tests": 93,
+  "passed": 93,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "warnings": 0,
+  "pytest_seconds": 43.31,
+  "python": "3.12.4 (tags/v3.12.4:8e8a4ba, Jun  6 2024, 19:30:16) [MSC v.1940 64 bit (AMD64)]",
+  "versions": {
+    "torch": "2.4.1",
+    "numpy": "2.2.6",
+    "pandas": "2.2.2",
+    "scipy": "1.14.0",
+    "tqdm": "4.66.6",
+    "pyyaml": "6.0.2",
+    "wandb": null,
+    "pytest": "9.0.3",
+    "scikit-learn": "1.6.1"
+  },
+  "cuda_available": false,
+  "gpu_validation": "NOT_RUN_CPU_ONLY",
+  "wandb_service_validation": "NOT_RUN_OPTIONAL_PACKAGE_UNAVAILABLE; disabled/unavailable fallback passed",
+  "full_real_export_validation": "NOT_RUN_NO_FINISHED_REAL_CORPUS_USED",
+  "full_scientific_training_started": false,
+  "flexdc_simulations": 0,
+  "mini_pipeline": {
+    "K0_saved_predictions_exact": true,
+    "status": "PASS",
+    "test_fixture_only": true,
+    "scientific_training": false,
+    "baseline_prior_hash": "6741654bc4b0601831dc39b7b4882857edb1152cbea441367004f57d292f2df0",
+    "steps": {
+      "baseline": 6,
+      "meta_v4": 4,
+      "flexpfn": 4
+    },
+    "methods": [
+      "baseline",
+      "meta_v4",
+      "flexpfn"
+    ],
+    "K": [
+      0,
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "shared_comparison_rows": 24,
+    "canonical_physical_K0_fields": [
+      "pred_mean",
+      "pred_p90",
+      "pred_max_pj",
+      "pred_objective"
+    ],
+    "full_optimizer_resume_parity": "PASS separately in test_training.py for all3 methods"
+  },
+  "benchmark_steps_per_method": 2,
+  "resume_parity": {
+    "baseline": "PASS_MODEL_OPTIMIZER_LR_RNG",
+    "meta_v4": "PASS_MODEL_OPTIMIZER_LR_RNG",
+    "flexpfn": "PASS_MODEL_OPTIMIZER_LR_RNG"
+  },
+  "sample_progress": {
+    "baseline": "Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 30.10step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]Checkpoint: latest.pt saved at step 1",
+    "meta_v4": "V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 23.98step/s, Kmean=64.0, loss=61.039, lr=0.00015, mean=3.724, mem=CPU, nll=5.183, p90=3.043, qos=13.57]Checkpoint: latest.pt saved at step 1",
+    "flexpfn": "V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 17.28step/s, Kmean=64.0, loss=182.76, lr=0.00015, mean=10.02, mem=CPU, nll=13.21, p90=2.164, qos=42.64]Checkpoint: latest.pt saved at step 1"
+  }
+}

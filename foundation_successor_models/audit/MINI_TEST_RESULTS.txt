@@ -1,0 +1,37 @@
+Local synthetic validation only; no FlexDC or real Foundation training.
+["C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\ARGOS Hybrid\\.venv\\Scripts\\python.exe", "-X", "utf8", "-u", "-B", "foundation_successor_models/smoke.py", "--output", "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_successor_models\\.validation_runs\\supervisor_patch_smoke"]
+{
+  "package_source_sha256": "57bbf07756ce73c67b349421e620e00bec6ca0a91d5556e7137cd683c672b18d",
+  "development_bank_hashes": {
+    "meta_v4": "051aae18493273ffa75813b0b1f243de9ff7c76659d2ea9637b957de7d2a93aa",
+    "flexpfn": "051aae18493273ffa75813b0b1f243de9ff7c76659d2ea9637b957de7d2a93aa"
+  },
+  "partial_final_semantics": "PASS",
+  "walltime_behavior": "PASS",
+  "evidence_counts_preserved": true,
+  "K0_saved_predictions_exact": true,
+  "status": "PASS",
+  "test_fixture_only": true,
+  "scientific_training": false,
+  "baseline_prior_hash": "445597e2f6fc43a797856dd71b672cd1136a80e75f091e9d8d2c9cbfa89a9bba",
+  "steps": {
+    "baseline": 6,
+    "meta_v4": 4,
+    "flexpfn": 4
+  },
+  "methods": [
+    "baseline",
+    "meta_v4",
+    "flexpfn"
+  ],
+  "K": [
+    0,
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ]
+}

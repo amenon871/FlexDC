@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "initial_tracked_files": 1107,
+  "unchanged_tracked_files": 1103,
+  "allowed_modified_files": {
+    "foundation_v1/collector_receipts.py": {
+      "old_sha256": "4b5c00bdc8c0b15dfa79a07060f106522ba0bcbeb155e54bead8db035d1ca4c0",
+      "new_sha256": "a2faa0dd76035ddce6993b0cf8bafa39fe000c936f3ce9465cd146399717db55"
+    },
+    "foundation_v1/simple_campaign.py": {
+      "old_sha256": "c352fb4346f316e10b8e77f7c076d714630daf51eef8d1227a746f810faeeb04",
+      "new_sha256": "67c10baee0cd5445c78429b780c99b37c176aa5d1452f0a77f5a50ce7cd76a70"
+    },
+    "foundation_v1/simple_collector.py": {
+      "old_sha256": "43ee3396f1e76c820000b468dae433de81b3ad8377ce369e263210ee6f74221b",
+      "new_sha256": "cb23a67f605ea5b0b2fb94c3bdc9ab8b2e5f4545b335da5000ed7ac9011efca6"
+    },
+    "foundation_v1_artifacts/preexecution_release.json": {
+      "old_sha256": "6ec7b03948026f36f5387e8fd8677e02b2ffaf36fab9c231d69396aee9f3a304",
+      "new_sha256": "e0352aa204d1d9d1a88b411b6e4d76ba5ffa29905bef5afbb8a87fc37ead015d"
+    }
+  },
+  "master_phaseA_sha256_before": "bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f",
+  "master_phaseA_sha256_after": "bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f",
+  "previous_review_zip_unchanged": true,
+  "no_real_foundation_data_accessed": true,
+  "no_simulator_calls": true,
+  "no_real_training": true,
+  "no_scc_access": true
+}

@@ -10,6 +10,7 @@ from collections import defaultdict,deque
 from pathlib import Path
 from am_flexdc_foundation_v1_common import ROOT,write_csv,write_json,read_json,iter_csv,file_hash
 from foundation_v1 import collector_receipts as receipts
+from foundation_v1.recovery_index import RecoveryIndex
 from foundation_v1.resilient import worker_env,decode_returncode,interrupts
 from peacsim.foundation_v1_cleanup import parent_changed
 
@@ -63,11 +64,7 @@ def collect(plan,area,max_workers,storage_gib=10,launch=None,chunk_rows=CHUNK_RO
     launch=launch or subprocess.Popen
     rows=list(iter_csv(plan));by_id={r['plan_row_id']:r for r in rows}
     if len(by_id)!=len(rows):raise ValueError('Duplicate original Plan_Row_ID in immutable plan')
-    recovered=receipts.completed(area,by_id);done=set(recovered); initial=len(done)
-    if recovered:
-        from am_flexdc_foundation_v1_common import atomic_bytes
-        atomic_bytes(area/'events'/'recovered.jsonl', ''.join(json.dumps({'id':k,'time':v['timestamp']})+'\n' for k,v in recovered.items()).encode(),False)
-    del recovered
+    recovery=RecoveryIndex(plan,area,by_id);done=recovery.done;initial=len(done)
     groups=defaultdict(list)
     for row in rows:
         if row['plan_row_id'] not in done:groups[row['Task_ID']].append(row)
@@ -82,7 +79,7 @@ def collect(plan,area,max_workers,storage_gib=10,launch=None,chunk_rows=CHUNK_RO
             'technical_retries':retry_count,'worker_attempts':attempt_count,'quarantined':len(quarantine),
             'quarantined_ids':sorted(quarantine) if status!='COLLECTING' else [],'wall_seconds':time.monotonic()-started,
             'worker_slot_seconds':slot_seconds,'peak_workers':peak,'replacement_gaps':gaps[-128:],
-            'new_completions':len(done)-initial,'updated_at':time.time()}
+            'new_completions':len(done)-initial,'updated_at':time.time(),**recovery.stats}
         cache_write(area/'progress.json',report);return report
     def stop(sig,frame):
         nonlocal interrupted,interrupt_at
@@ -93,6 +90,7 @@ def collect(plan,area,max_workers,storage_gib=10,launch=None,chunk_rows=CHUNK_RO
     try:
         with interrupts(stop):
             while pending or active:
+                recovery.flush()
                 current=time.monotonic();slot_seconds+=(current-last)*len(active);last=current
                 if parent_changed(os.environ.get('FOUNDATION_V1_CAMPAIGN_PARENT_PID')):stop(signal.SIGTERM,None)
                 check_storage(area,storage_gib)
@@ -151,7 +149,7 @@ def collect(plan,area,max_workers,storage_gib=10,launch=None,chunk_rows=CHUNK_RO
                     remaining=[]
                     for row in item['rows']:
                         try:
-                            body=receipts.load(area,row['plan_row_id']);done.add(row['plan_row_id'])
+                            body=receipts.load(area,row['plan_row_id']);recovery.accept(body)
                             events=area/'events';events.mkdir(exist_ok=True)
                             with (events/'parent.jsonl').open('a',encoding='utf8') as event_stream:
                                 event_stream.write(json.dumps({'id':body['Plan_Row_ID'],'time':body['timestamp']})+'\n');event_stream.flush();os.fsync(event_stream.fileno())
@@ -175,6 +173,7 @@ def collect(plan,area,max_workers,storage_gib=10,launch=None,chunk_rows=CHUNK_RO
     except BaseException:
         stop(signal.SIGTERM,None);save('INTERRUPTED_OR_GLOBAL_STOP');raise
     finally:
+        recovery.close()
         # Bound shutdown; no completion is inferred from a dead process.
         deadline=time.monotonic()+30
         for item in active:

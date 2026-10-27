@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "guarded_paths": 626,
+  "previous_source_identity": "75109d5f0953dcf60a6e2761db1f838d97dda4554d9937a06436a281fe25f0d5",
+  "new_source_identity": "6bfc4c802deb2088e9df723260a9ae0602865e8f13b15309cf0e7b19e7ae0348",
+  "historical_release_byte_identical": true,
+  "master_phaseA_sha256": "bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f",
+  "source_guard_weakened": false,
+  "operational_record": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\operational_patch_release_resume_v3.json",
+  "deployment_timestamp": null,
+  "completed_rows_at_transition": null
+}

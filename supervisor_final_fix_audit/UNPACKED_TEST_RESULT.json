@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "returncode": 0,
+  "seconds": 63.713343400042504,
+  "manual_pythonpath_required": false,
+  "one_command": "python -B run_supervisor_tests.py",
+  "test_fixture_only": true
+}

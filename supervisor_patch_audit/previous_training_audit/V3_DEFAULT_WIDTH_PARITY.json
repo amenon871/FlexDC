@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "reference_hidden": 512,
+  "reference_heads": 4,
+  "reference_global_width": 12,
+  "new_global_width_for_parity_only": 12,
+  "foundation_production_global_width": 14,
+  "parameter_count": 3921155,
+  "mixed_J": [
+    2,
+    4,
+    6
+  ],
+  "max_abs_errors": {
+    "tracking_logs": 0.0,
+    "qos_probabilities": 0.0,
+    "token_features": 0.0,
+    "context_features": 0.0
+  },
+  "historical_learned_weights_loaded": false,
+  "random_weight_copy_only_for_reference_parity": true
+}

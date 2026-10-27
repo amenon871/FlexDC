@@ -1,0 +1,86 @@
+[
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\ARGOS Hybrid\\condor_set_transformer_sweep_v3_behavior_v3_best_feasibility_artifacts\\data_center_model_flexdc_behavior_v3.py",
+    "sha256": "12c702a954c7e783150c0b8c38e0bcaccd8cae2c1ff432d45ab1efb191cd68fb",
+    "bytes": 11043,
+    "archive_path": "reference_only/v3_original/data_center_model_flexdc_behavior_v3.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\ARGOS Hybrid\\condor_set_transformer_sweep_v3_behavior_v3_best_feasibility_artifacts\\am_flexdc_behavior_training_utilities_v3.py",
+    "sha256": "38cc0f7106c6a0986643d514ab53f9d206d6d04e0618e966c896dc7550fe3764",
+    "bytes": 87599,
+    "archive_path": "reference_only/v3_original/am_flexdc_behavior_training_utilities_v3.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\ARGOS Hybrid\\condor_set_transformer_sweep_v3_behavior_v3_best_feasibility_artifacts\\test_flexdc_behavior_training_v3.py",
+    "sha256": "235a7297988fc3a8d3eb7e84daca44a6fd65921fc0aa7063c74a53e3fdc279f6",
+    "bytes": 12149,
+    "archive_path": "reference_only/v3_original/test_flexdc_behavior_training_v3.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\comder-main\\am_flexdc\\train\\am_unified_model_training_wandb_colab_paths_configured_objective_flexdc_behavior_v3.ipynb",
+    "sha256": "04d737fd4b5c9cd3b6647e93ec7fa16f355cd4d294f1e51855b0baae02b29157",
+    "bytes": 50457,
+    "archive_path": "reference_only/v3_original/am_unified_model_training_wandb_colab_paths_configured_objective_flexdc_behavior_v3.ipynb"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1\\audit.py",
+    "sha256": "1e6c442e13a7fe6480252237ee305c184c885e0beae708e300d702715f6bdf38",
+    "bytes": 19544,
+    "archive_path": "reference_only/foundation_contract/foundation_v1/audit.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1\\full_campaign.py",
+    "sha256": "30fe673e95c09a330873b08995f88ed60b0dd66b70ef2c5cac42dd77d909b46c",
+    "bytes": 17732,
+    "archive_path": "reference_only/foundation_contract/foundation_v1/full_campaign.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\am_flexdc_foundation_v1_common.py",
+    "sha256": "5c616f5c0ef051c9e839be394670f2494b34e1780488a2d62fb62240b14b73a6",
+    "bytes": 10408,
+    "archive_path": "reference_only/foundation_contract/am_flexdc_foundation_v1_common.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\flexdc_generic_sources\\flexdc_profile_split.py",
+    "sha256": "60903ab851d320d5f89ceb1c1ac01d51287728534e31ecaa0762492e00c4ce6b",
+    "bytes": 21227,
+    "archive_path": "reference_only/foundation_contract/flexdc_generic_sources/flexdc_profile_split.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\src\\peacsim\\am_data_extraction_wizard.py",
+    "sha256": "1628c6ab100aa705f790585365226a6c13ba78365e3d91f078a736ebddc34db7",
+    "bytes": 91541,
+    "archive_path": "reference_only/foundation_contract/src/peacsim/am_data_extraction_wizard.py"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\canonical_contract.json",
+    "sha256": "c327f03e5876b4ace15c187ca7a450ae747abdd9aad3cfa10563bb3b6dd70e16",
+    "bytes": 2790,
+    "archive_path": "reference_only/foundation_contract/foundation_v1_artifacts/canonical_contract.json"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\profiles.json",
+    "sha256": "7462307ce089eca42feb9ce7c5b84c8f32ab7b99687ffcc4faaf2c3d63247ada",
+    "bytes": 356672,
+    "archive_path": "reference_only/foundation_contract/foundation_v1_artifacts/profiles.json"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\workloads.json",
+    "sha256": "5e12816bb8d45f2d3a0bcf178564e492a2a2d20d7064c2e48915fda2be590c4a",
+    "bytes": 398115,
+    "archive_path": "reference_only/foundation_contract/foundation_v1_artifacts/workloads.json"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\contexts.json",
+    "sha256": "bcf0d6b2617dd6968ca6461a29a8d23b419aeadc1588117531e0a290aa0771e2",
+    "bytes": 3787810,
+    "archive_path": "reference_only/foundation_contract/foundation_v1_artifacts/contexts.json"
+  },
+  {
+    "path": "C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\comder-main\\am_flexdc\\flexdc_generic_sources\\FlexDC_Generic_Full_Parity_Training_and_Evaluation.ipynb",
+    "sha256": "4c60816790a553bc0d43cbf1877b4860a5e3eae3188350c0d71ce456cbecccbd",
+    "bytes": 57198,
+    "archive_path": "reference_only/v3_original/FlexDC_Generic_Full_Parity_Training_and_Evaluation.ipynb"
+  }
+]

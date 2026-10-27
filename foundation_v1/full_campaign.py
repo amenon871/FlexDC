@@ -26,6 +26,8 @@ def verify_release():
     release=read_json(ARTIFACTS/'preexecution_release.json')
     if file_hash(ARTIFACTS/'foundation_v1_phaseA_plan.csv.gz')!=MASTER_SHA256:raise ValueError('STOP: approved master Phase-A bytes changed')
     if release['phaseA_sha256']!=MASTER_SHA256:raise ValueError('Release master identity changed')
+    from foundation_v1 import operational_release
+    if (ARTIFACTS/operational_release.NAME).exists():return operational_release.verify(ROOT,ARTIFACTS,release)
     for name,expected in release['source_files'].items():
         if file_hash(ROOT/name)!=expected:raise ValueError('Frozen source/config changed; a newly reviewed release is required: '+name)
     return release

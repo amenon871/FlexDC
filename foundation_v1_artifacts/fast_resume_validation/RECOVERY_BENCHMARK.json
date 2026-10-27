@@ -1,0 +1,50 @@
+{
+  "test_fixture_only": true,
+  "simulator_calls": 0,
+  "platform": "win32",
+  "scenarios": [
+    {
+      "scenario": "authoritative_full_rebuild",
+      "completed": 5000,
+      "delta": 0,
+      "elapsed_seconds": 49.701839700050186,
+      "receipt_opens": 5000,
+      "historical_receipt_opens": 5000,
+      "journal_lines_processed": 0,
+      "sqlite_rows_loaded": 0
+    },
+    {
+      "scenario": "indexed_delta_resume",
+      "completed": 5010,
+      "delta": 10,
+      "elapsed_seconds": 0.14842219999991357,
+      "receipt_opens": 10,
+      "historical_receipt_opens": 0,
+      "journal_lines_processed": 10,
+      "sqlite_rows_loaded": 5000
+    },
+    {
+      "scenario": "indexed_no_delta_resume",
+      "completed": 5010,
+      "delta": 0,
+      "elapsed_seconds": 0.021560799970757216,
+      "receipt_opens": 0,
+      "historical_receipt_opens": 0,
+      "journal_lines_processed": 0,
+      "sqlite_rows_loaded": 5010
+    }
+  ],
+  "batched_update_overhead": {
+    "rows": 1000,
+    "batch_size": 100,
+    "batches": 10,
+    "set_only_control_seconds": 0.00013569998554885387,
+    "total_index_accept_and_flush_seconds": 0.0856498001376167,
+    "mean_batch_seconds": 0.008564980013761669,
+    "max_batch_seconds": 0.009799999999813735,
+    "seconds_per_accepted_row": 8.564980013761669e-05,
+    "receipt_persistence_and_simulator_cost_excluded": true,
+    "claim": "Derived-index microbenchmark only, not measured SCC collection throughput."
+  },
+  "scc_target": "SCC GPFS <5-minute target remains to be verified after deployment."
+}

@@ -1,0 +1,267 @@
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\make_fixture.py --output C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\tiny
+C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\tiny
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\prepare_cache.py --input C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\tiny\observations.csv.gz --profiles C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\tiny\profiles.json --workloads C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\fixtures\tiny\workloads.json --output C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --fixture
+{'schema_version': 'FOUNDATION_CACHE_V2', 'fixture': True, 'warning': 'TEST FIXTURE ONLY; NOT SCIENTIFIC DATA', 'rows': 2160, 'partitions': {'TRAIN': 720, 'DEVELOPMENT': 720, 'LOCKED_SYNTHETIC_TEST': 720}, 'tasks': 18, 'workloads': 18, 'max_j': 6, 'canonical_master_phaseA_sha256': 'TEST_FIXTURE_ONLY', 'geometry_schema': 'FOUNDATION_DOMAIN_COORDINATES_V1', 'normalization': {'schema_version': 'FOUNDATION_FEATURES_V1', 'job_names': ['pmin_kw', 'pmax_kw', 'power_range_kw', 'log10_tmin', 'log10_tmax', 'runtime_ratio', 'qos_threshold', 'job_size', 'qos_headroom', 'weight', 'weight_relative_to_equal', 'allocated_nodes_per_1000', 'queue_pressure'], 'global_names': ['Pbar_kw_per_server', 'R_kw_per_server', 'Pbar_minus_R', 'Pbar_plus_R', 'R_over_Pbar', 'Pbar_ratio', 'R_ratio', 'utilization', 'server_count_per_1000', 'log10_server_count', 'inverse_job_count', 'job_count_per_8', 'hardware_P100', 'hardware_A100'], 'job_mean': [0.19833333333333486, 0.6775000000000032, 0.4791666666666666, 1.4495467596876217, 1.8234985273008495, 2.367526455026457, 4.0, 1.0, 1.6921957671957537, 0.2500000000000002, 0.9999999999999978, 0.18750000000000003, 0.7018044462075855], 'job_std': [0.01572330188676105, 0.023584952830141455, 0.007861650943380523, 0.11485161989639682, 0.09769878164015568, 0.09419036692708273, 1.0, 1.0, 0.06711930094909102, 0.11853453675748844, 0.05048609529616547, 0.047624260951876024, 0.10659981613223844], 'global_mean': [0.4225346847502826, 0.06888969070956563, 0.35364499404071637, 0.4914243754598482, 0.16799858709365867, 0.844572725, 0.2495681611111108, 0.7000000000000038, 0.75, 2.799313336224022, 0.30555555555555475, 0.5, 0.5, 0.5], 'global_std': [0.07237817869579308, 0.028534476865578837, 0.07778057233194607, 0.07781912882023112, 0.07636759998819985, 0.17574173531935341, 0.10368257607216441, 0.09999999999999913, 0.3535533905932738, 0.2838138016994089, 0.14163943093313255, 0.2041241452319315, 0.5, 0.5], 'target_std': [0.28580366487400627, 0.39825010757885265], 'fit_partition': 'TRAIN', 'fit_rows': 720}, 'input_hashes': {'C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_successor_models\\fixtures\\tiny\\observations.csv.gz': '38f9ca0f50c29ffe0a077bb686fcfb0db0783c9a90408e3b82b331198fcdf224'}, 'source_manifest_hashes': {}, 'profile_manifest_hash': 'edb0fec1fb26a3b846e17eb5bc8c34ce2ac39db1c16d46eedf6046f0c6d12b95', 'workload_manifest_hash': 'a448accb9ad052beceb0cdaf6f71aea8d322983d4ad620efe61ccba6e276f434', 'cache_sha256': 'e658ea9e0461b4285f9594c91d3cce5def9f1e4cedb3f2d589f5769ee52a20e6'}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_baseline.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline --stop-after-steps 3 --device cpu
+=================================================================
+FlexDC Foundation Baseline Training | Run=baseline
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=6 Batch/episodes=256 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+  0%|          | 0/6 [00:00<?, ?step/s]
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 22.22step/s]
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 21.73step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]Checkpoint: latest.pt saved at step 1
+
+Epoch 1/2 | Step 2:  33%|###3      | 2/6 [00:00<00:00, 19.16step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]
+Epoch 1/2 | Step 2:  33%|###3      | 2/6 [00:00<00:00, 19.16step/s, Kmean=0.0, loss=11.683, lr=0.0003, mean=8.156, mem=CPU, p90=2.77, qos=0.1891] Checkpoint: latest.pt saved at step 2
+
+Epoch 1/2 | Step 3:  50%|#####     | 3/6 [00:00<00:00, 16.27step/s, Kmean=0.0, loss=11.683, lr=0.0003, mean=8.156, mem=CPU, p90=2.77, qos=0.1891]
+Epoch 1/2 | Step 3:  50%|#####     | 3/6 [00:00<00:00, 16.19step/s, Kmean=0.0, loss=11.511, lr=0.0003, mean=8.058, mem=CPU, p90=2.693, qos=0.19] Validation epoch=1 step=3 dev_loss=11.3256 p90_MAE=0.69064 max_Pj_MAE=0.42433 feasible_F1_macro=0.0000 false_feasible=0.0000 objective_R2=-1.4699 lr=0.0003
+Checkpoint: best_loss.pt saved at step 3
+Checkpoint: best_objective.pt saved at step 3
+Checkpoint: best_feasibility.pt saved at step 3
+
+Epoch 1/2 | Step 3:  50%|#####     | 3/6 [00:00<00:00,  9.19step/s, Kmean=0.0, loss=11.511, lr=0.0003, mean=8.058, mem=CPU, p90=2.693, qos=0.19]
+Checkpoint: latest.pt saved at step 3
+Training exit: {'model': 'baseline', 'optimizer_steps_this_invocation': 3, 'global_step': 3, 'exit_reason': 'smoke_limit', 'status': 'REQUESTED_STEP_LIMIT', 'wall_seconds': 3.2499636999564245, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\evaluate.py --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --build-dev-bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json --episodes-per-task 1 --query-count 4
+Frozen DEVELOPMENT bank: 48 episodes -> C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_meta_v4.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4 --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --dev-bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json --stop-after-steps 2 --device cpu
+=================================================================
+FlexDC Meta V4 Training | Run=meta_v4
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=4 Batch/episodes=2 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+  0%|          | 0/4 [00:00<?, ?step/s]
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 19.40step/s]
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 19.03step/s, Kmean=64.0, loss=59.478, lr=0.00015, mean=3.756, mem=CPU, nll=5.09, p90=3.028, qos=13.17]Checkpoint: latest.pt saved at step 1
+
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00, 24.23step/s, Kmean=64.0, loss=59.478, lr=0.00015, mean=3.756, mem=CPU, nll=5.09, p90=3.028, qos=13.17]
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00, 24.23step/s, Kmean=8.0, loss=108.34, lr=0.0003, mean=5.963, mem=CPU, nll=12.53, p90=14.95, qos=21.86] Validation epoch=1 step=2 dev_loss=88.6786 p90_MAE=0.11902 max_Pj_MAE=0.04254 feasible_F1_macro=0.0000 false_feasible=0.0774 objective_R2=0.9891 lr=0.0003
+DEVELOPMENT K-CURVE | K F1 FalseFeas p90_MAE maxPj_MAE
+K= 0 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.7339 maxPj_MAE=0.4091
+K= 1 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1327 maxPj_MAE=0.0457
+K= 2 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1339 maxPj_MAE=0.0476
+K= 4 F1=0.0000 FalseFeas=0.0417 p90_MAE=0.1217 maxPj_MAE=0.0444
+K= 8 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1213 maxPj_MAE=0.0449
+K=16 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1080 maxPj_MAE=0.0381
+K=32 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1090 maxPj_MAE=0.0386
+K=64 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1064 maxPj_MAE=0.0383
+Checkpoint: best_loss.pt saved at step 2
+Checkpoint: best_objective.pt saved at step 2
+Checkpoint: best_feasibility.pt saved at step 2
+Checkpoint: best_fewshot.pt saved at step 2
+
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00,  3.42step/s, Kmean=8.0, loss=108.34, lr=0.0003, mean=5.963, mem=CPU, nll=12.53, p90=14.95, qos=21.86]
+Checkpoint: latest.pt saved at step 2
+Training exit: {'model': 'meta_v4', 'optimizer_steps_this_invocation': 2, 'global_step': 2, 'exit_reason': 'smoke_limit', 'status': 'REQUESTED_STEP_LIMIT', 'wall_seconds': 3.6055255999672227, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_flexpfn.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --dev-bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json --stop-after-steps 2 --device cpu
+=================================================================
+FlexDC FlexPFN Training | Run=flexpfn
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=4 Batch/episodes=2 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+  0%|          | 0/4 [00:00<?, ?step/s]
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 16.29step/s]
+V-Epoch 1/2 | Step 1:  25%|##5       | 1/4 [00:00<00:00, 16.03step/s, Kmean=64.0, loss=182.8, lr=0.00015, mean=10, mem=CPU, nll=13.21, p90=2.163, qos=42.66]Checkpoint: latest.pt saved at step 1
+
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00, 20.20step/s, Kmean=64.0, loss=182.8, lr=0.00015, mean=10, mem=CPU, nll=13.21, p90=2.163, qos=42.66]
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00, 20.20step/s, Kmean=8.0, loss=67.886, lr=0.0003, mean=5.706, mem=CPU, nll=7.602, p90=2.113, qos=15.02]Validation epoch=1 step=2 dev_loss=40.0638 p90_MAE=2.90120 max_Pj_MAE=0.48003 feasible_F1_macro=0.0000 false_feasible=0.0000 objective_R2=-4.0304 lr=0.0003
+DEVELOPMENT K-CURVE | K F1 FalseFeas p90_MAE maxPj_MAE
+K= 0 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.7339 maxPj_MAE=0.4091
+K= 1 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9532 maxPj_MAE=0.4800
+K= 2 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9039 maxPj_MAE=0.4804
+K= 4 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9013 maxPj_MAE=0.4802
+K= 8 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.8853 maxPj_MAE=0.4802
+K=16 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.8931 maxPj_MAE=0.4796
+K=32 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.8836 maxPj_MAE=0.4800
+K=64 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.8880 maxPj_MAE=0.4798
+Checkpoint: best_loss.pt saved at step 2
+Checkpoint: best_objective.pt saved at step 2
+Checkpoint: best_feasibility.pt saved at step 2
+Checkpoint: best_fewshot.pt saved at step 2
+
+V-Epoch 1/2 | Step 2:  50%|#####     | 2/4 [00:00<00:00,  2.92step/s, Kmean=8.0, loss=67.886, lr=0.0003, mean=5.706, mem=CPU, nll=7.602, p90=2.113, qos=15.02]
+Checkpoint: latest.pt saved at step 2
+Training exit: {'model': 'flexpfn', 'optimizer_steps_this_invocation': 2, 'global_step': 2, 'exit_reason': 'smoke_limit', 'status': 'REQUESTED_STEP_LIMIT', 'wall_seconds': 3.6309355000266805, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\evaluate.py --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --model all --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --meta-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4\latest.pt --flexpfn-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn\latest.pt --bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json --output C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\comparison_before_resume
+  method  K  task_macro_feasible_f1  false_feasible_rate  p90_mae  max_pj_mae  objective_mae  objective_r2
+baseline  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  1                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  2                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  4                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  8                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 16                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 32                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 64                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ meta_v4  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ meta_v4  1                     0.0             0.000000 0.132729    0.045729       2.595159      0.989155
+ meta_v4  2                     0.0             0.000000 0.133880    0.047633       3.055369      0.986714
+ meta_v4  4                     0.0             0.041667 0.121726    0.044408       2.959207      0.987092
+ meta_v4  8                     0.0             0.000000 0.121282    0.044890       3.068585      0.988123
+ meta_v4 16                     0.0             0.166667 0.108022    0.038115       2.697858      0.990873
+ meta_v4 32                     0.0             0.166667 0.109021    0.038647       2.737650      0.990629
+ meta_v4 64                     0.0             0.166667 0.106446    0.038330       2.715953      0.991148
+ flexpfn  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ flexpfn  1                     0.0             0.000000 2.953199    0.479955      73.091682     -4.097992
+ flexpfn  2                     0.0             0.000000 2.903931    0.480392      72.617577     -4.028037
+ flexpfn  4                     0.0             0.000000 2.901268    0.480170      72.571266     -4.025854
+ flexpfn  8                     0.0             0.000000 2.885266    0.480223      72.444542     -4.006208
+ flexpfn 16                     0.0             0.000000 2.893058    0.479649      72.499146     -4.025101
+ flexpfn 32                     0.0             0.000000 2.883612    0.479981      72.415375     -4.013599
+ flexpfn 64                     0.0             0.000000 2.888035    0.479834      72.443459     -4.015851
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_baseline.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline --resume auto --device cpu
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline\latest.pt epoch=1 step=3 lr=0.0003 best_f1=0.0
+=================================================================
+FlexDC Foundation Baseline Training | Run=baseline
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=6 Batch/episodes=256 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+ 50%|#####     | 3/6 [00:00<?, ?step/s]
+Epoch 2/2 | Step 4:  67%|######6   | 4/6 [00:00<00:00, 25.00step/s]
+Epoch 2/2 | Step 4:  67%|######6   | 4/6 [00:00<00:00, 25.00step/s, Kmean=0.0, loss=11.298, lr=0.0003, mean=7.953, mem=CPU, p90=2.599, qos=0.1866]Checkpoint: latest.pt saved at step 4
+
+Epoch 2/2 | Step 5:  83%|########3 | 5/6 [00:00<00:00, 19.45step/s, Kmean=0.0, loss=11.298, lr=0.0003, mean=7.953, mem=CPU, p90=2.599, qos=0.1866]
+Epoch 2/2 | Step 5:  83%|########3 | 5/6 [00:00<00:00, 19.45step/s, Kmean=0.0, loss=11.327, lr=0.0003, mean=7.995, mem=CPU, p90=2.594, qos=0.1846]Checkpoint: latest.pt saved at step 5
+
+Epoch 2/2 | Step 6: 100%|##########| 6/6 [00:00<00:00, 17.17step/s, Kmean=0.0, loss=11.327, lr=0.0003, mean=7.995, mem=CPU, p90=2.594, qos=0.1846]
+Epoch 2/2 | Step 6: 100%|##########| 6/6 [00:00<00:00, 17.17step/s, Kmean=0.0, loss=11.189, lr=0.0003, mean=7.946, mem=CPU, p90=2.508, qos=0.1836]Validation epoch=2 step=6 dev_loss=11.0547 p90_MAE=0.63694 max_Pj_MAE=0.42011 feasible_F1_macro=0.0000 false_feasible=0.0000 objective_R2=-1.3642 lr=0.0003
+Checkpoint: best_loss.pt saved at step 6
+Checkpoint: best_objective.pt saved at step 6
+Checkpoint: latest.pt saved at step 6
+
+Epoch 2/2 | Step 6: 100%|##########| 6/6 [00:00<00:00,  9.02step/s, Kmean=0.0, loss=11.189, lr=0.0003, mean=7.946, mem=CPU, p90=2.508, qos=0.1836]
+Checkpoint: latest.pt saved at step 6
+Checkpoint: final.pt saved at step 6
+Training exit: {'model': 'baseline', 'optimizer_steps_this_invocation': 3, 'global_step': 6, 'exit_reason': 'completed_max_epochs', 'status': 'COMPLETE', 'wall_seconds': 3.381421700003557, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_meta_v4.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4 --resume auto --device cpu --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --dev-bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4\latest.pt epoch=1 step=2 lr=0.0003 best_f1=0.0
+=================================================================
+FlexDC Meta V4 Training | Run=meta_v4
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=4 Batch/episodes=2 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+ 50%|#####     | 2/4 [00:00<?, ?step/s]
+V-Epoch 2/2 | Step 3:  75%|#######5  | 3/4 [00:00<00:00, 45.45step/s]
+V-Epoch 2/2 | Step 3:  75%|#######5  | 3/4 [00:00<00:00, 45.45step/s, Kmean=8.0, loss=46.775, lr=0.0003, mean=11.55, mem=CPU, nll=6.62, p90=9.025, qos=6.55]Checkpoint: latest.pt saved at step 3
+
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00, 38.77step/s, Kmean=8.0, loss=46.775, lr=0.0003, mean=11.55, mem=CPU, nll=6.62, p90=9.025, qos=6.55]
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00, 38.04step/s, Kmean=1.0, loss=57.745, lr=1e-06, mean=2.965, mem=CPU, nll=5.868, p90=16.51, qos=9.567]Validation epoch=2 step=4 dev_loss=88.6271 p90_MAE=0.11901 max_Pj_MAE=0.04253 feasible_F1_macro=0.0000 false_feasible=0.0774 objective_R2=0.9891 lr=1e-06
+DEVELOPMENT K-CURVE | K F1 FalseFeas p90_MAE maxPj_MAE
+K= 0 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.7339 maxPj_MAE=0.4091
+K= 1 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1327 maxPj_MAE=0.0457
+K= 2 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1339 maxPj_MAE=0.0476
+K= 4 F1=0.0000 FalseFeas=0.0417 p90_MAE=0.1217 maxPj_MAE=0.0444
+K= 8 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.1213 maxPj_MAE=0.0449
+K=16 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1080 maxPj_MAE=0.0381
+K=32 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1090 maxPj_MAE=0.0386
+K=64 F1=0.0000 FalseFeas=0.1667 p90_MAE=0.1064 maxPj_MAE=0.0383
+Checkpoint: best_loss.pt saved at step 4
+Checkpoint: best_objective.pt saved at step 4
+Checkpoint: best_fewshot.pt saved at step 4
+Checkpoint: latest.pt saved at step 4
+
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00,  3.40step/s, Kmean=1.0, loss=57.745, lr=1e-06, mean=2.965, mem=CPU, nll=5.868, p90=16.51, qos=9.567]
+Checkpoint: latest.pt saved at step 4
+Checkpoint: final.pt saved at step 4
+Training exit: {'model': 'meta_v4', 'optimizer_steps_this_invocation': 2, 'global_step': 4, 'exit_reason': 'completed_max_epochs', 'status': 'COMPLETE', 'wall_seconds': 3.363665000011679, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_flexpfn.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn --resume auto --device cpu --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --dev-bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json
+RESUME checkpoint=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn\latest.pt epoch=1 step=2 lr=0.0003 best_f1=0.0
+=================================================================
+FlexDC FlexPFN Training | Run=flexpfn
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=4 Batch/episodes=2 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+ 50%|#####     | 2/4 [00:00<?, ?step/s]
+V-Epoch 2/2 | Step 3:  75%|#######5  | 3/4 [00:00<00:00, 23.53step/s]
+V-Epoch 2/2 | Step 3:  75%|#######5  | 3/4 [00:00<00:00, 23.53step/s, Kmean=8.0, loss=37.703, lr=0.0003, mean=8.065, mem=CPU, nll=4.969, p90=2.435, qos=6.801]Checkpoint: latest.pt saved at step 3
+
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00, 23.77step/s, Kmean=8.0, loss=37.703, lr=0.0003, mean=8.065, mem=CPU, nll=4.969, p90=2.435, qos=6.801]
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00, 23.49step/s, Kmean=1.0, loss=44.399, lr=1e-06, mean=7.827, mem=CPU, nll=4.935, p90=2.947, qos=8.406] Validation epoch=2 step=4 dev_loss=32.9807 p90_MAE=2.93547 max_Pj_MAE=0.47636 feasible_F1_macro=0.0000 false_feasible=0.0000 objective_R2=-4.0212 lr=1e-06
+DEVELOPMENT K-CURVE | K F1 FalseFeas p90_MAE maxPj_MAE
+K= 0 F1=0.0000 FalseFeas=0.0000 p90_MAE=0.7339 maxPj_MAE=0.4091
+K= 1 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9879 maxPj_MAE=0.4763
+K= 2 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9385 maxPj_MAE=0.4767
+K= 4 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9355 maxPj_MAE=0.4765
+K= 8 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9193 maxPj_MAE=0.4766
+K=16 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9271 maxPj_MAE=0.4760
+K=32 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9177 maxPj_MAE=0.4763
+K=64 F1=0.0000 FalseFeas=0.0000 p90_MAE=2.9223 maxPj_MAE=0.4761
+Checkpoint: best_loss.pt saved at step 4
+Checkpoint: best_objective.pt saved at step 4
+Checkpoint: latest.pt saved at step 4
+
+V-Epoch 2/2 | Step 4: 100%|##########| 4/4 [00:00<00:00,  3.25step/s, Kmean=1.0, loss=44.399, lr=1e-06, mean=7.827, mem=CPU, nll=4.935, p90=2.947, qos=8.406]
+Checkpoint: latest.pt saved at step 4
+Checkpoint: final.pt saved at step 4
+Training exit: {'model': 'flexpfn', 'optimizer_steps_this_invocation': 2, 'global_step': 4, 'exit_reason': 'completed_max_epochs', 'status': 'COMPLETE', 'wall_seconds': 3.516650900011882, 'fixture': True}
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\evaluate.py --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --model all --baseline-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\selected_baseline.pt --meta-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\meta_v4\latest.pt --flexpfn-checkpoint C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\flexpfn\latest.pt --bank C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\dev_bank.json --output C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\comparison_after_resume
+  method  K  task_macro_feasible_f1  false_feasible_rate  p90_mae  max_pj_mae  objective_mae  objective_r2
+baseline  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  1                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  2                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  4                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline  8                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 16                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 32                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+baseline 64                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ meta_v4  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ meta_v4  1                     0.0             0.000000 0.132729    0.045729       2.595043      0.989156
+ meta_v4  2                     0.0             0.000000 0.133881    0.047625       3.055311      0.986714
+ meta_v4  4                     0.0             0.041667 0.121726    0.044408       2.958909      0.987093
+ meta_v4  8                     0.0             0.000000 0.121281    0.044888       3.068094      0.988126
+ meta_v4 16                     0.0             0.166667 0.108019    0.038115       2.697422      0.990875
+ meta_v4 32                     0.0             0.166667 0.109018    0.038648       2.737310      0.990630
+ meta_v4 64                     0.0             0.166667 0.106446    0.038328       2.715666      0.991149
+ flexpfn  0                     0.0             0.000000 0.733904    0.409111      50.690418     -1.448521
+ flexpfn  1                     0.0             0.000000 2.987866    0.476309      73.123718     -4.089515
+ flexpfn  2                     0.0             0.000000 2.938534    0.476719      72.647774     -4.019551
+ flexpfn  4                     0.0             0.000000 2.935512    0.476521      72.597313     -4.016692
+ flexpfn  8                     0.0             0.000000 2.919293    0.476564      72.468765     -3.996882
+ flexpfn 16                     0.0             0.000000 2.927062    0.475967      72.523232     -4.015418
+ flexpfn 32                     0.0             0.000000 2.917718    0.476297      72.440331     -4.004017
+ flexpfn 64                     0.0             0.000000 2.922309    0.476150      72.469963     -4.006469
+
+COMMAND C:\Users\Achuthan Menon\Desktop\Research Work\ARGOS Hybrid\.venv\Scripts\python.exe -u -B C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\train_baseline.py --config C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\baseline.yaml --cache C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\cache --run-dir C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\walltime_guard --max-runtime-hours 0 --exit-before-minutes 0 --device cpu
+=================================================================
+FlexDC Foundation Baseline Training | Run=walltime_guard
+Device=cpu GPU=None Precision=fp32
+Train rows=720 Development rows=720 LOCKED rows excluded from training/selection
+Optimizer=AdamW LR=0.0003 Steps=6 Batch/episodes=256 Checkpoints=C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_successor_models\.validation_runs\supervisor_patch_smoke\walltime_guard
+TEST FIXTURE ONLY â€” NOT SCIENTIFIC DATA
+=================================================================
+
+  0%|          | 0/6 [00:00<?, ?step/s]
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 21.41step/s]
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 20.96step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]
+Epoch 1/2 | Step 1:  17%|#6        | 1/6 [00:00<00:00, 20.12step/s, Kmean=0.0, loss=11.747, lr=0.0003, mean=8.203, mem=CPU, p90=2.783, qos=0.1901]
+Checkpoint: latest.pt saved at step 1
+Training exit: {'model': 'baseline', 'optimizer_steps_this_invocation': 1, 'global_step': 1, 'exit_reason': 'walltime_exit', 'status': 'WALLTIME_CHECKPOINT', 'wall_seconds': 2.906640300003346, 'fixture': True}

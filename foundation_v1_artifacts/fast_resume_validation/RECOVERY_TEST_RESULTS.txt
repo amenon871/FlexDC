@@ -1,0 +1,5 @@
+Local synthetic validation only; no FlexDC or real Foundation training.
+["C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\venv\\Scripts\\python.exe", "-X", "utf8", "-B", "-m", "pytest", "tests/test_foundation_v1_fast_resume.py", "-q", "--junitxml=C:\\Users\\Achuthan Menon\\Desktop\\Research Work\\flexdc-sim-main\\foundation_v1_artifacts\\fast_resume_validation\\recovery_test_results.xml"]
+..................                                                       [100%]
+- generated xml file: C:\Users\Achuthan Menon\Desktop\Research Work\flexdc-sim-main\foundation_v1_artifacts\fast_resume_validation\recovery_test_results.xml -
+18 passed in 62.06s (0:01:02)

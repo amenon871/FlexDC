@@ -1,0 +1,19 @@
+{
+  "test_fixture_only": true,
+  "simulator_calls": 0,
+  "previous_certified_stages": 2,
+  "previous_stage_rows": 100,
+  "certificates_validated": 2,
+  "certificate_checks": 3,
+  "stages_skipped": 2,
+  "previous_stage_historical_receipt_opens": 0,
+  "previous_stage_strong_audit_calls": 0,
+  "active_stage_receipt_opens": 148,
+  "active_stage_strong_audit_calls": 1,
+  "startup_to_active_stage_seconds": 0.1537914999644272,
+  "total_fixture_resume_seconds": 13.053836199978832,
+  "stage_execution_order": [
+    "wave02"
+  ],
+  "scc_gpfs_target": "UNVERIFIED until reviewed deployment; local timing is not an SCC measurement"
+}
