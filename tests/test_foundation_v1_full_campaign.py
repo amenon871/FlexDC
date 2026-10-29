@@ -57,6 +57,7 @@ def backend(tmp_path,monkeypatch):
     b=Backend(tmp_path)
     monkeypatch.setattr(full,'ROOT',tmp_path)
     monkeypatch.setattr(full,'verify_release',lambda:{'uncommitted_source_sha256':'MOCK_RELEASE'})
+    monkeypatch.setattr(full,'versions',lambda require=False:{'test_fixture':'approved-version-contract'})
     monkeypatch.setattr(full,'inspect_stage',b.inspect);monkeypatch.setattr(full,'validate_plan',b.validate)
     monkeypatch.setattr(full,'export_scope',b.export);monkeypatch.setattr(full,'ledger_metrics',b.metrics)
     monkeypatch.setattr(scope,'plan_path',b.path)

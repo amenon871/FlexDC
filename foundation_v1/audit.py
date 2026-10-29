@@ -1,8 +1,10 @@
 """Strict row input/evidence audits and crash-safe canonical observation index."""
 import argparse
+import hashlib
 import json
 import math
 import sqlite3
+import time
 from pathlib import Path
 
 import numpy as np
@@ -64,6 +66,25 @@ def connection(path):
     db.execute('CREATE TABLE IF NOT EXISTS terminal_executions(row_id TEXT PRIMARY KEY,task_id TEXT,seed INTEGER,observation_status TEXT,body TEXT,body_hash TEXT,source TEXT)')
     db.execute('CREATE TABLE IF NOT EXISTS execution_states(row_id TEXT PRIMARY KEY,task_id TEXT,status TEXT,details TEXT)')
     db.execute('CREATE TABLE IF NOT EXISTS attempts(attempt_id TEXT PRIMARY KEY,status TEXT,details TEXT)')
+    # Adaptive planning is task-local.  Without this index every task lookup is a
+    # complete ledger scan (1,800 scans at production TRAIN_DEV scale).
+    db.execute('CREATE INDEX IF NOT EXISTS idx_observations_task_seed_row ON observations(task_id,seed,row_id)')
+    db.execute('CREATE INDEX IF NOT EXISTS idx_terminal_task_seed_row ON terminal_executions(task_id,seed,row_id)')
+    return db
+
+
+def ensure_planning_indexes(path):
+    """Install derived query indexes without changing any scientific row."""
+    started=time.perf_counter();db=connection(path)
+    with db:pass
+    db.close()
+    return {'index':'idx_observations_task_seed_row','elapsed_seconds':time.perf_counter()-started}
+
+
+def readonly_connection(path):
+    if not Path(path).exists():raise FileNotFoundError(path)
+    db=sqlite3.connect(f'file:{Path(path).resolve().as_posix()}?mode=ro',uri=True)
+    db.execute('PRAGMA query_only=ON')
     return db
 
 
@@ -91,9 +112,40 @@ def verify_database(path):
     finally:db.close()
 
 
-def read_task_observations(path,task_id,primary_only=False):
-    db=sqlite3.connect(f'file:{Path(path).resolve().as_posix()}?mode=ro',uri=True)
-    try:return [json.loads(r[0]) for r in db.execute('SELECT body FROM observations WHERE task_id=?'+(' AND seed=20' if primary_only else '')+' ORDER BY row_id',(task_id,))]
+def read_task_observations(path,task_id,primary_only=False,db=None,verify_bodies=False):
+    """Read one task, optionally reusing one persistent read-only connection."""
+    owned=db is None
+    if owned:db=readonly_connection(path)
+    columns='body,body_hash' if verify_bodies else 'body'
+    try:
+        rows=[]
+        for record in db.execute('SELECT '+columns+' FROM observations WHERE task_id=?'+(' AND seed=20' if primary_only else '')+' ORDER BY row_id',(task_id,)):
+            body=json.loads(record[0])
+            if verify_bodies and digest(body)!=record[1]:raise ValueError('Observation body checksum mismatch for task '+task_id)
+            rows.append(body)
+        return rows
+    finally:
+        if owned:db.close()
+
+
+def verify_planning_database(path):
+    """Fast structural seal; adaptive inputs are body-hash checked as streamed.
+
+    Strong stage certification has already reconstructed every row from its
+    authoritative receipt.  This pass verifies SQLite integrity and seals the
+    immutable row-id/body-hash inventory without deserializing gigabytes of JSON.
+    The planner then verifies each body it actually consumes.
+    """
+    started=time.perf_counter();db=readonly_connection(path)
+    try:
+        if db.execute('PRAGMA quick_check').fetchone()[0]!='ok':raise ValueError('Corrupt Foundation observation database')
+        hasher=hashlib.sha256();count=0
+        for table in ('observations','terminal_executions'):
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone():
+                for row_id,body_hash in db.execute('SELECT row_id,body_hash FROM '+table+' ORDER BY row_id'):
+                    hasher.update(canonical([table,row_id,body_hash]).encode('utf8')+b'\n');count+=1
+        return {'database_content_sha256':hasher.hexdigest(),'rows':count,'elapsed_seconds':time.perf_counter()-started,
+            'verification':'quick_check + ordered row-id/body-hash seal; consumed adaptive bodies independently hash-verified'}
     finally:db.close()
 
 

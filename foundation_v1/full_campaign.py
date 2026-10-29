@@ -53,7 +53,7 @@ def dry_run(a,partition):
         'simulation_calls_this_invocation':0,'adaptive_coordinates_generated':False,'environment':versions()}
     print(json.dumps(result,indent=2));return result
 
-def validate_plan(path,part,stage):
+def validate_plan(path,part,stage,protocol=None):
     receipt_path=path.with_suffix('.receipt.json')
     if not receipt_path.exists():raise ValueError('Missing atomic stage receipt: '+str(receipt_path))
     receipt=read_json(receipt_path);sha=file_hash(path)
@@ -75,12 +75,15 @@ def validate_plan(path,part,stage):
             expected=make_row(task,x,row['Candidate_Source'],wave,simulation_seed=seed)
             if any(row[k]!=expected[k] for k in ('plan_row_id','Plan_Row_ID','Foundation_Row_ID','Base_Geometry_ID')):raise ValueError('Stage scientific row content identity mismatch')
         groups[task['Task_ID']][row['Base_Geometry_ID']].add(seed)
-    required=150 if stage=='phaseA' else 20
+    required=(protocol['initial'] if stage=='phaseA' else
+        protocol['repeat_bases']*len(protocol['repeat_seeds']) if stage=='repeat' else
+        sum(protocol['wave_quotas'])) if protocol else (150 if stage=='phaseA' else 20)
     if set(counts)!=set(tasks) or set(counts.values())!={required} or receipt['rows']!=len(seen):raise ValueError('Stage candidate/task count quota mismatch')
-    if stage=='phaseA' and any(dict(v)!=PHASE_A for v in sources.values()):raise ValueError('Phase-A source quota mismatch')
-    if stage.startswith('wave') and any(v['GLOBAL_ESCAPE']<4 for v in sources.values()):raise ValueError('Missing protected global-escape quota')
+    if stage=='phaseA' and protocol is None and any(dict(v)!=PHASE_A for v in sources.values()):raise ValueError('Phase-A source quota mismatch')
+    if stage.startswith('wave') and any(v['GLOBAL_ESCAPE']<(protocol['wave_quotas'][0] if protocol else 4) for v in sources.values()):raise ValueError('Missing protected global-escape quota')
     if stage=='repeat':
-        if any(len(v)!=10 or any(s!={21,22} for s in v.values()) for v in groups.values()):raise ValueError('Repeat plan groups/seeds mismatch')
+        repeat_bases=protocol['repeat_bases'] if protocol else 10;repeat_seeds=set(protocol['repeat_seeds']) if protocol else {21,22}
+        if any(len(v)!=repeat_bases or any(s!=repeat_seeds for s in v.values()) for v in groups.values()):raise ValueError('Repeat plan groups/seeds mismatch')
     elif any(len(v)!=required for v in groups.values()):raise ValueError('Stage unique-geometry quota mismatch')
     return {'plan_sha256':sha,'rows':len(seen),'tasks':len(tasks),'status':'VALID_PLAN'}
 

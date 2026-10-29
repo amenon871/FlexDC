@@ -7,8 +7,12 @@ from pathlib import Path
 import pytest
 
 from am_flexdc_foundation_v1_common import (contexts,Domain,make_row,write_csv,write_json,read_json,read_csv,digest,file_hash)
-from foundation_v1 import audit,campaign,adaptive,scope
+from foundation_v1 import audit,campaign,adaptive,scope,environment
 from tests.test_foundation_v1 import fake_receipt,fake_observations
+
+@pytest.fixture(autouse=True)
+def approved_test_environment(monkeypatch):
+    monkeypatch.setattr(environment,'versions',lambda require=False:{'test_fixture':'approved-version-contract'})
 
 @pytest.fixture
 def task():return copy.deepcopy(contexts()[0])

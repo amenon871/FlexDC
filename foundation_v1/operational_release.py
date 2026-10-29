@@ -10,6 +10,8 @@ from am_flexdc_foundation_v1_common import ROOT,ARTIFACTS,digest,file_hash,read_
 
 NAME='operational_patch_release_resume_v3.json'
 LATEST_NAME='operational_patch_release_aqa_speedup_v1.json'
+BOUNDARY_NAME='operational_patch_release_campaign_boundary_v1.json'
+RELEASE_NAMES=(NAME,LATEST_NAME,BOUNDARY_NAME)
 MASTER='bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f'
 
 
@@ -17,7 +19,10 @@ def _verify_source_record(root,record,prior_files,check_current=True):
     if record.get('body_sha256')!=digest({k:v for k,v in record.items() if k!='body_sha256'}):raise ValueError('Operational release checksum mismatch')
     if record.get('scientific_simulations_started') is not True:raise ValueError('Mid-campaign release must acknowledge collection already started')
     if record['master_phaseA_sha256']!=MASTER or record['scientific_master_changed'] or not record['operational_patch_after_campaign_start']:raise ValueError('Operational release scientific/provenance contract mismatch')
-    if not set(prior_files)<=set(record['source_files']):raise ValueError('Previously guarded paths removed')
+    removed=set(prior_files)-set(record['source_files'])
+    allowed=set(record.get('validation_only_paths_removed',[]))
+    if removed!=allowed or any(not name.startswith('tests/') for name in allowed):
+        raise ValueError('Previously guarded runtime paths removed or validation-only removal list is incomplete')
     if digest(record['source_files'])!=record['new_source_identity']:raise ValueError('Operational source identity checksum mismatch')
     for name,expected in record['source_files'].items():
         if any(p.startswith('.env') for p in Path(name).parts):raise ValueError('Forbidden source path')
@@ -29,29 +34,36 @@ def verify(root,artifacts,historical):
     first_path=artifacts/NAME;first=read_json(first_path)
     if first['previous_source_identity']!=historical['uncommitted_source_sha256']:raise ValueError('Historical source identity changed')
     if file_hash(artifacts/'preexecution_release.json')!=first['historical_release_sha256']:raise ValueError('Historical preexecution bytes changed')
-    latest_path=artifacts/LATEST_NAME
-    _verify_source_record(root,first,historical['source_files'],check_current=not latest_path.exists())
+    later_paths=[artifacts/name for name in RELEASE_NAMES[1:] if (artifacts/name).exists()]
+    _verify_source_record(root,first,historical['source_files'],check_current=not later_paths)
     current={**historical,'scientific_simulations_started':True,'operational_patch_after_campaign_start':True,
         'source_files':first['source_files'],'uncommitted_source_sha256':first['new_source_identity'],
         'collection_initial_source_identity':first['previous_source_identity'],
         'collection_previous_source_identity':first['previous_source_identity'],
         'operational_patch_release':str(first_path),'operational_patch_release_sha256':file_hash(first_path),
         'operational_release_chain':[str(first_path)]}
-    if not latest_path.exists():return current
-    latest=read_json(latest_path)
-    if latest.get('previous_source_identity')!=current['uncommitted_source_sha256']:raise ValueError('Second operational release predecessor changed')
-    if latest.get('previous_operational_release_path')!=(Path('foundation_v1_artifacts')/NAME).as_posix():raise ValueError('Second operational release path chain changed')
-    if latest.get('previous_operational_release_sha256')!=file_hash(first_path):raise ValueError('First operational release bytes changed')
-    if latest.get('validation_bundle_sha256')!='0b2d322bc3cf85115e8b94aac661aefa9f0ff00eeb2466bf886b151ff7bb7226':raise ValueError('AQA validation bundle identity changed')
-    if latest.get('simulator_scientific_output_parity_validated') is not True or latest.get('aqa_decision_parity_validated') is not True:raise ValueError('AQA validation claims missing')
-    if latest.get('non_aqa_legacy_behavior_preserved') is not True:raise ValueError('Non-AQA fallback contract missing')
-    _verify_source_record(root,latest,current['source_files'])
-    return {**current,'source_files':latest['source_files'],'uncommitted_source_sha256':latest['new_source_identity'],
-        'collection_previous_source_identity':latest['previous_source_identity'],
-        'operational_patch_release':str(latest_path),'operational_patch_release_sha256':file_hash(latest_path),
-        'operational_release_chain':current['operational_release_chain']+[str(latest_path)],
-        'validation_bundle_sha256':latest['validation_bundle_sha256'],
-        'optimization':latest.get('optimization')}
+    previous_path=first_path
+    for index,name in enumerate(RELEASE_NAMES[1:],2):
+        path=artifacts/name
+        if not path.exists():continue
+        latest=read_json(path)
+        if latest.get('previous_source_identity')!=current['uncommitted_source_sha256']:raise ValueError('Operational release predecessor changed at '+name)
+        if latest.get('previous_operational_release_path')!=(Path('foundation_v1_artifacts')/previous_path.name).as_posix():raise ValueError('Operational release path chain changed at '+name)
+        if latest.get('previous_operational_release_sha256')!=file_hash(previous_path):raise ValueError('Previous operational release bytes changed at '+name)
+        if name==LATEST_NAME:
+            if latest.get('validation_bundle_sha256')!='0b2d322bc3cf85115e8b94aac661aefa9f0ff00eeb2466bf886b151ff7bb7226':raise ValueError('AQA validation bundle identity changed')
+            if latest.get('simulator_scientific_output_parity_validated') is not True or latest.get('aqa_decision_parity_validated') is not True:raise ValueError('AQA validation claims missing')
+            if latest.get('non_aqa_legacy_behavior_preserved') is not True:raise ValueError('Non-AQA fallback contract missing')
+        later_exists=any((artifacts/later).exists() for later in RELEASE_NAMES[index:])
+        _verify_source_record(root,latest,current['source_files'],check_current=not later_exists)
+        current={**current,'source_files':latest['source_files'],'uncommitted_source_sha256':latest['new_source_identity'],
+            'collection_previous_source_identity':latest['previous_source_identity'],
+            'operational_patch_release':str(path),'operational_patch_release_sha256':file_hash(path),
+            'operational_release_chain':current['operational_release_chain']+[str(path)],
+            'validation_bundle_sha256':latest.get('validation_bundle_sha256',current.get('validation_bundle_sha256')),
+            'optimization':latest.get('optimization',current.get('optimization'))}
+        previous_path=path
+    return current
 
 
 def atomic_immutable(path,body):
@@ -61,7 +73,18 @@ def atomic_immutable(path,body):
     try:
         with os.fdopen(fd,'w',encoding='utf8') as f:
             json.dump(body,f,sort_keys=True,indent=2,allow_nan=False);f.write('\n');f.flush();os.fsync(f.fileno())
-        os.link(temp,path)
+        try:os.link(temp,path)
+        except PermissionError:
+            # Some Windows filesystems deny hard links. O_EXCL preserves the
+            # no-overwrite contract; publish the already-fsynced bytes once.
+            flags=os.O_WRONLY|os.O_CREAT|os.O_EXCL
+            out=os.open(path,flags,0o644)
+            try:
+                with os.fdopen(out,'wb') as target,open(temp,'rb') as source:
+                    target.write(source.read());target.flush();os.fsync(target.fileno())
+            except BaseException:
+                path.unlink(missing_ok=True)
+                raise
         if os.name!='nt':
             d=os.open(path.parent,os.O_RDONLY)
             try:os.fsync(d)

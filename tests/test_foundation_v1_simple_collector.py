@@ -245,6 +245,8 @@ def test_full_production_state_machine_real_planners_synthetic_simulator(tmp_pat
         if all(len(v)==150 for v in master.values()):break
     def tasks(part=None,task_id=None):return [t for t in selected if t['split'] in scope.SCOPES[scope.normalize(part)] and (task_id is None or t['Task_ID']==task_id)]
     monkeypatch.setattr(scope,'ROOT',tmp_path);monkeypatch.setattr(full,'ROOT',tmp_path)
+    monkeypatch.setattr(full,'versions',lambda require=False:{'status':'SYNTHETIC'})
+    monkeypatch.setattr('foundation_v1.environment.versions',lambda require=False:{'status':'SYNTHETIC'})
     monkeypatch.setattr(scope,'selected_tasks',tasks)
     monkeypatch.setattr(full,'verify_release',lambda:{'uncommitted_source_sha256':'SYNTHETIC_EXECUTION_ONLY_REAL_SCIENTIFIC_PLANNERS'})
     def view(part):

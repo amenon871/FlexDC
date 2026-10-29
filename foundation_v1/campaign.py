@@ -163,6 +163,7 @@ def main():
     mode=p.add_mutually_exclusive_group()
     mode.add_argument('--stage',choices=['phaseA','wave01','wave02','wave03','wave04','repeat'])
     mode.add_argument('--full-campaign',action='store_true',help='Automatically audit/generate/run all stages and isolated final exports')
+    mode.add_argument('--prepare-next-stage',action='store_true',help='Audit/certify and generate the next missing stage plan without launching simulator workers')
     p.add_argument('--partition',choices=CHOICES,default='TRAIN_DEV',help='Default TRAIN+DEVELOPMENT; ALL dispatches isolated groups sequentially')
     p.add_argument('--unlock-locked-test',action='store_true',help='Explicitly authorize isolated sealed-test precomputation; never use those outcomes for fitting/tuning')
     p.add_argument('--task');p.add_argument('--chunk-index',type=int,default=0);p.add_argument('--chunk-count',type=int,default=1)
@@ -174,6 +175,8 @@ def main():
     p.add_argument('--confirm-fresh-start',action='store_true')
     p.add_argument('--status',action='store_true')
     p.add_argument('--storage-emergency-gib',type=float,default=10.0)
+    p.add_argument('--adaptive-progress-seconds',type=float,default=10.0)
+    p.add_argument('--adaptive-stall-seconds',type=float,default=300.0)
     a=p.parse_args();partition=normalize(a.partition)
     from foundation_v1.simple_campaign import dispatch
     return dispatch(a,p)

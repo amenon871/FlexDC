@@ -9,7 +9,7 @@ import stat
 import time
 from pathlib import Path
 from collections import Counter
-from am_flexdc_foundation_v1_common import ROOT,ARTIFACTS,contexts,iter_csv,read_json,write_json,file_hash,make_row,row_geometry,digest
+from am_flexdc_foundation_v1_common import ROOT,ARTIFACTS,contexts,iter_csv,read_json,write_json,file_hash,make_row,row_geometry,digest,canonical
 from foundation_v1 import scope,audit,adaptive,collector_receipts as receipts,simple_collector as collector
 from foundation_v1 import stage_certification as certificates
 from foundation_v1.full_campaign import STAGES,verify_release,counts_for
@@ -132,7 +132,9 @@ def run_full(a,part):
                     if not path.exists():
                         if stage=='phaseA':scope.make_phaseA_view(selected)
                         else:adaptive.generate_stage(scope.database_path(selected),selected,
-                            wave_number=None if stage=='repeat' else int(stage[-2:]),repeat=stage=='repeat',unlock=a.unlock_locked_test)
+                            wave_number=None if stage=='repeat' else int(stage[-2:]),repeat=stage=='repeat',unlock=a.unlock_locked_test,
+                            progress_seconds=getattr(a,'adaptive_progress_seconds',10.),stall_seconds=getattr(a,'adaptive_stall_seconds',300.),
+                            protocol=getattr(a,'test_protocol',None))
                     # Byte integrity before execution, geometry certification after.
                     plan_receipt=read_json(path.with_suffix('.receipt.json'))
                     if plan_receipt.get('plan_sha256',plan_receipt.get('sha256'))!=file_hash(path):raise ValueError('Immutable stage plan hash changed')
@@ -147,10 +149,12 @@ def run_full(a,part):
                             'simulation_calls_this_invocation':0,'simulation_rows_submitted_this_invocation':0}
                         state['resume_telemetry']['stages_skipped']+=1
                     else:
-                        print('STAGE CERTIFICATION REQUIRED '+selected+':'+stage+'; '+reason,flush=True)
+                        certificate_path=area/'stage_certification.json'
+                        prefix='STAGE CERTIFICATE ABSENT: performing certified recovery/audit before resume' if not certificate_path.exists() else 'STAGE CERTIFICATE STALE/CORRUPT: performing strong re-audit before resume'
+                        print(prefix+' '+selected+':'+stage+'; '+reason,flush=True)
                         call=copy.copy(a);call.stage=stage
                         report=execute_stage(call,selected)
-                        validate_plan(path,selected,stage)
+                        validate_plan(path,selected,stage,getattr(a,'test_protocol',None))
                         certificates.create(path,area,database,selected,stage,expected_rows,release)
                     state['stages'][selected+':'+stage]=report;write_json(state_file,state,False)
                 export_scope(selected,a.unlock_locked_test)
@@ -174,6 +178,61 @@ def run_full(a,part):
             state.update(status='INTERRUPTED' if isinstance(error,KeyboardInterrupt) or 'INTERRUPTED' in str(error) else 'STOPPED_AT_STAGE_BOUNDARY_OR_GLOBAL_CONDITION',error=str(error))
             write_json(state_file,state,False);raise
         finally:scope.PLAN_ROOT=None
+
+
+def prepare_next_stage(a,part):
+    """Prepare exactly the next unprepared simulator stage and launch zero workers."""
+    release=verify_release();versions(require=True);scope.require_unlock(part,a.unlock_locked_test)
+    root=ROOT/'foundation_v1_runs';root.mkdir(exist_ok=True);scope.PLAN_ROOT=root/'scientific_stage_plans'
+    from foundation_v1.full_campaign import validate_plan
+    try:
+        for selected in (('TRAIN_DEV','LOCKED_SYNTHETIC_TEST') if part=='ALL' else (part,)):
+            for index,stage in enumerate(STAGES):
+                path=scope.plan_path(stage,selected)
+                if not path.exists():
+                    if stage=='phaseA':path=scope.make_phaseA_view(selected)
+                    else:
+                        previous=STAGES[index-1];previous_path=scope.plan_path(previous,selected)
+                        if not previous_path.exists():raise RuntimeError('PREVIOUS_STAGE_PLAN_MISSING: '+selected+':'+previous)
+                        previous_receipt=read_json(previous_path.with_suffix('.receipt.json'))
+                        previous_rows=int(previous_receipt.get('rows',counts_for(selected)['tasks']*(150 if previous=='phaseA' else 20)))
+                        previous_area=stage_area(selected,previous);database=scope.database_path(selected)
+                        certificate,reason=certificates.validate(previous_path,previous_area,database,selected,previous,previous_rows,release)
+                        if not certificate:
+                            label='ABSENT' if not (previous_area/'stage_certification.json').exists() else 'STALE_OR_CORRUPT'
+                            print('STAGE CERTIFICATE '+label+': performing certified recovery/audit before planning '+selected+':'+stage,flush=True)
+                            report=certify(previous_path,previous_area,database)
+                            if report['status']!='PASS':raise RuntimeError('PREVIOUS_STAGE_NOT_CERTIFIABLE: '+canonical(report))
+                            certificates.create(previous_path,previous_area,database,selected,previous,previous_rows,release)
+                        path=adaptive.generate_stage(database,selected,wave_number=None if stage=='repeat' else int(stage[-2:]),
+                            repeat=stage=='repeat',unlock=a.unlock_locked_test,progress_seconds=a.adaptive_progress_seconds,
+                            stall_seconds=a.adaptive_stall_seconds,protocol=getattr(a,'test_protocol',None))
+                    validate_plan(path,selected,stage,getattr(a,'test_protocol',None))
+                    receipt=read_json(path.with_suffix('.receipt.json'))
+                    result={'status':'NEXT_STAGE_READY','partition':selected,'stage':stage,'plan':str(path),
+                        'plan_rows':receipt.get('rows'),'plan_sha256':file_hash(path),'pending_rows':receipt.get('rows'),
+                        'simulation_calls':0,'SAFE_TO_REQUEST_COMPUTE_ALLOCATION':'YES'}
+                    print(json.dumps(result,indent=2));return result
+                receipt=read_json(path.with_suffix('.receipt.json'))
+                expected=int(receipt.get('rows',counts_for(selected)['tasks']*(150 if stage=='phaseA' else 20)))
+                area=stage_area(selected,stage);database=scope.database_path(selected)
+                certificate,reason=certificates.validate(path,area,database,selected,stage,expected,release)
+                if not certificate:
+                    next_missing=index+1<len(STAGES) and not scope.plan_path(STAGES[index+1],selected).exists()
+                    if next_missing:
+                        label='ABSENT' if not (area/'stage_certification.json').exists() else 'STALE_OR_CORRUPT'
+                        print('STAGE CERTIFICATE '+label+': performing certified recovery/audit before planning '+selected+':'+STAGES[index+1],flush=True)
+                        report=certify(path,area,database)
+                        if report['status']!='PASS':raise RuntimeError('CURRENT_STAGE_NOT_CERTIFIABLE: '+canonical(report))
+                        certificates.create(path,area,database,selected,stage,expected,release)
+                        continue
+                    result={'status':'NEXT_STAGE_ALREADY_PLANNED','partition':selected,'stage':stage,'plan':str(path),
+                        'plan_rows':expected,'plan_sha256':file_hash(path),'pending_rows':expected,'simulation_calls':0,
+                        'certificate_status':'STALE_OR_MISSING','certificate_reason':reason,'SAFE_TO_REQUEST_COMPUTE_ALLOCATION':'YES'}
+                    print(json.dumps(result,indent=2));return result
+        result={'status':'FOUNDATION_V1_COMPLETE','simulation_calls':0,'SAFE_TO_REQUEST_COMPUTE_ALLOCATION':'NO_WORK_REMAINING'}
+        print(json.dumps(result,indent=2));return result
+    finally:scope.PLAN_ROOT=None
 
 
 def reset_targets(root):
@@ -310,10 +369,14 @@ def dispatch(a,parser):
     if a.status:
         result=live_status();print(json.dumps(result,indent=2));return result
     if a.max_workers<1 or a.storage_emergency_gib<0:parser.error('Invalid workers/storage threshold')
+    if a.adaptive_progress_seconds<=0 or a.adaptive_stall_seconds<=0:parser.error('Adaptive progress/stall intervals must be positive')
     part=scope.normalize(a.partition)
-    if a.full_campaign and (a.task or a.database or a.chunk_count!=1 or a.chunk_index!=0):
+    if (a.full_campaign or a.prepare_next_stage) and (a.task or a.database or a.chunk_count!=1 or a.chunk_index!=0):
         parser.error('Full campaign owns whole isolated scopes; task/database/chunk overrides are retired')
     if a.stage:parser.error('Stage-only launching is retired for the new collector; use --full-campaign')
+    if a.prepare_next_stage:
+        if a.execute:parser.error('--prepare-next-stage launches zero simulator workers; omit --execute')
+        return prepare_next_stage(a,part)
     if not a.execute:return preview(a,part)
     if not a.full_campaign:parser.error('The new collector executes the full campaign; use --full-campaign')
     return run_full(a,part)
