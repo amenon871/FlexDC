@@ -11,7 +11,8 @@ from am_flexdc_foundation_v1_common import ROOT,ARTIFACTS,digest,file_hash,read_
 NAME='operational_patch_release_resume_v3.json'
 LATEST_NAME='operational_patch_release_aqa_speedup_v1.json'
 BOUNDARY_NAME='operational_patch_release_campaign_boundary_v1.json'
-RELEASE_NAMES=(NAME,LATEST_NAME,BOUNDARY_NAME)
+PORTABILITY_NAME='operational_patch_release_certificate_portability_v1.json'
+RELEASE_NAMES=(NAME,LATEST_NAME,BOUNDARY_NAME,PORTABILITY_NAME)
 MASTER='bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f'
 
 
@@ -54,6 +55,10 @@ def verify(root,artifacts,historical):
             if latest.get('validation_bundle_sha256')!='0b2d322bc3cf85115e8b94aac661aefa9f0ff00eeb2466bf886b151ff7bb7226':raise ValueError('AQA validation bundle identity changed')
             if latest.get('simulator_scientific_output_parity_validated') is not True or latest.get('aqa_decision_parity_validated') is not True:raise ValueError('AQA validation claims missing')
             if latest.get('non_aqa_legacy_behavior_preserved') is not True:raise ValueError('Non-AQA fallback contract missing')
+        if name==PORTABILITY_NAME:
+            if latest.get('certificate_source_continuity_validated') is not True:raise ValueError('Certificate source-continuity validation claim missing')
+            if latest.get('filesystem_device_remap_validated') is not True:raise ValueError('Filesystem portability validation claim missing')
+            if latest.get('arbitrary_source_mismatch_rejected') is not True:raise ValueError('Arbitrary source mismatch rejection claim missing')
         later_exists=any((artifacts/later).exists() for later in RELEASE_NAMES[index:])
         _verify_source_record(root,latest,current['source_files'],check_current=not later_exists)
         current={**current,'source_files':latest['source_files'],'uncommitted_source_sha256':latest['new_source_identity'],
@@ -116,6 +121,41 @@ def transition_chain(root,initial_source_identity,target_source_identity):
         if len(choices)!=1:raise ValueError('SOURCE_TRANSITION_CHAIN_INCOMPLETE_OR_AMBIGUOUS at '+current)
         path,body=choices[0];chain.append(str(path));current=body['new_source_identity']
     return chain
+
+
+def validate_source_continuity(root,certificate_source_identity,release,transition_receipts=None):
+    """Validate an approved append-only operational chain without weakening source identity."""
+    target=release['uncommitted_source_sha256']
+    if certificate_source_identity==target:
+        return {'status':'EXACT_SOURCE_IDENTITY','certificate_source_identity':certificate_source_identity,
+            'current_source_identity':target,'transition_receipts':[]}
+    valid={str(path.resolve()):(path,body) for path,body in _valid_transition_receipts(root)}
+    supplied=[str(Path(path).resolve()) for path in (transition_receipts or [])]
+    if not supplied:raise ValueError('certificate source mismatch without approved transition receipts')
+    records=[]
+    for path in supplied:
+        if path not in valid:raise ValueError('certificate source transition receipt invalid/tampered: '+path)
+        records.append(valid[path])
+    release_sources={}
+    for path in release.get('operational_release_chain',[]):
+        record=read_json(path)
+        release_sources[record['new_source_identity']]=file_hash(path)
+    by_old={}
+    for path,body in records:by_old.setdefault(body['old_source_identity'],[]).append((path,body))
+    current=certificate_source_identity;used=[];seen=set();master=release.get('phaseA_sha256',MASTER)
+    while current!=target:
+        if current in seen:raise ValueError('certificate source transition chain contains a cycle')
+        seen.add(current);choices=by_old.get(current,[])
+        if len(choices)!=1:raise ValueError('certificate source transition chain incomplete or ambiguous at '+current)
+        path,body=choices[0]
+        if body.get('master_phaseA_sha256')!=master or body.get('scientific_plan_unchanged') is not True:
+            raise ValueError('certificate source transition changed scientific identity')
+        expected_release_sha=release_sources.get(body.get('new_source_identity'))
+        if not expected_release_sha or body.get('operational_patch_release_sha256')!=expected_release_sha:
+            raise ValueError('certificate source transition is not tied to the approved operational release')
+        used.append(str(path));current=body['new_source_identity']
+    return {'status':'APPROVED_OPERATIONAL_SOURCE_CONTINUITY','certificate_source_identity':certificate_source_identity,
+        'current_source_identity':target,'scientific_master_unchanged':True,'transition_receipts':used}
 
 
 def record_transition(root,release,status_snapshot,old_source_identity,operator=None,release_id=None,transition_id=None,old_git_commit=None,new_git_commit=None):

@@ -7,6 +7,7 @@ from pathlib import Path
 from am_flexdc_foundation_v1_common import digest,file_hash,read_json,write_json
 from foundation_v1 import collector_receipts as receipts
 from foundation_v1.recovery_index import RecoveryIndex
+from foundation_v1.operational_release import validate_source_continuity
 
 SCHEMA='FOUNDATION_STAGE_CERTIFICATION_V1'
 MASTER='bb4a1c0da7f15c53b8201766ff48a7b15d672e78a82d636b5d0159e80f47ed7f'
@@ -45,6 +46,23 @@ def recovery_generation(area):
         if not row:raise ValueError('recovery index generation missing')
         return row[0]
     finally:db.close()
+
+
+def portable_watermark_compare(expected,actual,device_index,label):
+    """Accept only a mount-device remap; every stable watermark field stays exact."""
+    if not isinstance(expected,dict) or not isinstance(actual,dict) or set(expected)!=set(actual):
+        raise ValueError(label+' entries changed')
+    diagnostics=[]
+    for name in sorted(expected):
+        old,new=expected[name],actual[name]
+        if old==new:continue
+        if (not isinstance(old,(list,tuple)) or not isinstance(new,(list,tuple)) or len(old)!=len(new)
+            or device_index>=len(old) or any(old[i]!=new[i] for i in range(len(old)) if i!=device_index)):
+            raise ValueError(label+' stable watermark changed: '+name)
+        diagnostics.append({'status':'FILESYSTEM_DEVICE_REMAP_ACCEPTED','watermark':label,'name':name,
+            'old_st_dev':old[device_index],'new_st_dev':new[device_index],
+            'stable_watermark_fields_match':True})
+    return diagnostics
 
 
 def ledger_marker(database,partition,stage,body=None):
@@ -86,7 +104,7 @@ def create(plan,area,database,partition,stage,expected_rows,release):
     return body
 
 
-def validate(plan,area,database,partition,stage,expected_rows,release):
+def validate(plan,area,database,partition,stage,expected_rows,release,transition_receipts=None,provenance_root=None):
     try:
         area=Path(area);body=read_json(area/'stage_certification.json')
         if body.get('body_sha256')!=digest({k:v for k,v in body.items() if k!='body_sha256'}):raise ValueError('certificate checksum mismatch')
@@ -95,16 +113,25 @@ def validate(plan,area,database,partition,stage,expected_rows,release):
             plan_path=str(Path(plan).resolve()),plan_sha256=file_hash(plan),expected_rows=expected_rows,
             certified_valid_rows=expected_rows,receipt_schema=receipts.SCHEMA,
             master_phaseA_sha256=release.get('phaseA_sha256',MASTER),
-            audit_database_path=str(Path(database).resolve()),
-            collector_source_identity=release['uncommitted_source_sha256'])
-        if any(body.get(k)!=v for k,v in required.items()):raise ValueError('certificate stage/plan/science/source identity mismatch')
+            audit_database_path=str(Path(database).resolve()))
+        if any(body.get(k)!=v for k,v in required.items()):raise ValueError('certificate stage/plan/science identity mismatch')
+        source=validate_source_continuity(provenance_root or Path(plan).resolve().parent,
+            body.get('collector_source_identity'),release,transition_receipts)
         audit_path=area/'stage_audit.json'
         if body['strong_audit_path']!=str(audit_path.resolve()) or file_hash(audit_path)!=body['strong_audit_sha256']:raise ValueError('strong audit artifact mismatch')
-        if body['journal_watermarks']!=journal_watermarks(area):raise ValueError('new/inconsistent completion or invalidation journals')
-        if body['receipt_bucket_watermarks']!=receipt_buckets(area):raise ValueError('receipt bucket changed; strong audit required')
+        remaps=portable_watermark_compare(body['journal_watermarks'],journal_watermarks(area),1,'journal')
+        remaps+=portable_watermark_compare(body['receipt_bucket_watermarks'],receipt_buckets(area),0,'receipt_bucket')
         if body['recovery_index_generation']!=recovery_generation(area):raise ValueError('recovery generation changed')
         marker=ledger_marker(database,partition,stage)
         if marker.get('certificate_id')!=body['certificate_id'] or digest(marker)!=body['audit_database_stage_identity']:raise ValueError('stage audit database identity mismatch')
-        return body,None
+        if source['status']=='APPROVED_OPERATIONAL_SOURCE_CONTINUITY':
+            print('CERTIFICATE_SOURCE_CONTINUITY_ACCEPTED old_source='+source['certificate_source_identity']+
+                ' new_source='+source['current_source_identity']+' transitions='+str(len(source['transition_receipts'])),flush=True)
+        if remaps:
+            pairs=sorted({str(item['old_st_dev'])+'->'+str(item['new_st_dev']) for item in remaps})
+            print('FILESYSTEM_DEVICE_REMAP_ACCEPTED device_remaps='+','.join(pairs)+' entries='+str(len(remaps))+
+                ' stable_watermark_fields_match=true',flush=True)
+        result=dict(body);result['validation_diagnostics']={'source_continuity':source,'filesystem_device_remaps':remaps}
+        return result,None
     except (OSError,ValueError,KeyError,TypeError,sqlite3.Error) as error:
         return None,str(error)

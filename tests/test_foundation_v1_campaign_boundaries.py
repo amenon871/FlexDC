@@ -124,7 +124,8 @@ def test_exact_recovery_state_prepares_missing_wave1_without_simulation(tmp_path
     release={'uncommitted_source_sha256':'BOUNDARY_FIXTURE','phaseA_sha256':'FIXTURE'}
     monkeypatch.setattr(campaign,'verify_release',lambda:release);monkeypatch.setattr(campaign,'versions',lambda require=False:{'status':'FIXTURE'})
     monkeypatch.setattr('foundation_v1.environment.versions',lambda require=False:{'status':'FIXTURE'})
-    monkeypatch.setattr('foundation_v1.operational_release.require_transition',lambda *a,**k:[])
+    transition_checks=[]
+    monkeypatch.setattr('foundation_v1.operational_release.require_transition',lambda *a,**k:transition_checks.append((a,k)) or [])
     root=tmp_path/'foundation_v1_runs';scope.PLAN_ROOT=root/'scientific_stage_plans'
     plan=scope.plan_path('phaseA','TRAIN_DEV');write_csv(plan,rows);write_json(plan.with_suffix('.receipt.json'),{'scope':'TRAIN_DEV','rows':4,'sha256':file_hash(plan)})
     area=campaign.stage_area('TRAIN_DEV','phaseA');launcher=FakeLaunch(tmp_path/'outputs',[task])
@@ -136,3 +137,4 @@ def test_exact_recovery_state_prepares_missing_wave1_without_simulation(tmp_path
     result=campaign.prepare_next_stage(args,'TRAIN_DEV')
     assert result['status']=='NEXT_STAGE_READY' and result['stage']=='wave01' and result['plan_rows']==4
     assert result['simulation_calls']==0 and result['SAFE_TO_REQUEST_COMPUTE_ALLOCATION']=='YES'
+    assert transition_checks

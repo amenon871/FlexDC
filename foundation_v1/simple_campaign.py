@@ -140,7 +140,7 @@ def run_full(a,part):
                     if plan_receipt.get('plan_sha256',plan_receipt.get('sha256'))!=file_hash(path):raise ValueError('Immutable stage plan hash changed')
                     expected_rows=int(plan_receipt.get('rows',state['expected'][selected]['tasks']*(150 if stage=='phaseA' else 20)))
                     area=stage_area(selected,stage);database=scope.database_path(selected)
-                    certificate,reason=certificates.validate(path,area,database,selected,stage,expected_rows,release)
+                    certificate,reason=certificates.validate(path,area,database,selected,stage,expected_rows,release,transitions,ROOT)
                     state['resume_telemetry']['certificates_checked']+=1
                     if certificate:
                         print('STAGE CERTIFIED '+selected+':'+stage+' rows='+str(expected_rows)+'/'+str(expected_rows)+'; previously PASS; historical receipt re-scan skipped',flush=True)
@@ -183,6 +183,8 @@ def run_full(a,part):
 def prepare_next_stage(a,part):
     """Prepare exactly the next unprepared simulator stage and launch zero workers."""
     release=verify_release();versions(require=True);scope.require_unlock(part,a.unlock_locked_test)
+    from foundation_v1.operational_release import require_transition
+    transitions=require_transition(ROOT,release)
     root=ROOT/'foundation_v1_runs';root.mkdir(exist_ok=True);scope.PLAN_ROOT=root/'scientific_stage_plans'
     from foundation_v1.full_campaign import validate_plan
     try:
@@ -197,7 +199,7 @@ def prepare_next_stage(a,part):
                         previous_receipt=read_json(previous_path.with_suffix('.receipt.json'))
                         previous_rows=int(previous_receipt.get('rows',counts_for(selected)['tasks']*(150 if previous=='phaseA' else 20)))
                         previous_area=stage_area(selected,previous);database=scope.database_path(selected)
-                        certificate,reason=certificates.validate(previous_path,previous_area,database,selected,previous,previous_rows,release)
+                        certificate,reason=certificates.validate(previous_path,previous_area,database,selected,previous,previous_rows,release,transitions,ROOT)
                         if not certificate:
                             label='ABSENT' if not (previous_area/'stage_certification.json').exists() else 'STALE_OR_CORRUPT'
                             print('STAGE CERTIFICATE '+label+': performing certified recovery/audit before planning '+selected+':'+stage,flush=True)
@@ -216,7 +218,7 @@ def prepare_next_stage(a,part):
                 receipt=read_json(path.with_suffix('.receipt.json'))
                 expected=int(receipt.get('rows',counts_for(selected)['tasks']*(150 if stage=='phaseA' else 20)))
                 area=stage_area(selected,stage);database=scope.database_path(selected)
-                certificate,reason=certificates.validate(path,area,database,selected,stage,expected,release)
+                certificate,reason=certificates.validate(path,area,database,selected,stage,expected,release,transitions,ROOT)
                 if not certificate:
                     next_missing=index+1<len(STAGES) and not scope.plan_path(STAGES[index+1],selected).exists()
                     if next_missing:
