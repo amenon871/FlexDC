@@ -129,7 +129,7 @@ def run_one(checkout, config_root, manifest, row, output, label, fast):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=ROOT / "runs/p100_v3_doe_release")
+    parser.add_argument("--root", type=Path, default=ROOT / "runs/p100_v3_doe_matched")
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--extra-repetitions", type=int, choices=range(0, 3), default=1)

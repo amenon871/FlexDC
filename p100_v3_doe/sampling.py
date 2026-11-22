@@ -131,8 +131,9 @@ def sobol(domain, context_id, salt, bits):
     ).random_base2(bits)
 
 
-def broad(domain, context_id):
-    points = sobol(domain, context_id, "A", 8)
+def broad(domain, workload_id):
+    """Share just the Stage A Sobol sequence across a workload's utilizations."""
+    points = sobol(domain, workload_id, "A", 8)
     for index in range(16):
         points[index, :2] = [(index // 2) % 2, index % 2]
     seen = set()
@@ -144,7 +145,9 @@ def broad(domain, context_id):
             answer.append((point, "physical_edge" if index < 16 else "sobol", ""))
         if len(answer) == A_COUNT:
             return answer
-    raise ValueError(f"Stage A could not produce {A_COUNT} distinct bids: {context_id}")
+    raise ValueError(
+        f"Stage A could not produce {A_COUNT} distinct bids: {workload_id}"
+    )
 
 
 def margins(p90, probabilities):

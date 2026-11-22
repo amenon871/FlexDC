@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "P100_V3_DOE_V1"
+VERSION = "P100_V3_DOE_V2_MATCHED_A"
 SEED = 20
 PROTECTED = {
     "am_run_flexdc_dataset_parallel_combo.py": "094094fe3aa5af6c6a2f2dc287a9a89e5ec9b326cfddb9f28569702293f3194b",

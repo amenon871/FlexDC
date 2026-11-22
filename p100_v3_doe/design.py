@@ -343,6 +343,73 @@ def splits(workloads, groups):
     return models, folds, u07
 
 
+def reporting_contract(models, contexts):
+    def counts(model):
+        train = model["train"]
+        return dict(
+            workload_definitions=len({contexts[cid]["workload"] for cid in train}),
+            contexts=len(train),
+            planned_a_rows=len(train) * A_COUNT,
+            planned_b_rows=len(train) * B_COUNT,
+            planned_total_rows=len(train) * (A_COUNT + B_COUNT),
+        )
+
+    baseline = {
+        name: model for name, model in models.items() if name.startswith("baseline_")
+    }
+    one, two = {}, {}
+    for name, model in models.items():
+        if name.startswith("leave_one_"):
+            test = set(model["test"]["one_unseen"])
+            matches = {
+                fold: sorted(test.intersection(spec["test"]["held_out_groups"]))
+                for fold, spec in baseline.items()
+            }
+            assert set().union(*map(set, matches.values())) == test
+            assert sum(map(len, matches.values())) == len(test)
+            one[name] = dict(
+                held_out_source=model["held_out"][0], baseline_test_contexts=matches
+            )
+        if name.startswith("leave_two_"):
+            (a, role_a), (b, role_b) = [
+                source.rsplit("-", 1) for source in model["held_out"]
+            ]
+            category = (
+                "TT"
+                if role_a == role_b == "T"
+                else "II"
+                if role_a == role_b == "I"
+                else "same_family_T_I"
+                if a == b
+                else "different_family_T_I"
+            )
+            two[name] = dict(
+                set=int(name.split("_")[2]),
+                category=category,
+                held_out_sources=model["held_out"],
+                groups=model["test"].keys(),
+            )
+            two[name]["groups"] = list(two[name]["groups"])
+    return dict(
+        training_sample_counts={name: counts(model) for name, model in models.items()},
+        leave_one=dict(
+            models=one,
+            delta="Error(Leave X Out) - Error(Baseline)",
+            match_key="Plan_Row_ID within specified baseline test context",
+            interpretation="Unequal training-set size confounds isolation of source novelty.",
+        ),
+        leave_two=dict(
+            models=two,
+            aggregation="Unweighted mean of the two pair-level metric values per category and presence group.",
+        ),
+        utilization=dict(
+            matched_stage="A",
+            match_keys=["workload_id", "stage_a_sample_index"],
+            stage_b="Context-specific measured targeting. Analyze separately from matched Stage A.",
+        ),
+    )
+
+
 def generate(root):
     profiles = profile_library(root)
     workloads, groups, exposure = workload_library(root, profiles)
@@ -413,6 +480,7 @@ def generate(root):
             )
     for model, definition in models.items():
         json_write(root / "splits" / (model + ".json"), definition)
+    json_write(root / "evaluation_reporting.json", reporting_contract(models, contexts))
     manifest = dict(
         version=VERSION,
         design_seed=DESIGN_SEED,
@@ -425,6 +493,7 @@ def generate(root):
         u07_groups=u07,
         models=sorted(models),
         split_hashes={m: sha(root / "splits" / (m + ".json")) for m in models},
+        reporting_sha256=sha(root / "evaluation_reporting.json"),
         gradient=gradient.relative_to(root).as_posix(),
         gradient_sha256=sha(gradient),
         canonical_experiment_sha256=sha(EXPERIMENT),

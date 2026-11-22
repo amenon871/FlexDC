@@ -2,8 +2,9 @@
 
 import json
 import math
-from collections import Counter
+from collections import Counter, defaultdict
 from decimal import Decimal
+from itertools import combinations
 
 from am_vet_flexdc_sweep_dataset_v3 import parse_vector
 
@@ -27,6 +28,70 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def matched_stage_a(manifest, read_rows):
+    """Compare all utilization pairs by the exact-plan sample index."""
+    groups = defaultdict(list)
+    for cid, context in manifest["contexts"].items():
+        groups[context["workload"]].append(cid)
+    report = dict(
+        workloads_checked=0,
+        cross_utilization_comparisons=0,
+        bid_coordinate_comparisons=0,
+        maximum_coordinate_difference=0.0,
+        mismatches=0,
+        examples=[],
+    )
+    fields = ("Pbar_kw_per_server", "R_kw_per_server", "weights")
+    index = lambda row: int(row["weight_index_within_pr"])
+    for workload, contexts in sorted(groups.items()):
+        if len(contexts) < 2:
+            continue
+        report["workloads_checked"] += 1
+        require(
+            len({manifest["contexts"][cid]["u"] for cid in contexts}) == len(contexts),
+            f"Repeated utilization for {workload}",
+        )
+        rows = {cid: sorted(read_rows(cid), key=index) for cid in sorted(contexts)}
+        domains = {domain_for(manifest, manifest["contexts"][cid]) for cid in rows}
+        require(len(domains) == 1, f"Utilization-dependent bid domain for {workload}")
+        domain = next(iter(domains))
+        seen = set()
+        for cid, plan in rows.items():
+            require(
+                [index(row) for row in plan] == list(range(A_COUNT)),
+                f"Invalid Stage A indices {cid}",
+            )
+            ids = {row["plan_row_id"] for row in plan}
+            require(
+                len(ids) == A_COUNT
+                and not ids & seen
+                and all(row["context_id"] == cid for row in plan),
+                f"Context or Plan_Row_ID collision for {cid}",
+            )
+            seen.update(ids)
+            require(
+                len({point_key(domain.validate(coords(row))) for row in plan})
+                == A_COUNT,
+                f"Duplicate bids for {cid}",
+            )
+        for left, right in combinations(rows, 2):
+            report["cross_utilization_comparisons"] += 1
+            for first, second in zip(rows[left], rows[right], strict=True):
+                report["bid_coordinate_comparisons"] += 1
+                delta = max(
+                    abs(a - b)
+                    for a, b in zip(coords(first), coords(second), strict=True)
+                )
+                report["maximum_coordinate_difference"] = max(
+                    report["maximum_coordinate_difference"], delta
+                )
+                if delta != 0 or any(first[key] != second[key] for key in fields):
+                    report["mismatches"] += 1
+                    if len(report["examples"]) < 5:
+                        report["examples"].append([left, right, index(first)])
+    return report
+
+
 def audit_design(root, manifest):
     profiles, workloads, groups, contexts = (
         manifest[key] for key in ("profiles", "workloads", "groups", "contexts")
@@ -34,6 +99,10 @@ def audit_design(root, manifest):
     require(
         manifest["version"] == VERSION and set(SOURCES) <= profiles.keys(),
         "Wrong design or sources",
+    )
+    require(
+        sha(root / "evaluation_reporting.json") == manifest["reporting_sha256"],
+        "Evaluation reporting seal changed",
     )
     require(
         len(profiles) == 104

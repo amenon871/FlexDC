@@ -6,15 +6,18 @@ from pathlib import Path
 
 from .audit import audit_design, require
 from .collection import (
+    audit_collected_stage,
+    audit_matched,
     choose_contexts,
     collect_attempts,
     exclusive,
     export,
     generate_all,
+    pilot_report,
     prepare_b,
     run,
 )
-from .io import ROOT, load, sha
+from .io import ROOT, json_write, load, sha
 from .ledger import ledger
 
 
@@ -23,7 +26,7 @@ def main(argv=None):
     parser.add_argument(
         "--root",
         type=Path,
-        default=ROOT / "runs/p100_v3_doe_release",
+        default=ROOT / "runs/p100_v3_doe_matched",
         help="New isolated DOE directory under this checkout's runs directory",
     )
     actions = parser.add_subparsers(dest="action", required=True)
@@ -32,6 +35,15 @@ def main(argv=None):
         help="Freeze and audit all manifests and 244,800 Stage A planned rows",
     )
     actions.add_parser("audit-design")
+    actions.add_parser("audit-matched")
+    actions.add_parser(
+        "pilot-report", help="Audit the pilot's 200 real rows and boundary criterion"
+    )
+    stage_audit = actions.add_parser(
+        "audit-stage", help="Re-audit a measured stage without simulations"
+    )
+    stage_audit.add_argument("--stage", choices=("A", "B"), required=True)
+    stage_audit.add_argument("--case", action="append", default=[])
     for name in ("run", "smoke", "stage-b"):
         command = actions.add_parser(name)
         command.add_argument(
@@ -85,11 +97,23 @@ def main(argv=None):
             sha(root / "design.json") == receipt["design_sha256"],
             "Frozen design seal mismatch",
         )
-        if args.action == "audit-design":
-            result = audit_design(root, manifest)
+        if args.action in ("audit-design", "audit-matched"):
             require(
                 sha(root / "stage_a.csv") == receipt["stage_a_sha256"],
                 "Stage A aggregate seal mismatch",
+            )
+            matched = audit_matched(root, manifest, receipt["design_sha256"])
+            require(
+                matched == receipt["matched_stage_a"], "Matched Stage A receipt differs"
+            )
+            result = (
+                matched
+                if args.action == "audit-matched"
+                else {
+                    **audit_design(root, manifest),
+                    "matched_stage_a": matched,
+                    "stage_a_sha256": receipt["stage_a_sha256"],
+                }
             )
         else:
             smoke = args.action == "smoke"
@@ -100,6 +124,19 @@ def main(argv=None):
                     audit_design(root, manifest)
                     collect_attempts(root, manifest, connection)
                     result = export(root, manifest, connection, args.require_complete)
+                elif args.action in ("audit-stage", "pilot-report"):
+                    audit_design(root, manifest)
+                    collect_attempts(root, manifest, connection)
+                    if args.action == "pilot-report":
+                        result = pilot_report(root, manifest, connection)
+                        target = "pilot_report.json"
+                    else:
+                        cases = choose_contexts(root, manifest, args.case, None, "test")
+                        result = audit_collected_stage(
+                            root, manifest, connection, args.stage, cases
+                        )
+                        target = f"audit_stage_{args.stage}_{'selected' if args.case else 'all'}.json"
+                    json_write(root / target, result, immutable=False)
                 else:
                     cases = choose_contexts(
                         root, manifest, args.case, args.model, args.partition
@@ -160,6 +197,10 @@ def main(argv=None):
     print(json.dumps(result, indent=2))
     return int(
         result.get("status") == "INCOMPLETE_OR_INVALID"
+        or (
+            args.action in ("audit-stage", "pilot-report")
+            and result["status"] != "PASS"
+        )
         or (getattr(args, "require_complete", False) and result["status"] != "PASS")
     )
 

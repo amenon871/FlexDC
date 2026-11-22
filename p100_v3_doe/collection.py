@@ -11,7 +11,7 @@ from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 
-from .audit import audit_design, audit_plan, require
+from .audit import audit_design, audit_observation, audit_plan, matched_stage_a, require
 from .design import A_COUNT, B_COUNT, CLUSTER, generate
 from .io import (
     ROOT,
@@ -119,6 +119,23 @@ def read_plan(root, manifest, cid, stage, design_hash=None):
     return rows, receipt
 
 
+def audit_matched(root, manifest, design_hash):
+    result = matched_stage_a(
+        manifest, lambda cid: read_plan(root, manifest, cid, "A", design_hash)[0]
+    )
+    require(result["mismatches"] == 0, f"Stage A utilization mismatch: {result}")
+    require(
+        (
+            result["workloads_checked"],
+            result["cross_utilization_comparisons"],
+            result["bid_coordinate_comparisons"],
+        )
+        == (741, 1041, 156150),
+        f"Stage A matched audit coverage mismatch: {result}",
+    )
+    return result
+
+
 def generate_all(root):
     protected()
     manifest = generate(root)
@@ -131,7 +148,7 @@ def generate_all(root):
             root,
             cid,
             "A",
-            plan_rows(root, manifest, cid, "A", broad(domain, cid)),
+            plan_rows(root, manifest, cid, "A", broad(domain, context["workload"])),
             design_hash=design_hash,
         )
         rows, _ = read_plan(root, manifest, cid, "A", design_hash)
@@ -172,6 +189,8 @@ def generate_all(root):
     require(count == 244800 and not seen, "Incomplete aggregate Stage A plan")
     report["stage_a_sha256"] = sha(aggregate)
     report["design_sha256"] = design_hash
+    report["matched_stage_a"] = audit_matched(root, manifest, design_hash)
+    json_write(root / "matched_stage_a.json", report["matched_stage_a"])
     report["protected_sha256"] = protected()
     json_write(root / "preflight.json", report)
     return report
@@ -213,7 +232,7 @@ def prepare_b(root, manifest, connection, contexts):
         if index % 50 == 0:
             print(
                 f"Stage B planning: {index}/{len(contexts)} examined, "
-                f"{len(ready)} ready, elapsed={time.monotonic()-started:.1f}s",
+                f"{len(ready)} ready, elapsed={time.monotonic() - started:.1f}s",
                 flush=True,
             )
         a_rows, receipt = read_plan(root, manifest, cid, "A", design_hash)
@@ -485,6 +504,94 @@ def run(
     return report
 
 
+PILOT_CONTEXT = "P100D_J2_011_V0_U6"
+
+
+def audit_collected_stage(root, manifest, connection, stage, contexts):
+    """Require an exact, valid measured population before moving to the next stage."""
+    expected = A_COUNT if stage == "A" else B_COUNT
+    design_hash = sha(root / "design.json")
+    incomplete, summaries = {}, {}
+    for cid in contexts:
+        observed = measured(connection, cid, stage)
+        if len(observed) != expected:
+            incomplete[cid] = {"valid": len(observed), "expected": expected}
+            continue
+        rows, receipt = read_plan(root, manifest, cid, stage, design_hash)
+        previous = []
+        if stage == "B":
+            previous, old_receipt = read_plan(root, manifest, cid, "A", design_hash)
+            source = measured(connection, cid, "A")
+            require(
+                len(source) == A_COUNT
+                and receipt["source"]
+                == {
+                    "a_plan_sha256": old_receipt["plan_sha256"],
+                    "a_observation_sha256": digest(source),
+                },
+                f"Stage B Stage A lineage mismatch {cid}",
+            )
+        audit_plan(root, manifest, cid, stage, rows, previous)
+        require(
+            {row["plan_row_id"] for row in rows} == observed.keys(),
+            f"Observed plan ID mismatch {cid}",
+        )
+        arrivals = set()
+        for row in rows:
+            result = observed[row["plan_row_id"]]
+            checked = audit_observation(
+                row,
+                result["simulator_results"],
+                result["simulator_diagnostics"],
+                result["evidence"],
+                manifest,
+            )
+            require(
+                all(checked[key] == result[key] for key in checked),
+                f"Audited observation changed {cid}",
+            )
+            arrivals.add(checked["evidence"]["arrival_sha256"])
+        require(len(arrivals) == 1, f"Mixed arrivals {cid}")
+        summaries[cid] = dict(
+            rows=expected,
+            arrival_sha256=next(iter(arrivals)),
+            plan_sha256=receipt["plan_sha256"],
+            near_boundary=sum(abs(v["margin"]) <= 0.25 for v in observed.values()),
+            feasible=sum(v["feasible"] for v in observed.values()),
+            closest_absolute_margin=min(abs(v["margin"]) for v in observed.values()),
+            sampling=receipt["diagnostics"] if stage == "B" else None,
+        )
+    return dict(
+        status="PASS" if not incomplete else "INCOMPLETE",
+        stage=stage,
+        rows=sum(s["rows"] for s in summaries.values()),
+        contexts=summaries,
+        incomplete=incomplete,
+    )
+
+
+def pilot_report(root, manifest, connection):
+    a, b = (
+        audit_collected_stage(root, manifest, connection, stage, [PILOT_CONTEXT])
+        for stage in ("A", "B")
+    )
+    if a["status"] != "PASS" or b["status"] != "PASS":
+        return dict(status="INCOMPLETE", A=a, B=b)
+    aa, bb = (report["contexts"][PILOT_CONTEXT] for report in (a, b))
+    shared = aa["arrival_sha256"] == bb["arrival_sha256"]
+    boundary = bb["near_boundary"] > 0
+    return dict(
+        status="PASS" if shared and boundary else "FAIL",
+        context=PILOT_CONTEXT,
+        scope="scientific pilot gate only",
+        total_rows=aa["rows"] + bb["rows"],
+        common_arrivals=shared,
+        stage_b_boundary_pass=boundary,
+        A=aa,
+        B=bb,
+    )
+
+
 def export(root, manifest, connection, complete):
     counts = Counter()
     near = Counter()
@@ -505,6 +612,7 @@ def export(root, manifest, connection, complete):
             "U",
             "J",
             "stage",
+            "stage_a_sample_index",
             "Pbar_kw_per_server",
             "R_kw_per_server",
             "weights",
@@ -583,6 +691,7 @@ def export(root, manifest, connection, complete):
                             context["u"],
                             context["j"],
                             stage,
+                            row["weight_index_within_pr"] if stage == "A" else "",
                             row["Pbar_kw_per_server"],
                             row["R_kw_per_server"],
                             row["weights"],
