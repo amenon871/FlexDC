@@ -285,6 +285,9 @@ class Simulator:
         self.tracking_error_at_90 = self.error_violate()
         self.constraint_violations, self.ratio_of_job_type_qos_violation = write_qos_summary_df(self)
         power_cost, tracking_cost = self.final_output()
+        if os.environ.get("FLEXDC_P100_DOE_EVIDENCE") == "1":
+            from peacsim.p100_doe_evidence import append_observation
+            append_observation(self)
         return power_cost, tracking_cost
 
     def error_violate(self):
